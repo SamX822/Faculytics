@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Faculytics Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Faculytics</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- File Upload Form -->
+        <div class="card mb-4">
+            <div class="card-header">Upload CSV File</div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <input type="file" name="csv_file" id="csv_file" accept=".csv" class="form-control-file">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Process File</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sub Menu Tabs -->
+        <ul class="nav nav-tabs" id="resultTabs" role="tablist" style="display:none;">
+            <li class="nav-item">
+                <a class="nav-link active" id="sentiments-tab" data-toggle="tab" href="#sentiments" role="tab">Sentiments</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="topics-tab" data-toggle="tab" href="#topics" role="tab">Topics</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="recommendation-tab" data-toggle="tab" href="#recommendation" role="tab">Recommendation</a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="resultContent">
+            <!-- Sentiments Tab -->
+            <div class="tab-pane fade show active" id="sentiments" role="tabpanel">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+            <!-- Topics Tab -->
+            <div class="tab-pane fade" id="topics" role="tabpanel">
+                <div id="wordCloudContainer"></div>
+            </div>
+            <!-- Recommendation Tab -->
+            <div class="tab-pane fade" id="recommendation" role="tabpanel">
+                <div id="recommendationText"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery, Popper.js, and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart.js for sentiment graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JavaScript for handling upload and displaying results -->
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData();
+            const fileField = document.getElementById('csv_file');
+            if (fileField.files.length === 0) {
+                alert("Please select a CSV file.");
+                return;
+            }
+            formData.append('csv_file', fileField.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    // Show the tabs now that results are available
+                    document.getElementById('resultTabs').style.display = "block";
+
+                    // Display the sentiment analysis results
+                    renderSentimentChart(data.sentiment);
+                    // Display topics in word cloud format (implement renderWordCloud)
+                    renderWordCloud(data.topics);
+                    // Display recommendation text
+                    document.getElementById('recommendationText').innerHTML = "<p>" + data.recommendation + "</p>";
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        function renderSentimentChart(sentiment) {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            // Create a horizontal bar chart
+            new Chart(ctx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: ['Sentiments'],
+                    datasets: [{
+                        label: 'Positive',
+                        data: [sentiment.positive],
+                        backgroundColor: 'green'
+                    },
+                    {
+                        label: 'Negative',
+                        data: [sentiment.negative],
+                        backgroundColor: 'red'
+                    }]
+                },
+                options: {
+                    scales: {
+                        xAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    },
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Sentiment Analysis'
+                    }
+                }
+            });
+        }
+
+        function renderWordCloud(topics) {
+            // Placeholder: You can integrate a word cloud library such as d3-cloud or any other.
+            // For demonstration, we will simply list the topics with their strength.
+            const container = document.getElementById('wordCloudContainer');
+            container.innerHTML = "";
+            topics.forEach(topic => {
+                const topicDiv = document.createElement('div');
+                topicDiv.style.border = "1px solid #ccc";
+                topicDiv.style.margin = "5px";
+                topicDiv.style.padding = "5px";
+                topicDiv.style.backgroundColor = topic.color;
+                topicDiv.innerHTML = `<strong>Topic ${topic.Topic}:</strong> ${topic.Name} <br> Strength: ${topic.strength}`;
+                container.appendChild(topicDiv);
+            });
+        }
+    </script>
+</body>
+</html>
