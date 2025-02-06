@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+{% set title = "Register" %}
+{% set year = 2025 %}
+
+{% block content %}
+<div class="container" style="margin-top:70px;">
+    <!-- Back Button -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('login') }}" class="btn btn-default">Back to Login</a>
+    </div>
+
+    <h2>Register</h2>
+
+    <!-- Position Selection Pane -->
+    <div id="positionPane">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Please select your position</h3>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="userType">Position</label>
+                    <select id="userType" class="form-control">
+                        <option value="Unselected">Unselected</option>
+                        <option value="Campus Director">Campus Director</option>
+                        <option value="Vice Chancellor">Vice Chancellor</option>
+                        <option value="Dean">Dean</option>
+                        <option value="Teacher">Teacher</option>
+                    </select>
+                </div>
+                <button id="nextButton" class="btn btn-primary" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Details Pane -->
+    <div id="accountPane" style="display:none;">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Account Details</h3>
+            </div>
+            <div class="panel-body">
+                <form id="registerForm" method="POST" action="{{ url_for('register') }}">
+                    <!-- Hidden field to store the userType selected in the first pane -->
+                    <input type="hidden" id="selectedUserType" name="userType" value="">
+
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" class="form-control" placeholder="Enter first name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" class="form-control" placeholder="Enter last name">
+                    </div>
+                    <div class="form-group">
+                        <label for="uName">Username</label>
+                        <input type="text" id="uName" name="uName" class="form-control" placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label for="pWord">Password</label>
+                        <input type="password" id="pWord" name="pWord" class="form-control" placeholder="Choose a password">
+                    </div>
+                    <div class="form-group">
+                        <label for="campus">Campus</label>
+                        <input type="text" id="campus" name="campus" class="form-control" placeholder="Enter campus">
+                    </div>
+                    <div class="form-group" id="collegeGroup" style="display:none;">
+                        <label for="college">College</label>
+                        <input type="text" id="college" name="college" class="form-control" placeholder="Enter college">
+                    </div>
+                    <button type="submit" id="registerButton" class="btn btn-success" disabled>Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // Enable the "Next" button only if the userType dropdown is not "Unselected"
+        $('#userType').change(function () {
+            if ($(this).val() !== 'Unselected') {
+                $('#nextButton').prop('disabled', false);
+            } else {
+                $('#nextButton').prop('disabled', true);
+            }
+        });
+
+        // On "Next" click, store the selected user type and move to the account details pane
+        $('#nextButton').click(function () {
+            var selectedType = $('#userType').val();
+            $('#selectedUserType').val(selectedType);
+            // Show the College field only if the position is Dean or Teacher
+            if (selectedType === 'Dean' || selectedType === 'Teacher') {
+                $('#collegeGroup').show();
+            } else {
+                $('#collegeGroup').hide();
+            }
+            $('#positionPane').hide();
+            $('#accountPane').show();
+            validateForm();
+        });
+
+        // Validate form fields on input changes
+        $('#registerForm input').on('input change', function () {
+            validateForm();
+        });
+
+        function validateForm() {
+            var isValid = true;
+            // Check that the required fields are not empty
+            $('#firstName, #lastName, #uName, #pWord, #campus').each(function () {
+                if ($(this).val().trim() === '') {
+                    isValid = false;
+                }
+            });
+            // If the userType is Dean or Teacher, ensure the College field is filled
+            var userType = $('#selectedUserType').val();
+            if (userType === 'Dean' || userType === 'Teacher') {
+                if ($('#college').val().trim() === '') {
+                    isValid = false;
+                }
+            }
+            $('#registerButton').prop('disabled', !isValid);
+        }
+    });
+</script>
+{% endblock %}
