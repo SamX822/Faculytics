@@ -43,6 +43,8 @@
     <Folder Include="Faculytics\templates\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Faculytics\templates\my_account.html" />
+    <Content Include="Faculytics\templates\dashboard.html" />
     <Content Include="Faculytics\templates\register.html" />
     <Content Include="Faculytics\templates\login.html" />
     <Content Include="Faculytics\templates\index.html" />

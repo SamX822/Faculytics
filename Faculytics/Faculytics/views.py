@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import render_template, redirect, url_for, request, jsonify
+from flask import render_template, redirect, url_for, request, jsonify, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from Faculytics import app, db
 from Faculytics.models import User, CSVUpload
@@ -28,6 +28,7 @@ def login():
         pWord = request.form.get('pWord')
         user = User.query.filter_by(uName=uName).first()
         if user and check_password_hash(user.pWord, pWord):
+            session['user_id'] = user.id  # Store user ID in session
             return redirect(url_for('dashboard'))
         else:
             error = "Invalid username or password."
@@ -62,7 +63,47 @@ def register():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('index.html', title="Dashboard", year=datetime.now().year)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    return render_template('dashboard.html', user=user, title="Dashboard", year=datetime.now().year)
+
+@app.route('/my_account', methods=['GET', 'POST'])
+def my_account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+
+    if request.method == 'POST':
+        first_name = request.form.get('firstName')
+        last_name = request.form.get('lastName')
+
+        if first_name and last_name:
+            user.firstName = first_name
+            user.lastName = last_name
+            db.session.commit()
+            flash("Account updated successfully!", "success")
+        else:
+            flash("First name and last name cannot be empty.", "danger")
+
+        return redirect(url_for('my_account'))
+
+    return render_template('my_account.html', user=user, title="My Account", year=datetime.now().year)
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    db.session.delete(user)
+    db.session.commit()
+    session.pop('user_id', None)  # Remove user from session
+
+    flash("Your account has been deleted.", "info")
+    return redirect(url_for('login'))
 
 @app.route('/contact')
 def contact():

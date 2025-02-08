@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+{% set title = "My Account" %}
+
+{% block content %}
+<style>
+    .sidebar {
+        position: fixed;
+        top: 50px; /* Adjust this based on your navbar height */
+        left: 0;
+        width: 250px;
+        height: calc(100vh - 50px); /* Subtract navbar height */
+        background-color: #343a40;
+        padding-top: 20px;
+        color: white;
+        overflow-y: auto; /* Allows scrolling */
+    }
+
+        .sidebar .profile {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+            .sidebar .profile img {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background-color: gray;
+            }
+
+        .sidebar .menu a {
+            display: block;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+        }
+
+            .sidebar .menu a:hover, .sidebar .menu a.active {
+                background-color: #007bff;
+            }
+
+    /* Adjust content area to prevent overlap */
+    .content {
+        margin-left: 270px;
+        padding: 20px;
+        margin-top: 60px; /* To match the navbar height */
+    }
+</style>
+
+<div class="sidebar">
+    <div class="profile">
+        <img src="" alt="Profile Picture">
+        <p>{{ user.firstName }} {{ user.lastName }}</p>
+    </div>
+    <div class="menu">
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('my_account') }}" class="active">My Account</a>
+        <a href="{{ url_for('login') }}">Logout</a>
+    </div>
+</div>
+
+<div class="content">
+    <h2>My Account</h2>
+    <form method="POST">
+        <label>Full Name:</label>
+        <input type="text" name="firstName" value="{{ user.firstName }}" required>
+        <input type="text" name="lastName" value="{{ user.lastName }}" required>
+
+        <label>Username:</label>
+        <input type="text" value="{{ user.uName }}" disabled>
+
+        <label>Campus:</label>
+        <input type="text" value="{{ user.campus }}" disabled>
+
+        {% if user.userType in ['Dean', 'Teacher'] %}
+        <label>College:</label>
+        <input type="text" value="{{ user.college }}" disabled>
+        {% endif %}
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete Account</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function confirmDelete() {
+    if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+        fetch("{{ url_for('delete_account') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        }).then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -7,6 +7,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:21463112@localhost:5432/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Set a secret key for session management
+app.secret_key = "FaculSecure"
+
 # Initialize the database
 db = SQLAlchemy(app)
 
