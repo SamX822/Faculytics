@@ -3,19 +3,19 @@
 {% set year = 2025 %}
 
 {% block content %}
-<div class="container" style="margin-top:70px;">
+<div class="register-container">
     <!-- Back Button -->
-    <div style="margin-bottom: 20px;">
+    <div class="back-btn">
         <a href="{{ url_for('login') }}" class="btn btn-default">Back to Login</a>
     </div>
 
-    <h2>Register</h2>
+    <h2 class="text-center">Register</h2>
 
     <!-- Position Selection Pane -->
-    <div id="positionPane">
+    <div id="positionPane" class="form-panel">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Please select your position</h3>
+                <h3 class="panel-title text-center">Please select your position</h3>
             </div>
             <div class="panel-body">
                 <div class="form-group">
@@ -34,10 +34,10 @@
     </div>
 
     <!-- Account Details Pane -->
-    <div id="accountPane" style="display:none;">
+    <div id="accountPane" class="form-panel" style="display:none;">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Account Details</h3>
+                <h3 class="panel-title text-center">Account Details</h3>
             </div>
             <div class="panel-body">
                 <form id="registerForm" method="POST" action="{{ url_for('register') }}">
@@ -79,20 +79,13 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        // Enable the "Next" button only if the userType dropdown is not "Unselected"
         $('#userType').change(function () {
-            if ($(this).val() !== 'Unselected') {
-                $('#nextButton').prop('disabled', false);
-            } else {
-                $('#nextButton').prop('disabled', true);
-            }
+            $('#nextButton').prop('disabled', $(this).val() === 'Unselected');
         });
 
-        // On "Next" click, store the selected user type and move to the account details pane
         $('#nextButton').click(function () {
             var selectedType = $('#userType').val();
             $('#selectedUserType').val(selectedType);
-            // Show the College field only if the position is Dean or Teacher
             if (selectedType === 'Dean' || selectedType === 'Teacher') {
                 $('#collegeGroup').show();
             } else {
@@ -103,28 +96,61 @@
             validateForm();
         });
 
-        // Validate form fields on input changes
         $('#registerForm input').on('input change', function () {
             validateForm();
         });
 
         function validateForm() {
-            var isValid = true;
-            // Check that the required fields are not empty
-            $('#firstName, #lastName, #uName, #pWord, #campus').each(function () {
-                if ($(this).val().trim() === '') {
-                    isValid = false;
-                }
-            });
-            // If the userType is Dean or Teacher, ensure the College field is filled
-            var userType = $('#selectedUserType').val();
-            if (userType === 'Dean' || userType === 'Teacher') {
-                if ($('#college').val().trim() === '') {
-                    isValid = false;
-                }
+            var isValid = $('#firstName, #lastName, #uName, #pWord, #campus').toArray().every(input => $(input).val().trim() !== '');
+            if ($('#selectedUserType').val() === 'Dean' || $('#selectedUserType').val() === 'Teacher') {
+                isValid = isValid && $('#college').val().trim() !== '';
             }
             $('#registerButton').prop('disabled', !isValid);
         }
     });
 </script>
 {% endblock %}
+
+<style>
+    /* Centering the form */
+    .register-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .back-btn {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 20px;
+    }
+
+    .form-panel {
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        width: 100%;
+    }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+    button {
+        width: 100%;
+        margin-top: 10px;
+    }
+</style>

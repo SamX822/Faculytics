@@ -7,6 +7,75 @@
     <link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="/static/content/site.css" />
     <script src="/static/scripts/modernizr-2.6.2.js"></script>
+
+    <style>
+        /* Center login form */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* Center input fields */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+            .form-group label {
+                align-self: center;
+                font-weight: bold;
+            }
+
+            .form-group input {
+                width: 100%;
+                max-width: 300px;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+
+        /* Full-width button */
+        .login-form button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        /* Register link styling */
+        .register-text {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        .register-link {
+            color: #007bff;
+            font-weight: bold;
+            text-decoration: none;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+            .register-link:hover {
+                color: #0056b3;
+                text-decoration: underline;
+            }
+    </style>
 </head>
 
 <body>
@@ -31,7 +100,36 @@
     </div>
 
     <div class="container body-content">
-        {% block content %}{% endblock %}
+        {% if request.path == url_for('login') %}
+        <div class="login-container">
+            <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                <h3 class="text-center">Login</h3>
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                <div class="form-group">
+                    <label for="uName">Username</label>
+                    <input type="text" id="uName" name="uName" class="form-control" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label for="pWord">Password</label>
+                    <input type="password" id="pWord" name="pWord" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+
+                <!-- Register text link (without background) -->
+                <p class="register-text">
+                    Don't have an account?
+                    <a href="{{ url_for('register') }}" class="register-link">Register</a>
+                </p>
+            </form>
+        </div>
+        {% else %}
+        <div class="mt-4">
+            {% block content %}{% endblock %}
+        </div>
+        {% endif %}
+
         <hr />
         <footer>
             <p>&copy; {{ year }} - Faculytics</p>
@@ -42,6 +140,5 @@
     <script src="/static/scripts/bootstrap.js"></script>
     <script src="/static/scripts/respond.js"></script>
     {% block scripts %}{% endblock %}
-
 </body>
 </html>
