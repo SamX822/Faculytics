@@ -2,90 +2,91 @@
 {% set title = "My Account" %}
 
 {% block content %}
-<style>
-    .sidebar {
-        position: fixed;
-        top: 50px; /* Adjust this based on your navbar height */
-        left: 0;
-        width: 250px;
-        height: calc(100vh - 50px); /* Subtract navbar height */
-        background-color: #343a40;
-        padding-top: 20px;
-        color: white;
-        overflow-y: auto; /* Allows scrolling */
-    }
 
-        .sidebar .profile {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+<div class="flex min-h-screen bg-gray-900 text-white">
+    {% include "sidebar.html" %}
 
-            .sidebar .profile img {
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                background-color: gray;
-            }
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col items-center justify-center p-8">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-700 shadow-lg rounded-lg p-6 w-full max-w-lg">
+            <h2 class="text-2xl font-bold text-center text-gray-200">My Account</h2>
 
-        .sidebar .menu a {
-            display: block;
-            padding: 15px;
-            color: white;
-            text-decoration: none;
-        }
+            <form method="POST" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-gray-400 font-medium">Full Name:</label>
+                    <div class="flex space-x-2">
+                        <input type="text" name="firstName" value="{{ user.firstName }}" required
+                               class="w-1/2 p-2 bg-gray-700 border border-gray-500 text-white rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
+                        <input type="text" name="lastName" value="{{ user.lastName }}" required
+                               class="w-1/2 p-2 bg-gray-700 border border-gray-500 text-white rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
+                    </div>
+                </div>
 
-            .sidebar .menu a:hover, .sidebar .menu a.active {
-                background-color: #007bff;
-            }
+                <div>
+                    <label class="block text-gray-400 font-medium">Username:</label>
+                    <input type="text" value="{{ user.uName }}" disabled
+                           class="w-full p-2 bg-gray-800 border border-gray-600 text-gray-400 rounded-md cursor-not-allowed">
+                </div>
 
-    /* Adjust content area to prevent overlap */
-    .content {
-        margin-left: 270px;
-        padding: 20px;
-        margin-top: 60px; /* To match the navbar height */
-    }
-</style>
+                <div>
+                    <label class="block text-gray-400 font-medium">Campus:</label>
+                    <input type="text" value="{{ user.campus }}" disabled
+                           class="w-full p-2 bg-gray-800 border border-gray-600 text-gray-400 rounded-md cursor-not-allowed">
+                </div>
 
-<div class="sidebar">
-    <div class="profile">
-        <img src="" alt="Profile Picture">
-        <p>{{ user.firstName }} {{ user.lastName }}</p>
-    </div>
-    <div class="menu">
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('my_account') }}" class="active">My Account</a>
-        <a href="{{ url_for('login') }}">Logout</a>
+                {% if user.userType in ['Dean', 'Teacher'] %}
+                <div>
+                    <label class="block text-gray-400 font-medium">College:</label>
+                    <input type="text" value="{{ user.college }}" disabled
+                           class="w-full p-2 bg-gray-800 border border-gray-600 text-gray-400 rounded-md cursor-not-allowed">
+                </div>
+                {% endif %}
+
+                <div class="flex justify-between items-center mt-6">
+                    <button type="submit"
+                            class="bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-md hover:bg-yellow-500 transition">
+                        Update
+                    </button>
+                    <button type="button"
+                            class="bg-red-600 text-white font-bold px-4 py-2 rounded-md hover:bg-red-700 transition"
+                            onclick="openDeleteModal()">
+                        Delete Account
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<div class="content">
-    <h2>My Account</h2>
-    <form method="POST">
-        <label>Full Name:</label>
-        <input type="text" name="firstName" value="{{ user.firstName }}" required>
-        <input type="text" name="lastName" value="{{ user.lastName }}" required>
-
-        <label>Username:</label>
-        <input type="text" value="{{ user.uName }}" disabled>
-
-        <label>Campus:</label>
-        <input type="text" value="{{ user.campus }}" disabled>
-
-        {% if user.userType in ['Dean', 'Teacher'] %}
-        <label>College:</label>
-        <input type="text" value="{{ user.college }}" disabled>
-        {% endif %}
-
-        <div style="margin-top: 20px;">
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete Account</button>
+<!-- Custom Delete Confirmation Modal -->
+<div id="deleteModal"
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+        <h3 class="text-lg font-bold text-yellow-400">Confirm Deletion</h3>
+        <p class="text-gray-300 mt-2">Are you sure you want to delete your account? This action cannot be undone.</p>
+        <div class="flex justify-center space-x-4 mt-4">
+            <button onclick="confirmDelete()"
+                    class="bg-red-600 text-white font-bold px-4 py-2 rounded-md hover:bg-red-700 transition">
+                Delete
+            </button>
+            <button onclick="closeDeleteModal()"
+                    class="bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-md hover:bg-yellow-500 transition">
+                Cancel
+            </button>
         </div>
-    </form>
+    </div>
 </div>
 
 <script>
-function confirmDelete() {
-    if (confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+    function openDeleteModal() {
+        document.getElementById("deleteModal").classList.remove("hidden");
+    }
+
+    function closeDeleteModal() {
+        document.getElementById("deleteModal").classList.add("hidden");
+    }
+
+    function confirmDelete() {
         fetch("{{ url_for('delete_account') }}", {
             method: "POST",
             headers: { "Content-Type": "application/json" }
@@ -95,6 +96,6 @@ function confirmDelete() {
             }
         });
     }
-}
 </script>
+
 {% endblock %}
