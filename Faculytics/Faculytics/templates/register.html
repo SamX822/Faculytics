@@ -3,154 +3,147 @@
 {% set year = 2025 %}
 
 {% block content %}
-<div class="register-container">
-    <!-- Back Button -->
-    <div class="back-btn">
-        <a href="{{ url_for('login') }}" class="btn btn-default">Back to Login</a>
-    </div>
+<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div class="relative w-full max-w-md bg-white/10 backdrop-blur-lg p-8 rounded-xl shadow-lg border border-white/20">
+        <h2 class="text-3xl font-extrabold text-white text-center">Create an Account</h2>
+        <p class="text-gray-300 text-center mt-2">Join us today</p>
 
-    <h2 class="text-center">Register</h2>
+        <form id="registerForm" method="POST" action="{{ url_for('register') }}" class="mt-6 space-y-4">
+            <div class="relative">
+                <label for="userType" class="block text-sm font-semibold text-gray-200">Position</label>
+                <select id="userType" name="userType"
+                        class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
+               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                    <option value="Unselected">Select your position</option>
+                    <option value="Campus Director">Campus Director</option>
+                    <option value="Vice Chancellor">Vice Chancellor</option>
+                    <option value="Dean">Dean</option>
+                    <option value="Teacher">Teacher</option>
+                </select>
+            </div>
 
-    <!-- Position Selection Pane -->
-    <div id="positionPane" class="form-panel">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title text-center">Please select your position</h3>
+            <div class="relative">
+                <label for="firstName" class="block text-sm font-medium text-gray-300">First Name</label>
+                <input type="text" id="firstName" name="firstName"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Enter first name" required>
             </div>
-            <div class="panel-body">
-                <div class="form-group">
-                    <label for="userType">Position</label>
-                    <select id="userType" class="form-control">
-                        <option value="Unselected">Unselected</option>
-                        <option value="Campus Director">Campus Director</option>
-                        <option value="Vice Chancellor">Vice Chancellor</option>
-                        <option value="Dean">Dean</option>
-                        <option value="Teacher">Teacher</option>
-                    </select>
-                </div>
-                <button id="nextButton" class="btn btn-primary" disabled>Next</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Account Details Pane -->
-    <div id="accountPane" class="form-panel" style="display:none;">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title text-center">Account Details</h3>
+            <div class="relative">
+                <label for="lastName" class="block text-sm font-medium text-gray-300">Last Name</label>
+                <input type="text" id="lastName" name="lastName"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Enter last name" required>
             </div>
-            <div class="panel-body">
-                <form id="registerForm" method="POST" action="{{ url_for('register') }}">
-                    <!-- Hidden field to store the userType selected in the first pane -->
-                    <input type="hidden" id="selectedUserType" name="userType" value="">
 
-                    <div class="form-group">
-                        <label for="firstName">First Name</label>
-                        <input type="text" id="firstName" name="firstName" class="form-control" placeholder="Enter first name">
-                    </div>
-                    <div class="form-group">
-                        <label for="lastName">Last Name</label>
-                        <input type="text" id="lastName" name="lastName" class="form-control" placeholder="Enter last name">
-                    </div>
-                    <div class="form-group">
-                        <label for="uName">Username</label>
-                        <input type="text" id="uName" name="uName" class="form-control" placeholder="Choose a username">
-                    </div>
-                    <div class="form-group">
-                        <label for="pWord">Password</label>
-                        <input type="password" id="pWord" name="pWord" class="form-control" placeholder="Choose a password">
-                    </div>
-                    <div class="form-group">
-                        <label for="campus">Campus</label>
-                        <input type="text" id="campus" name="campus" class="form-control" placeholder="Enter campus">
-                    </div>
-                    <div class="form-group" id="collegeGroup" style="display:none;">
-                        <label for="college">College</label>
-                        <input type="text" id="college" name="college" class="form-control" placeholder="Enter college">
-                    </div>
-                    <button type="submit" id="registerButton" class="btn btn-success" disabled>Register</button>
-                </form>
+            <div class="relative">
+                <label for="uName" class="block text-sm font-medium text-gray-300">Username</label>
+                <input type="text" id="uName" name="uName"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Choose a username" required>
             </div>
-        </div>
+
+            <div class="relative">
+                <label for="pWord" class="block text-sm font-medium text-gray-300">Password</label>
+                <input type="password" id="pWord" name="pWord"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Choose a password" required>
+            </div>
+
+            <div class="relative">
+                <label for="campus" class="block text-sm font-medium text-gray-300">Campus</label>
+                <input type="text" id="campus" name="campus"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Enter campus" required>
+            </div>
+
+            <div class="relative hidden" id="collegeGroup">
+                <label for="college" class="block text-sm font-medium text-gray-300">College</label>
+                <input type="text" id="college" name="college"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Enter college">
+            </div>
+
+            <button type="submit" id="registerButton"
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg
+                           hover:bg-blue-700 hover:scale-105 transition-all duration-300 ease-in-out shadow-lg">
+                Register
+            </button>
+        </form>
+
+        <p class="mt-4 text-center text-gray-400">
+            Already have an account?
+            <a href="{{ url_for('login') }}" class="text-blue-400 hover:text-blue-500 transition">Login</a>
+        </p>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-    $(document).ready(function () {
-        $('#userType').change(function () {
-            $('#nextButton').prop('disabled', $(this).val() === 'Unselected');
-        });
+    document.addEventListener("DOMContentLoaded", function () {
+        const userType = document.getElementById("userType");
+        const collegeGroup = document.getElementById("collegeGroup");
+        const uNameInput = document.getElementById("uName");
+        const registerForm = document.getElementById("registerForm");
 
-        $('#nextButton').click(function () {
-            var selectedType = $('#userType').val();
-            $('#selectedUserType').val(selectedType);
-            if (selectedType === 'Dean' || selectedType === 'Teacher') {
-                $('#collegeGroup').show();
+        // Create validation messages
+        const usernameError = document.createElement("span");
+        usernameError.className = "text-red-500 font-bold text-sm mt-1";
+        uNameInput.parentNode.insertBefore(usernameError, uNameInput.nextSibling);
+
+        const positionError = document.createElement("span");
+        positionError.className = "text-red-500 font-bold text-sm mt-1 hidden";
+        positionError.textContent = "Please select a valid position.";
+        userType.parentNode.insertBefore(positionError, userType.nextSibling);
+
+        userType.addEventListener("change", function () {
+            if (this.value === "Dean" || this.value === "Teacher") {
+                collegeGroup.classList.remove("hidden");
             } else {
-                $('#collegeGroup').hide();
+                collegeGroup.classList.add("hidden");
             }
-            $('#positionPane').hide();
-            $('#accountPane').show();
-            validateForm();
+
+            if (this.value !== "Unselected") {
+                positionError.classList.add("hidden");
+            }
         });
 
-        $('#registerForm input').on('input change', function () {
-            validateForm();
-        });
+        registerForm.addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent immediate submission
 
-        function validateForm() {
-            var isValid = $('#firstName, #lastName, #uName, #pWord, #campus').toArray().every(input => $(input).val().trim() !== '');
-            if ($('#selectedUserType').val() === 'Dean' || $('#selectedUserType').val() === 'Teacher') {
-                isValid = isValid && $('#college').val().trim() !== '';
+            let formValid = true;
+
+            // Check if position is selected
+            if (userType.value === "Unselected") {
+                positionError.classList.remove("hidden");
+                formValid = false;
             }
-            $('#registerButton').prop('disabled', !isValid);
-        }
+
+            // Check if username is available
+            fetch("{{ url_for('check_username') }}", {
+                method: "POST",
+                body: JSON.stringify({ uName: uNameInput.value.trim() }),
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    usernameError.textContent = "Username is already taken. Please choose another.";
+                    formValid = false;
+                } else {
+                    usernameError.textContent = "";
+                }
+
+                if (formValid) {
+                    registerForm.submit(); // Submit the form only if all checks pass
+                }
+            })
+            .catch(error => console.error("Error checking username:", error));
+        });
     });
 </script>
+
+
+
+
 {% endblock %}
-
-<style>
-    /* Centering the form */
-    .register-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .back-btn {
-        width: 100%;
-        max-width: 400px;
-        margin-bottom: 20px;
-    }
-
-    .form-panel {
-        width: 100%;
-        max-width: 400px;
-        padding: 20px;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-group {
-        width: 100%;
-    }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-    button {
-        width: 100%;
-        margin-top: 10px;
-    }
-</style>
