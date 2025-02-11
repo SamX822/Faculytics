@@ -61,6 +61,14 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title="Register", year=datetime.now().year)
 
+#Check username
+@app.route('/check_username', methods=['POST'])
+def check_username():
+    data = request.json
+    username = data.get('uName')
+    user_exists = User.query.filter_by(uName=username).first() is not None
+    return jsonify({"exists": user_exists})
+
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
