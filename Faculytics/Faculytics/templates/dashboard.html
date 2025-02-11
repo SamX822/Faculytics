@@ -2,64 +2,14 @@
 {% set title = "Dashboard" %}
 
 {% block content %}
-<style>
-    .sidebar {
-        position: fixed;
-        top: 50px; /* Adjust this based on your navbar height */
-        left: 0;
-        width: 250px;
-        height: calc(100vh - 50px); /* Subtract navbar height */
-        background-color: #343a40;
-        padding-top: 20px;
-        color: white;
-        overflow-y: auto; /* Allows scrolling */
-    }
+<div class="flex">
+    <!-- Sidebar -->
+    {% include "sidebar.html" %}
 
-        .sidebar .profile {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-            .sidebar .profile img {
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                background-color: gray;
-            }
-
-        .sidebar .menu a {
-            display: block;
-            padding: 15px;
-            color: white;
-            text-decoration: none;
-        }
-
-            .sidebar .menu a:hover, .sidebar .menu a.active {
-                background-color: #007bff;
-            }
-
-    /* Adjust content area to prevent overlap */
-    .content {
-        margin-left: 270px;
-        padding: 20px;
-        margin-top: 60px; /* To match the navbar height */
-    }
-</style>
-
-<div class="sidebar">
-    <div class="profile">
-        <img src="" alt="Profile Picture">
-        <p>{{ user.firstName }} {{ user.lastName }}</p>
-    </div>
-    <div class="menu">
-        <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
-        <a href="{{ url_for('my_account') }}">My Account</a>
-        <a href="{{ url_for('login') }}">Logout</a>
-    </div>
-</div>
-
-<div class="content">
-    <h2>Welcome to Your Dashboard</h2>
-    <p>This page is currently under construction.</p>
+    <!-- Main Content -->
+    <main class="ml-[260px] p-6 mt-[60px] transition-all duration-300 text-gray-300">
+        <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
+        <p class="mt-2 text-gray-400">This page is currently under construction.</p>
+    </main>
 </div>
 {% endblock %}

@@ -19,6 +19,7 @@
     <RootNamespace>Faculytics</RootNamespace>
     <InterpreterId>
     </InterpreterId>
+    <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,6 +32,7 @@
   <ItemGroup>
     <Compile Include="Faculytics\models.py" />
     <Compile Include="runserver.py" />
+    <Compile Include="vercel.json" />
     <Compile Include="Faculytics\__init__.py" />
     <Compile Include="Faculytics\views.py" />
   </ItemGroup>
@@ -48,6 +50,7 @@
     <Content Include="Faculytics\templates\register.html" />
     <Content Include="Faculytics\templates\login.html" />
     <Content Include="Faculytics\templates\index.html" />
+    <Content Include="Faculytics\templates\sidebar.html" />
     <Content Include="requirements.txt" />
     <Content Include="Faculytics\static\content\bootstrap.css" />
     <Content Include="Faculytics\static\content\bootstrap.min.css" />

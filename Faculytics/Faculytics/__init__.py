@@ -4,7 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # Configuration for PostgreSQL (adjust as needed)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:21463112@localhost:5432/postgres'
+# Postgres password: admin | Mark
+# Postgres password: 21463112 | Montecillo
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Set a secret key for session management
