@@ -1,0 +1,41 @@
+<!-- ucm.html -->
+{% extends "layout.html" %}
+{% set title = "UCM" %}
+{% set campus_code = "ucm" %}  {# Add a variable for the campus identifier #}
+
+{% block content %}
+<div class="flex">
+    <!-- Sidebar -->
+    {% include "sidebar.html" %}
+
+    <!-- Main Content -->
+    <main class="ml-[260px] p-6 mt-[60px] text-gray-300">
+        <h2 class="text-3xl font-bold text-white mb-4">University of Cebu - Main Campus</h2>
+
+        <!-- Back to Dashboard button -->
+        <a href="{{ url_for('dashboard') }}" class="mb-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+            Back to Dashboard
+        </a>
+
+        <!-- Inner scrollable pane for colleges -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-md h-[600px] overflow-y-auto">
+            <div class="grid grid-cols-2 gap-6 justify-items-center">
+                {% for college in [
+                {"name": "College of Arts and Sciences", "url": "cas"},
+                {"name": "College of Computer Engineering", "url": "cce"},
+                {"name": "College of Computer Studies", "url": "ccs"},
+                {"name": "College of Criminology", "url": "c_crim"},
+                {"name": "College of Education", "url": "c_edu"},
+                {"name": "College of Engineering", "url": "c_engr"}
+                ] %}
+                {# Pass the current campus code as a query parameter (campus) #}
+                <a href="{{ url_for(college.url, campus=campus_code) }}" class="block bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600">
+                    <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
+                    <p class="text-white text-lg font-bold text-center">{{ college.name }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

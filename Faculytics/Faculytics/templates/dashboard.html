@@ -7,9 +7,25 @@
     {% include "sidebar.html" %}
 
     <!-- Main Content -->
-    <main class="ml-[260px] p-6 mt-[60px] transition-all duration-300 text-gray-300">
+    <main class="ml-[260px] p-6 mt-[60px] text-gray-300">
         <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
-        <p class="mt-2 text-gray-400">This page is currently under construction.</p>
+
+        {% if user.userType == "admin" %}
+        <div class="grid grid-cols-2 gap-6 mt-6">
+            {% for campus in [
+            {"acronym": "UC Main", "name": "University of Cebu - Main", "url": "ucm"},
+            {"acronym": "UCLM", "name": "University of Cebu - Lapu-lapu and Mandaue", "url": "uclm"},
+            {"acronym": "UCB", "name": "University of Cebu - Banilad", "url": "ucb"},
+            {"acronym": "UCPT", "name": "University of Cebu - Pardo and Talisay", "url": "ucpt"}
+            ] %}
+            <a href="{{ url_for(campus.url) }}" class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
+                <div class="w-16 h-16 bg-white rounded-full mx-auto"></div>
+                <h3 class="text-lg font-bold text-white mt-4">{{ campus.acronym }}</h3>
+                <p class="text-gray-400">{{ campus.name }}</p>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
     </main>
 </div>
 {% endblock %}

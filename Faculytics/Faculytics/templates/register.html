@@ -53,16 +53,32 @@
 
             <div class="relative">
                 <label for="campus" class="block text-sm font-medium text-gray-300">Campus</label>
-                <input type="text" id="campus" name="campus"
-                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
-                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Enter campus" required>
+                <select id="campus" name="campus"
+                        class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
+               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                    <option value="">Select your campus</option>
+                    <option value="UCM">UCM</option>
+                    <option value="UCLM">UCLM</option>
+                    <option value="UCB">UCB</option>
+                    <option value="UCPT">UCPT</option>
+                </select>
             </div>
 
             <div class="relative hidden" id="collegeGroup">
                 <label for="college" class="block text-sm font-medium text-gray-300">College</label>
-                <input type="text" id="college" name="college"
-                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
-                              focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Enter college">
+                <select id="college" name="college"
+                        class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
+               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                    <option value="">Select your college</option>
+                    <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+                    <option value="College of Computer Engineering">College of Computer Engineering</option>
+                    <option value="College of Computer Studies">College of Computer Studies</option>
+                    <option value="College of Criminology">College of Criminology</option>
+                    <option value="College of Education">College of Education</option>
+                    <option value="College of Engineering">College of Engineering</option>
+                </select>
             </div>
 
             <button type="submit" id="registerButton"
@@ -83,18 +99,6 @@
     document.addEventListener("DOMContentLoaded", function () {
         const userType = document.getElementById("userType");
         const collegeGroup = document.getElementById("collegeGroup");
-        const uNameInput = document.getElementById("uName");
-        const registerForm = document.getElementById("registerForm");
-
-        // Create validation messages
-        const usernameError = document.createElement("span");
-        usernameError.className = "text-red-500 font-bold text-sm mt-1";
-        uNameInput.parentNode.insertBefore(usernameError, uNameInput.nextSibling);
-
-        const positionError = document.createElement("span");
-        positionError.className = "text-red-500 font-bold text-sm mt-1 hidden";
-        positionError.textContent = "Please select a valid position.";
-        userType.parentNode.insertBefore(positionError, userType.nextSibling);
 
         userType.addEventListener("change", function () {
             if (this.value === "Dean" || this.value === "Teacher") {
@@ -102,48 +106,7 @@
             } else {
                 collegeGroup.classList.add("hidden");
             }
-
-            if (this.value !== "Unselected") {
-                positionError.classList.add("hidden");
-            }
-        });
-
-        registerForm.addEventListener("submit", function (event) {
-            event.preventDefault(); // Prevent immediate submission
-
-            let formValid = true;
-
-            // Check if position is selected
-            if (userType.value === "Unselected") {
-                positionError.classList.remove("hidden");
-                formValid = false;
-            }
-
-            // Check if username is available
-            fetch("{{ url_for('check_username') }}", {
-                method: "POST",
-                body: JSON.stringify({ uName: uNameInput.value.trim() }),
-                headers: { "Content-Type": "application/json" }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.exists) {
-                    usernameError.textContent = "Username is already taken. Please choose another.";
-                    formValid = false;
-                } else {
-                    usernameError.textContent = "";
-                }
-
-                if (formValid) {
-                    registerForm.submit(); // Submit the form only if all checks pass
-                }
-            })
-            .catch(error => console.error("Error checking username:", error));
         });
     });
 </script>
-
-
-
-
 {% endblock %}

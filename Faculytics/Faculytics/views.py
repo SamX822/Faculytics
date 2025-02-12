@@ -1,3 +1,4 @@
+#views.py
 from datetime import datetime
 from flask import render_template, redirect, url_for, request, jsonify, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,6 +34,13 @@ def login():
         else:
             error = "Invalid username or password."
     return render_template('login.html', error=error, title="Login", year=datetime.now().year)
+
+@app.context_processor
+def inject_user():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    return dict(user=user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -120,6 +128,82 @@ def contact():
 @app.route('/about')
 def about():
     return render_template('about.html', title="About", year=datetime.now().year, message="Your application description page.")
+
+@app.route('/ucm')
+def ucm():
+    return render_template('ucm.html')
+
+@app.route('/uclm')
+def uclm():
+    return render_template('uclm.html')
+
+@app.route('/ucb')
+def ucb():
+    return render_template('ucb.html')
+
+@app.route('/ucpt')
+def ucpt():
+    return render_template('ucpt.html')
+
+@app.route('/cas')
+def cas():
+    # Query for teachers whose userType is 'Teacher' and who belong to College of Arts and Sciences
+    back_campus = request.args.get('campus', 'ucm')
+    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Arts and Sciences").all()
+    return render_template('colleges/cas.html', back_campus=back_campus, title="College of Arts and Sciences", teachers=teachers)
+
+@app.route('/cce')
+def cce():
+    # Query for teachers whose userType is 'Teacher' and who belong to College of Computer Engineering
+    back_campus = request.args.get('campus', 'ucm')
+    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Engineering").all()
+    return render_template('colleges/cce.html', back_campus=back_campus, title="College of Computer Engineering", teachers=teachers)
+
+@app.route('/ccs')
+def ccs():
+    back_campus = request.args.get('campus', 'ucm')
+    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Studies").all()
+    return render_template('colleges/ccs.html', back_campus=back_campus, title="College of Computer Studies", teachers=teachers)
+
+@app.route('/c_crim')
+def c_crim():
+    back_campus = request.args.get('campus', 'ucm')
+    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Criminology").all()
+    return render_template('colleges/c_crim.html', back_campus=back_campus, title="College of Criminology", teachers=teachers)
+
+@app.route('/c_edu')
+def c_edu():
+    back_campus = request.args.get('campus', 'ucm')
+    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Education").all()
+    return render_template('colleges/c_edu.html', back_campus=back_campus, title="College of Education", teachers=teachers)
+
+@app.route('/c_engr')
+def c_engr():
+    back_campus = request.args.get('campus', 'ucm')
+    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Engineering").all()
+    return render_template('colleges/c_engr.html', back_campus=back_campus, title="College of Engineering", teachers=teachers)
+
+@app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
+def delete_teacher(teacher_id):
+    # Ensure the user is logged in and is an admin.
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    current_user = User.query.get(session['user_id'])
+    if current_user.userType != 'admin':
+        flash("Unauthorized action.", "danger")
+        return redirect(request.referrer or url_for('dashboard'))
+    
+    # Find the teacher and delete if found
+    teacher = User.query.get(teacher_id)
+    if teacher and teacher.userType == 'Teacher':
+        db.session.delete(teacher)
+        db.session.commit()
+        flash("Teacher account deleted successfully.", "success")
+    else:
+        flash("Teacher account not found.", "danger")
+    
+    return redirect(request.referrer or url_for('dashboard'))
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
