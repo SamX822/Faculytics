@@ -1,4 +1,7 @@
 from . import db
+from sqlalchemy.dialects.postgresql import JSON
+from datetime import datetime
+import pytz
 
 class User(db.Model):
     __tablename__ = 'Users'
