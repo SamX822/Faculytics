@@ -1,154 +1,298 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Faculytics Dashboard</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Faculytics</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent"
-                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </nav>
+<div class="w-full bg-gray-100 rounded-[20px] flex flex-col p-4">
+    <div class="w-[70%] self-center bg-white p-7 shadow-lg rounded-lg">
 
-    <div class="container mt-4">
-        <!-- File Upload Form -->
-        <div class="card mb-4">
-            <div class="card-header">Upload CSV File</div>
-            <div class="card-body">
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <input type="file" name="csv_file" id="csv_file" accept=".csv" class="form-control-file">
+        <!-- 📂 Drag & Drop Upload Section -->
+        <div class="flex flex-row mb-6">
+
+            <form id="uploadForm" class="space-y-4">
+                <!-- Drag and Drop Area -->
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Upload Files</h2>
+                <div id="drop-area" class="block w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:bg-gray-100">
+                    <div class="flex flex-col items-center">
+                        <!-- Drag and Drop Icon -->
+                        <svg class="w-12 h-12 text-[var(--neon-color)] mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l4-4m0 0l4 4m-4-4v12M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                        </svg>
+                        <p class="text-gray-600 text-lg">Drag files to upload</p>
+                        <p class="text-gray-500 text-sm mt-1">or</p>
+                        <!-- Browse Files Button -->
+                        <label for="csv_file" class="mt-1 mb-1 cursor-pointer border border-[var(--neon-color)] text-[var(--neon-color)] p-1 text-xs font-bold rounded-lg hover:bg-[var(--neon-color)] hover:text-white transition">
+                            Browse Files
+                        </label>
+                        <p class="mt-1 text-xs text-gray-700">Max file size: <span class="text-black font-bold">50MB</span></p>
+                        <p class="text-xs text-gray-700">Supported file type: <span class="text-black font-bold">CSV</span></p>
                     </div>
-                    <button type="submit" class="btn btn-primary">Process File</button>
-                </form>
+                </div>
+
+                <!-- Hidden File Input -->
+                <input type="file" name="csv_file" id="csv_file" accept=".csv" class="hidden">
+
+                <!-- Process Button -->
+                <button id="processBtn" type="submit" class="hidden absolute bottom-[200px] right-[35rem] w-[235px] mt-4 bg-[var(--primary-color)] text-sm text-white px-6 py-1 rounded-lg transition-all hover:bg-[var(--neon-color)] hover:text-black hover:font-bold">
+                    Process File
+                </button>
+            </form>
+
+            <!-- 🟦 Status Section -->
+            <div class="mt-[75px] ml-6 flex flex-col w-60">
+
+                <!-- Filename & Size -->
+                <div class="flex flex-col">
+                    <div class="flex flex-row items-center text-xs text-gray-700 font-bold justify-between">
+                        <!-- ✅ Check Icon (Blue) -->
+                        <svg id="check-icon" class="w-4 h-4 text-blue-600 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span id="file-name">No file selected</span>
+                        <span id="file-size">0 KB</span>
+                    </div>
+                    <div id="file-info" class="w-full bg-[var(--primary-color)] rounded-lg h-2 mb-3 hidden"></div>
+                </div>
             </div>
         </div>
+    </div>
+    <!-- 📊 Results Section -->
+    <div id="resultTabs" class="w-[80%] mt-4 self-center bg-white p-7 shadow-lg rounded-lg">
+        <div class="flex border-b mb-4">
+            <button class="tab-link active-tab" id="sentiments-tab" data-target="sentiments">📈 Sentiments</button>
+            <button class="tab-link" id="topics-tab" data-target="topics">📝 Topics</button>
+            <button class="tab-link" id="recommendation-tab" data-target="recommendation">💡 Recommendations</button>
+        </div>
 
-        <!-- Sub Menu Tabs -->
-        <ul class="nav nav-tabs" id="resultTabs" role="tablist" style="display:none;">
-            <li class="nav-item">
-                <a class="nav-link active" id="sentiments-tab" data-toggle="tab" href="#sentiments" role="tab">Sentiments</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="topics-tab" data-toggle="tab" href="#topics" role="tab">Topics</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="recommendation-tab" data-toggle="tab" href="#recommendation" role="tab">Recommendation</a>
-            </li>
-        </ul>
-
-        <div class="tab-content mt-3" id="resultContent">
-            <!-- Sentiments Tab -->
-            <div class="tab-pane fade show active" id="sentiments" role="tabpanel">
+        <div class="tab-content" id="results">
+            <!-- 🔵 Sentiments Tab -->
+            <div class="tab-pane active-pane" id="sentiments">
                 <canvas id="sentimentChart"></canvas>
+                <!-- 🗨️ Comments Section -->
+                <div id="commentsSection" class="p-2 bg-[var(--primary-color)] rounded-lg">
+                    <h3 class="font-light text-white">Comments <span class="font-bold text-gray">(Number of Comments)</span></h3>
+                    <ul id="commentsList" class="mt-2">
+                        <!-- Comments will be dynamically added here -->
+                    </ul>
+                </div>
             </div>
-            <!-- Topics Tab -->
-            <div class="tab-pane fade" id="topics" role="tabpanel">
-                <div id="wordCloudContainer"></div>
+
+            <!-- 🟡 Topics Tab -->
+            <div class="tab-pane hidden" id="topics">
+                <div id="wordCloudContainer" class="grid grid-cols-2 gap-4"></div>
             </div>
-            <!-- Recommendation Tab -->
-            <div class="tab-pane fade" id="recommendation" role="tabpanel">
-                <div id="recommendationText"></div>
+
+            <!-- 🟢 Recommendations Tab -->
+            <div class="tab-pane hidden" id="recommendation">
+                <p id="recommendationText" class="text-gray-700 bg-gray-100 p-4 rounded-lg shadow-sm"></p>
             </div>
         </div>
     </div>
 
-    <!-- jQuery, Popper.js, and Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- Chart.js for sentiment graph -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom JavaScript for handling upload and displaying results -->
-    <script>document.getElementById('uploadForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData();
-            const fileField = document.getElementById('csv_file');
-            if (fileField.files.length === 0) {
-                alert("Please select a CSV file.");
-                return;
-            }
-            formData.append('csv_file', fileField.files[0]);
+</div>
 
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
-                    // Show the tabs now that results are available
-                    document.getElementById('resultTabs').style.display = "block";
+<!-- Chart.js for Sentiment Graph -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-                    // Display the sentiment analysis results
-                    renderSentimentChart(data.sentiment);
-                    // Display topics in word cloud format (implement renderWordCloud)
-                    renderWordCloud(data.topics);
-                    // Display recommendation text
-                    document.getElementById('recommendationText').innerHTML = "<p>" + data.recommendation + "</p>";
-                })
-                .catch(error => console.error('Error:', error));
-        });
+<script>
+    const dropArea = document.getElementById('drop-area');
 
-        function renderSentimentChart(sentiment) {
-            const ctx = document.getElementById('sentimentChart').getContext('2d');
-            // Create a horizontal bar chart
-            new Chart(ctx, {
-                type: 'horizontalBar',
-                data: {
-                    labels: ['Sentiments'],
-                    datasets: [{
-                        label: 'Positive',
-                        data: [sentiment.positive],
-                        backgroundColor: 'green'
-                    },
-                    {
-                        label: 'Negative',
-                        data: [sentiment.negative],
-                        backgroundColor: 'red'
-                    }]
-                },
-                options: {
-                    scales: {
-                        xAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
-                        }]
-                    },
-                    legend: { position: 'bottom' },
-                    title: {
-                        display: true,
-                        text: 'Sentiment Analysis'
-                    }
-                }
-            });
+    const fileInput = document.getElementById('csv_file');
+    const fileInfo = document.getElementById('file-info');
+    const fileNameSpan = document.getElementById('file-name');
+    const fileSizeSpan = document.getElementById('file-size');
+    const progressBar = document.getElementById('progress-bar');
+    const progressContainer = document.getElementById('progress-container');
+
+    const checkIcon = document.getElementById('check-icon');
+
+    function updateFileStatus(file) {
+        if (!file) return;
+
+        // Show file info
+        fileNameSpan.textContent = file.name;
+        fileSizeSpan.textContent = (file.size / 1024).toFixed(2) + ' KB';
+
+        checkIcon.classList.remove('hidden'); // Show check icon
+        fileInfo.classList.remove('hidden'); // Show blue bar
+
+        processBtn.disabled = false;
+        processBtn.classList.remove('hidden'); 
+    }
+    // Drag & Drop Events
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('bg-gray-200');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('bg-gray-200');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('bg-gray-200');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileStatus(files[0]);
+        }
+    });
+
+    // Browse File Selection
+    fileInput.addEventListener('change', (e) => {
+        updateFileStatus(e.target.files[0]);
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileField = document.getElementById('csv_file');
+
+        if (fileField.files.length === 0) {
+            alert("Please select a CSV file.");
+            return;
         }
 
-        function renderWordCloud(topics) {
-            // Placeholder: You can integrate a word cloud library such as d3-cloud or any other.
-            // For demonstration, we will simply list the topics with their strength.
-            const container = document.getElementById('wordCloudContainer');
-            container.innerHTML = "";
-            topics.forEach(topic => {
-                const topicDiv = document.createElement('div');
-                topicDiv.style.border = "1px solid #ccc";
-                topicDiv.style.margin = "5px";
-                topicDiv.style.padding = "5px";
-                topicDiv.style.backgroundColor = topic.color;
-                topicDiv.innerHTML = `<strong>Topic ${topic.Topic}:</strong> ${topic.Name} <br> Strength: ${topic.strength}`;
-                container.appendChild(topicDiv);
-            });
-        }</script>
-</body>
-</html>
+        formData.append('csv_file', fileField.files[0]);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }       
+            checkIcon.classList.add('hidden'); // Show check icon
+            fileInfo.classList.add('hidden'); // Show blue bar
+            fileNameSpan.textContent = "No file selected";
+
+            processBtn.classList.add('hidden'); 
+
+            commentsList.innerHTML = ''; // Clear previous comments
+
+             const sentimentCounts = {
+                positive: data.sentiment.filter(s => s === "Positive").length,
+                negative: data.sentiment.filter(s => s === "Negative").length
+             };
+
+            document.getElementById('resultTabs').classList.remove("hidden");
+
+            renderSentimentChart(sentimentCounts);
+            renderComments(data.comments, data.sentiment);
+            //renderWordCloud(data.topics);
+            document.getElementById('recommendationText').innerHTML = data.recommendation;
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    let sentimentChart = null;
+
+    function renderSentimentChart(sentiment) {
+        const ctx = document.getElementById('sentimentChart').getContext('2d');
+
+        if (sentimentChart) {
+            sentimentChart.destroy();
+        }
+
+        sentimentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Positive', 'Negative'],
+                datasets: [{
+                    label: 'Sentiment Analysis',
+                    data: [sentiment.positive, sentiment.negative],
+                    backgroundColor: ['#10B981', '#EF4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Sentiment Analysis' }
+                }
+            }
+        });
+    }
+
+    function renderComments(comments, sentiment) {
+        const commentsList = document.getElementById('commentsList');
+        const commentsCount = document.querySelector("#commentsSection h3 span"); // Select the span for count
+
+        commentsList.innerHTML = ''; // Clear previous comments
+
+        // Update the number of comments dynamically
+        commentsCount.textContent = `(${comments.length})`;
+
+        for (let i = 0; i < comments.length; i++) {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = comments[i].replace(/<br\s*\/?>/g, "<br>") + 
+                ` <span class="font-semibold">(${sentiment[i]})</span>`;
+
+            // Tailwind styling
+            listItem.classList.add(
+                "p-2", "rounded-lg", "mb-2", "shadow-sm", "border", "text-sm", "leading-relaxed"
+            );
+
+            if (sentiment[i] === 'Positive') {
+                listItem.classList.add("text-green-600", "border-green-400", "bg-green-50");
+            } else if (sentiment[i] === 'Negative') {
+                listItem.classList.add("text-red-600", "border-red-400", "bg-red-50");
+            } else {
+                listItem.classList.add("text-gray-600", "border-gray-300", "bg-gray-50");
+            }
+
+            commentsList.appendChild(listItem);
+        }
+    }
+
+
+
+
+
+    function renderWordCloud(topics) {
+        const container = document.getElementById('wordCloudContainer');
+        container.innerHTML = "";
+        topics.forEach(topic => {
+            const topicDiv = document.createElement('div');
+            topicDiv.className = "p-3 border rounded-lg shadow bg-gray-200";
+            topicDiv.innerHTML = `<strong>${topic.Name}:</strong> Strength: ${topic.strength}`;
+            container.appendChild(topicDiv);
+        });
+    }
+
+    document.querySelectorAll('.tab-link').forEach(button => {
+        button.addEventListener('click', function () {
+            document.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active-tab'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+
+            this.classList.add('active-tab');
+            document.getElementById(this.dataset.target).classList.remove('hidden');
+        });
+    });
+</script>
+
+<style>
+    .tab-link {
+        padding: 10px 15px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: #F3F4F6;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+    }
+
+        .tab-link:hover {
+            background: #E5E7EB;
+        }
+
+    .active-tab {
+        background: white;
+        border-bottom: 2px solid #2563EB;
+        color: #2563EB;
+    }
+
+    .tab-pane {
+        padding: 10px;
+    }
+</style>
