@@ -12,7 +12,10 @@ from bertopic import BERTopic
 from sklearn.ensemble import RandomForestClassifier
 
 # Load ML models (you could alternatively move this code into a separate ml.py module)
-sentiment_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
+# MarkyBoyax Sentiment Analysis Model
+from Faculytics.src.SentimentAnalysis_functions import SentimentAnalyzer
+sentiment_analyzer = SentimentAnalyzer()
+# sentiment_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 topic_model = BERTopic()
 rf_model = RandomForestClassifier()
 
@@ -208,29 +211,37 @@ def delete_teacher(teacher_id):
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'csv_file' not in request.files:
-        return jsonify({"error": "No file part"})
+        return jsonify({"error": "No file part"}), 400
+    
     file = request.files['csv_file']
     if file.filename == '':
-        return jsonify({"error": "No selected file"})
-    # Save file metadata to PostgreSQL
-    upload_record = CSVUpload(filename=file.filename)
-    db.session.add(upload_record)
-    db.session.commit()
+        return jsonify({"error": "No selected file"}), 400
+
     try:
         df = pd.read_csv(file)
     except Exception as e:
-        return jsonify({"error": f"Error reading CSV: {str(e)}"})
-    required_cols = {'comment', 'polarity', 'label'}
-    if not required_cols.issubset(set(df.columns)):
-        return jsonify({"error": "CSV file missing required columns."})
+        return jsonify({"error": f"Error reading CSV: {str(e)}"}), 400
+
+    if 'comment' not in df.columns:
+        return jsonify({"error": "CSV file missing required 'comment' column."}), 400
+
+    # Convert comments to JSON format
+    comments_list = df['comment'].tolist()
+    print(comments_list)
+
     # --- Sentiment Analysis ---
-    sentiments = [sentiment_analyzer(comment)[0] for comment in df['comment']]
-    pos_count = sum(1 for s in sentiments if s['label'] == 'POSITIVE')
-    neg_count = sum(1 for s in sentiments if s['label'] == 'NEGATIVE')
-    sentiment_result = {"positive": pos_count, "negative": neg_count}
-    # --- Topic Modeling ---
-    topics, probs = topic_model.fit_transform(df['comment'].tolist())
+    sentiment_result = sentiment_analyzer.predict(comments_list)
+
+    # Count positive and negative sentiments
+    neg_count = sentiment_result["predictions"].count("Negative")
+    pos_count = sentiment_result["predictions"].count("Positive")
+
+    """ TODO Guba pa ang topic modelling
+   --- Topic Modeling ---
+    topics, probs = topic_model.fit_transform(comments_list)
     topic_info = topic_model.get_topic_info().to_dict(orient="records")
+
+    # Add strength and color attributes
     for topic in topic_info:
         frequency = topic.get("Count", 1)
         if frequency > 10:
@@ -242,14 +253,35 @@ def upload_file():
         else:
             topic['strength'] = "Weak"
             topic['color'] = "#FFFF00"
+    """
+    # Generate recommendation
     recommendation_text = (
         "There are more negative comments. Consider scheduling professional development seminars."
         if neg_count > pos_count else
         "Feedback is generally positive, but keep monitoring for potential issues."
     )
+
+    # Store data in the database
+    try:
+        upload_record = CSVUpload(
+            filename=file.filename,
+            comments=json.dumps(comments_list),  # Store original comments
+            sentiment=json.dumps(sentiment_result["predictions"]),  # Store sentiment results
+            #topics=json.dumps(topic_info),  # Store topic modeling results
+            recommendation=recommendation_text  # Store recommendation
+        )
+        db.session.add(upload_record)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+    # Return response
     results = {
-        "sentiment": sentiment_result,
-        "topics": topic_info,
+        "sentiment": sentiment_result["predictions"],
+        "comments": comments_list,
+        #"topics": topic_info,
         "recommendation": recommendation_text
     }
-    return jsonify(results)
+    
+    return jsonify(results), 200
