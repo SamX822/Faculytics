@@ -17,6 +17,7 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.uName}>'
 
+PH_TZ = pytz.timezone('Asia/Manila')
 class CSVUpload(db.Model):
     __tablename__ = 'Uploads'
     
