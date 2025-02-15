@@ -7,10 +7,8 @@
     {% include "sidebar.html" %}
 
     <!-- Main Content -->
+    {% if user.userType == "admin" %}
     <main class="ml-[260px] p-6 mt-[60px] text-gray-300">
-        <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
-
-        {% if user.userType == "admin" %}
         <div class="grid grid-cols-2 gap-6 mt-6">
             {% for campus in [
             {"acronym": "UC Main", "name": "University of Cebu - Main", "url": "ucm"},
@@ -25,9 +23,13 @@
             </a>
             {% endfor %}
         </div>
-        {% else %}
-            {% include "upload.html" %}
-        {% endif %}
     </main>
+    {% else %}
+    <main class="w-full ml-[260px] p-4 mt-1 transition-all duration-300 text-gray-300">
+        <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
+        <p class="mt-2 text-gray-400">This page is currently under construction.</p>
+        {% include "upload.html" %}
+    </main>
+    {% endif %}
 </div>
 {% endblock %}
