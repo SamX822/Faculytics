@@ -15,9 +15,15 @@ class User(db.Model):
         return f'<User {self.uName}>'
 
 class CSVUpload(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    __tablename__ = 'Uploads'
+    
+    upload_id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(150), nullable=False)
-    upload_date = db.Column(db.DateTime, server_default=db.func.now())
+    comments = db.Column(db.JSON, nullable=False)  # Stores original comments
+    sentiment = db.Column(db.JSON, nullable=False)  # Stores sentiment results
+    topics = db.Column(db.JSON, nullable=False)  # Stores topic modeling results
+    recommendation = db.Column(db.String, nullable=False)  # Stores recommendation
+    upload_date = db.Column(db.DateTime, default=lambda: datetime.now(PH_TZ))
 
     def __repr__(self):
         return f'<CSVUpload {self.filename}>'
