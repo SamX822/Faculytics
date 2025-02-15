@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from Faculytics import app, db
 from Faculytics.models import User, CSVUpload
 import pandas as pd
+import json
 
 # ML libraries
 from transformers import pipeline
