@@ -28,7 +28,9 @@
     <main class="w-full ml-[260px] p-4 mt-1 transition-all duration-300 text-gray-300">
         <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
         <p class="mt-2 text-gray-400">This page is currently under construction.</p>
-        {% include "upload.html" %}
+        {% if user.userType != "teacher" %}
+            {% include "upload.html" %}
+        {% endif %}
     </main>
     {% endif %}
 </div>
