@@ -203,9 +203,9 @@ def delete_teacher(teacher_id):
     if teacher and teacher.userType == 'Teacher':
         db.session.delete(teacher)
         db.session.commit()
-        flash("Teacher account deleted successfully.", "success")
+        flash("Account deleted successfully.", "success")
     else:
-        flash("Teacher account not found.", "danger")
+        flash("Account not found.", "danger")
     
     return redirect(request.referrer or url_for('dashboard'))
 

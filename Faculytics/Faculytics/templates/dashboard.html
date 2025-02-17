@@ -27,11 +27,32 @@
     {% else %}
     <main class="w-full ml-[260px] p-4 mt-1 transition-all duration-300 text-gray-300">
         <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
-        <p class="mt-2 text-gray-400">This page is currently under construction.</p>
-        {% if user.userType != "teacher" %}
+
+        {% if user.userType != "Teacher" %}
+        <!-- Toggle Button for Upload Section -->
+        <button id="toggleUploadButton" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+            Upload
+        </button>
+        <!-- Hidden upload section -->
+        <div id="uploadContainer" class="hidden mt-4">
             {% include "upload.html" %}
+        </div>
         {% endif %}
     </main>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var toggleButton = document.getElementById("toggleUploadButton");
+    var uploadContainer = document.getElementById("uploadContainer");
+    if (toggleButton && uploadContainer) {
+        toggleButton.addEventListener("click", function() {
+            uploadContainer.classList.toggle("hidden");
+        });
+    }
+});
+</script>
 {% endblock %}

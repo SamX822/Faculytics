@@ -6,16 +6,16 @@ import os
 login(token="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")
 # Will delete if proven unnecessary
 current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "..", "ml_models", "distilbert-sentiment-analysis", "checkpoint-4452")
+#model_path = os.path.join(current_dir, "..", "ml_models", "distilbert-sentiment-analysis", "checkpoint-4452")
 #"C:/Users/Bentot/source/repos/KrammyBoy/Faculytics/Faculytics/Faculytics/ml_models/DistilBERT-Sentiment-Analysis/checkpoint-4452"
 
 # Using Huggingface model from me
 model_id = "Markus112/distilbert-sentiment-analysis"
 class SentimentAnalyzer:
-    def __init__(self, model_path = model_path):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_id, use_auth_token=True)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_Token=True)
+    #def __init__(self, model_path = model_path):
+        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.model = AutoModelForSequenceClassification.from_pretrained(model_id, use_auth_token=True)
+        #self.tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_Token=True)
 
     def predict(self, texts):
         inputs = self.tokenizer(texts, return_tensors="pt", truncation=True, padding=True)
