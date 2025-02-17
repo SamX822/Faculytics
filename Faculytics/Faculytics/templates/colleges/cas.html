@@ -11,7 +11,9 @@
         <h2 class="text-3xl font-bold text-white mb-4">College of Arts and Sciences</h2>
 
         <!-- Back to Campus button -->
-        <a href="{{ url_for('ucm') }}" class="mb-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+        <!-- Retrieve the campus code from the query parameter, defaulting to "ucm" if not provided #} -->
+        {% set campus_code = request.args.get('campus', 'ucm') %}
+        <a href="{{ url_for(campus_code) }}" class="mb-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
             Back to Campus
         </a>
 
@@ -20,7 +22,7 @@
             {% for teacher in teachers %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600
                 {% if user.userType == 'admin' %} cursor-pointer {% endif %}"
-                 {% if user.userType =='admin' %}
+                 {% if user.userType= ='admin' %}
                  onclick="confirmDeleteTeacher({{ teacher.id }})"
                  {% endif %}>
                 <!-- Circular Profile Picture Placeholder -->
