@@ -20,7 +20,7 @@
             {% for teacher in teachers %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600
                 {% if user.userType == 'admin' %} cursor-pointer {% endif %}"
-                 {% if user.userType= ='admin' %}
+                 {% if user.userType =='admin' %}
                  onclick="confirmDeleteTeacher({{ teacher.id }})"
                  {% endif %}>
                 <!-- Circular Profile Picture Placeholder -->
