@@ -151,41 +151,75 @@ def ucpt():
 
 @app.route('/cas')
 def cas():
-    # Query for teachers whose userType is 'Teacher' and who belong to College of Arts and Sciences
     back_campus = request.args.get('campus', 'ucm')
-    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Arts and Sciences").all()
-    return render_template('colleges/cas.html', back_campus=back_campus, title="College of Arts and Sciences", teachers=teachers)
+    user = User.query.get(session['user_id'])  # Get current user
+
+    if user and user.userType == 'admin':  
+        users = User.query.filter(User.college == "College of Arts and Sciences").all()
+    else:
+        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Arts and Sciences").all()
+
+    return render_template('colleges/cas.html', back_campus=back_campus, title="College of Arts and Sciences", users=users)
 
 @app.route('/cce')
 def cce():
-    # Query for teachers whose userType is 'Teacher' and who belong to College of Computer Engineering
     back_campus = request.args.get('campus', 'ucm')
-    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Engineering").all()
-    return render_template('colleges/cce.html', back_campus=back_campus, title="College of Computer Engineering", teachers=teachers)
+    user = User.query.get(session['user_id'])  # Get current user
+
+    if user and user.userType == 'admin':  
+        users = User.query.filter(User.college == "College of Computer Engineering").all()
+    else:
+        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Engineering").all()
+
+    return render_template('colleges/cce.html', back_campus=back_campus, title="College of Computer Engineering", users=users)
 
 @app.route('/ccs')
 def ccs():
     back_campus = request.args.get('campus', 'ucm')
-    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Studies").all()
-    return render_template('colleges/ccs.html', back_campus=back_campus, title="College of Computer Studies", teachers=teachers)
+    user = User.query.get(session['user_id'])  # Get current user
+
+    if user and user.userType == 'admin':  
+        users = User.query.filter(User.college == "College of Computer Studies").all()
+    else:
+        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Studies").all()
+
+    return render_template('colleges/ccs.html', back_campus=back_campus, title="College of Computer Studies", users=users)
 
 @app.route('/c_crim')
 def c_crim():
     back_campus = request.args.get('campus', 'ucm')
-    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Criminology").all()
-    return render_template('colleges/c_crim.html', back_campus=back_campus, title="College of Criminology", teachers=teachers)
+    user = User.query.get(session['user_id'])  # Get current user
+
+    if user and user.userType == 'admin':  
+        users = User.query.filter(User.college == "College of Criminology").all()
+    else:
+        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Criminology").all()
+
+    return render_template('colleges/c_crim.html', back_campus=back_campus, title="College of Criminology", users=users)
 
 @app.route('/c_edu')
 def c_edu():
     back_campus = request.args.get('campus', 'ucm')
-    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Education").all()
-    return render_template('colleges/c_edu.html', back_campus=back_campus, title="College of Education", teachers=teachers)
+    user = User.query.get(session['user_id'])  # Get current user
+
+    if user and user.userType == 'admin':  
+        users = User.query.filter(User.college == "College of Education").all()
+    else:
+        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Education").all()
+
+    return render_template('colleges/c_edu.html', back_campus=back_campus, title="College of Education", users=users)
 
 @app.route('/c_engr')
 def c_engr():
     back_campus = request.args.get('campus', 'ucm')
-    teachers = User.query.filter(User.userType == 'Teacher', User.college == "College of Engineering").all()
-    return render_template('colleges/c_engr.html', back_campus=back_campus, title="College of Engineering", teachers=teachers)
+    user = User.query.get(session['user_id'])  # Get current user
+
+    if user and user.userType == 'admin':  
+        users = User.query.filter(User.college == "College of Engineering").all()
+    else:
+        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Engineering").all()
+
+    return render_template('colleges/c_engr.html', back_campus=back_campus, title="College of Engineering", users=users)
 
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 def delete_teacher(teacher_id):
@@ -198,9 +232,9 @@ def delete_teacher(teacher_id):
         flash("Unauthorized action.", "danger")
         return redirect(request.referrer or url_for('dashboard'))
     
-    # Find the teacher and delete if found
+    # Find the account and delete if found
     teacher = User.query.get(teacher_id)
-    if teacher and teacher.userType == 'Teacher':
+    if teacher and teacher.userType != 'admin':
         db.session.delete(teacher)
         db.session.commit()
         flash("Account deleted successfully.", "success")
