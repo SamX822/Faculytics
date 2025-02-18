@@ -14,6 +14,9 @@ class User(db.Model):
     lastName = db.Column(db.String(50), nullable=False)
     campus = db.Column(db.String(50), nullable=False)
     college = db.Column(db.String(50))  # Optional for non-Dean/Teacher
+    profilePicture = db.Column(db.String(255), nullable=True, default='../static/assets/default-avatar.png')
+    emailAddress = db.Column(db.String(100), nullable=True)
+    phoneNumber = db.Column(db.String(20), nullable=True)    
 
     def __repr__(self):
         return f'<User {self.uName}>'
