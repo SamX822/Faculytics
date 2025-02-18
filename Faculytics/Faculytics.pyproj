@@ -41,6 +41,7 @@
     <Folder Include="Faculytics\" />
     <Folder Include="Faculytics\static\" />
     <Folder Include="Faculytics\static\content\" />
+    <Folder Include="Faculytics\static\uploads\" />
     <Folder Include="Faculytics\static\fonts\" />
     <Folder Include="Faculytics\static\scripts\" />
     <Folder Include="Faculytics\static\scripts\template" />
