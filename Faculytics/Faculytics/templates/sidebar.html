@@ -2,7 +2,7 @@
 <aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-gradient-to-b from-gray-800 to-gray-900 text-white shadow-xl overflow-y-auto transition-all duration-300 border-r border-gray-700">
     <!-- Profile Section -->
     <div class="text-center py-6">
-        <div class="w-20 h-20 rounded-full bg-gray-500 mx-auto shadow-md"></div>
+        <img src="{{ url_for('static', filename=user.profilePicture) if user.profilePicture else url_for('static', filename='assets/default-avatar.png') }}" alt="Profile Picture" class="h-24 w-24 rounded-full rounded-full mx-auto shadow-md border-2 border-yellow-400 mb-2">
 
         <a href="{{ url_for('my_account') }}"
            class="font-bold mt-2 text-gray-200 hover:text-yellow-400 hover:font-extrabold transition">
