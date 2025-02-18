@@ -2,23 +2,21 @@
 from datetime import datetime
 from flask import render_template, redirect, url_for, request, jsonify, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from Faculytics import app, db
 from Faculytics.models import User, CSVUpload
 import pandas as pd
 import json
+import os
 
 # ML libraries
 from transformers import pipeline
 from bertopic import BERTopic
 from sklearn.ensemble import RandomForestClassifier
 
-# Load ML models (you could alternatively move this code into a separate ml.py module)
 # MarkyBoyax Sentiment Analysis Model
 from Faculytics.src.SentimentAnalysis_functions import SentimentAnalyzer
 sentiment_analyzer = SentimentAnalyzer()
-# sentiment_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
-topic_model = BERTopic()
-rf_model = RandomForestClassifier()
 
 @app.route('/')
 def index():
@@ -89,6 +87,11 @@ def dashboard():
     user = User.query.get(session['user_id'])
     return render_template('dashboard.html', user=user, title="Dashboard", year=datetime.now().year)
 
+IMG_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in IMG_ALLOWED_EXTENSIONS
+
 @app.route('/my_account', methods=['GET', 'POST'])
 def my_account():
     if 'user_id' not in session:
@@ -99,15 +102,29 @@ def my_account():
     if request.method == 'POST':
         first_name = request.form.get('firstName')
         last_name = request.form.get('lastName')
+        email_address = request.form.get('emailAddress')
+        phone_number = request.form.get('phoneNumber')
+        profile_picture = request.files.get('profileImage')        
 
         if first_name and last_name:
             user.firstName = first_name
             user.lastName = last_name
-            db.session.commit()
-            flash("Account updated successfully!", "success")
-        else:
-            flash("First name and last name cannot be empty.", "danger")
-
+            user.emailAddress = email_address
+            user.phoneNumber = phone_number
+        
+        if profile_picture and allowed_file(profile_picture.filename):
+            # Delete the old profile picture if it exists
+            old_picture_path = f'Faculytics/static/{user.profilePicture}'
+            if user.profilePicture and os.path.exists(old_picture_path):
+                os.remove(old_picture_path)
+            filename, file_extension = os.path.splitext(secure_filename(profile_picture.filename))
+            filename = f"U_{user.id}_ProfilePicture{file_extension}"
+            file_path = f'Faculytics/static/uploads/{filename}'
+            profile_picture.save(file_path)
+            user.profilePicture = f'uploads/{filename}'
+        
+        db.session.commit()
+        flash("Account updated successfully!", "success")
         return redirect(url_for('my_account'))
 
     return render_template('my_account.html', user=user, title="My Account", year=datetime.now().year)
