@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /Faculytics/env
+/Faculytics/Faculytics/static/uploads/U_3_ProfilePicture.png
+/Faculytics/Faculytics/static/uploads/U_4_ProfilePicture.png
