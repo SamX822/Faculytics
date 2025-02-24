@@ -49,7 +49,6 @@
     <Folder Include="Faculytics\templates\" />
     <Folder Include="Faculytics\templates\colleges\" />
     <Folder Include="Faculytics\src\" />
-    <Folder Include="Faculytics\templates\courses\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Faculytics\templates\colleges\c_engr.html" />
@@ -58,7 +57,6 @@
     <Content Include="Faculytics\templates\colleges\ccs.html" />
     <Content Include="Faculytics\templates\colleges\cce.html" />
     <Content Include="Faculytics\templates\colleges\cas.html" />
-    <Content Include="Faculytics\templates\courses\course.html" />
     <Content Include="Faculytics\templates\uclm.html" />
     <Content Include="Faculytics\templates\ucb.html" />
     <Content Include="Faculytics\templates\ucpt.html" />

@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, request, jsonify, session,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
-from Faculytics.models import User, CSVUpload
+from Faculytics.models import User, CSVUpload, Course
 import pandas as pd
 import json
 import os
@@ -83,9 +83,12 @@ def check_username():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+
+    # Fetch courses so they are available in the form inside dashboard.html
+    courses = Course.query.all()
     
     user = User.query.get(session['user_id'])
-    return render_template('dashboard.html', user=user, title="Dashboard", year=datetime.now().year)
+    return render_template('dashboard.html', user=user, title="Dashboard", year=datetime.now().year, courses=courses)
 
 IMG_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -98,6 +101,9 @@ def my_account():
         return redirect(url_for('login'))
     
     user = User.query.get(session['user_id'])
+
+    # Get all courses with no teacher assigned
+    available_courses = Course.query.filter(Course.course_teacher == None).all()
 
     if request.method == 'POST':
         first_name = request.form.get('firstName')
@@ -127,7 +133,7 @@ def my_account():
         flash("Account updated successfully!", "success")
         return redirect(url_for('my_account'))
 
-    return render_template('my_account.html', user=user, title="My Account", year=datetime.now().year)
+    return render_template('my_account.html', user=user, title="My Account", year=datetime.now().year, available_courses=available_courses)
 
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
@@ -168,75 +174,133 @@ def ucpt():
 
 @app.route('/cas')
 def cas():
-    back_campus = request.args.get('campus', 'ucm')
-    user = User.query.get(session['user_id'])  # Get current user
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    if user and user.userType == 'admin':  
-        users = User.query.filter(User.college == "College of Arts and Sciences").all()
+    user = User.query.get(session['user_id'])
+
+    back_campus = request.args.get('campus', user.campus)
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+
+    if user.userType in ['admin']:
+        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == user.campus).all()
+    elif user.userType in ['Dean']:
+        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == user.campus, User.userType == "Teacher").all()
     else:
-        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Arts and Sciences").all()
+        return redirect(url_for('dashboard'))
 
-    return render_template('colleges/cas.html', back_campus=back_campus, title="College of Arts and Sciences", users=users)
+    return render_template('colleges/cas.html', back_campus=back_campus, title="College of Arts and Sciences", users=users, courses=courses)
 
 @app.route('/cce')
 def cce():
-    back_campus = request.args.get('campus', 'ucm')
-    user = User.query.get(session['user_id'])  # Get current user
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    if user and user.userType == 'admin':  
-        users = User.query.filter(User.college == "College of Computer Engineering").all()
+    user = User.query.get(session['user_id'])
+
+    back_campus = request.args.get('campus', user.campus)
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+
+    if user.userType in ['admin']:
+        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == user.campus).all()
+    elif user.userType in ['Dean']:
+        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == user.campus, User.userType == "Teacher").all()
     else:
-        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Engineering").all()
+        return redirect(url_for('dashboard'))
 
-    return render_template('colleges/cce.html', back_campus=back_campus, title="College of Computer Engineering", users=users)
+    return render_template('colleges/cce.html', back_campus=back_campus, title="College of Computer Engineering", users=users, courses=courses)
 
 @app.route('/ccs')
 def ccs():
-    back_campus = request.args.get('campus', 'ucm')
-    user = User.query.get(session['user_id'])  # Get current user
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    if user and user.userType == 'admin':  
-        users = User.query.filter(User.college == "College of Computer Studies").all()
+    user = User.query.get(session['user_id'])  # Get logged-in user
+
+    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # If the request is AJAX, return courses as JSON
+        return jsonify([course.as_dict() for course in courses])
+
+    if user.userType in ['admin', 'Dean']:
+        users = User.query.filter(User.college == "College of Computer Studies", User.campus == user.campus).all()
+    elif user.userType in ['Dean']:
+        users = User.query.filter(User.college == "College of Computer Studies", User.campus == user.campus, User.userType == "Teacher").all()
     else:
-        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Computer Studies").all()
+        return redirect(url_for('dashboard'))
 
-    return render_template('colleges/ccs.html', back_campus=back_campus, title="College of Computer Studies", users=users)
+    return render_template('colleges/ccs.html', back_campus=back_campus, title="College of Computer Studies", users=users, courses=courses)
 
 @app.route('/c_crim')
 def c_crim():
-    back_campus = request.args.get('campus', 'ucm')
-    user = User.query.get(session['user_id'])  # Get current user
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    if user and user.userType == 'admin':  
-        users = User.query.filter(User.college == "College of Criminology").all()
+    user = User.query.get(session['user_id'])  # Get logged-in user
+
+    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+
+    if user.userType in ['admin', 'Dean']:
+        users = User.query.filter(User.college == "College of Criminology", User.campus == user.campus).all()
+    elif user.userType in ['Dean']:
+        users = User.query.filter(User.college == "College of Criminology", User.campus == user.campus, User.userType == "Teacher").all()
     else:
-        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Criminology").all()
+        return redirect(url_for('dashboard'))
 
-    return render_template('colleges/c_crim.html', back_campus=back_campus, title="College of Criminology", users=users)
+    return render_template('colleges/c_crim.html', back_campus=back_campus, title="College of Criminology", users=users, courses=courses)
 
 @app.route('/c_edu')
 def c_edu():
-    back_campus = request.args.get('campus', 'ucm')
-    user = User.query.get(session['user_id'])  # Get current user
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    if user and user.userType == 'admin':  
-        users = User.query.filter(User.college == "College of Education").all()
+    user = User.query.get(session['user_id'])  # Get logged-in user
+
+    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+
+    if user.userType in ['admin']:
+        users = User.query.filter(User.college == "College of Education", User.campus == user.campus).all()
+    elif user.userType in ['Dean']:
+        users = User.query.filter(User.college == "College of Education", User.campus == user.campus, User.userType == "Teacher").all()
     else:
-        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Education").all()
+        return redirect(url_for('dashboard'))
 
-    return render_template('colleges/c_edu.html', back_campus=back_campus, title="College of Education", users=users)
+    return render_template('colleges/c_edu.html', back_campus=back_campus, title="College of Education", users=users, courses=courses)
 
 @app.route('/c_engr')
 def c_engr():
-    back_campus = request.args.get('campus', 'ucm')
-    user = User.query.get(session['user_id'])  # Get current user
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    if user and user.userType == 'admin':  
-        users = User.query.filter(User.college == "College of Engineering").all()
+    user = User.query.get(session['user_id'])  # Get logged-in user
+
+    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+
+    if user.userType in ['admin', 'Dean']:
+        users = User.query.filter(User.college == "College of Engineering", User.campus == user.campus).all()
+    elif user.userType in ['Dean']:
+        users = User.query.filter(User.college == "College of Engineering", User.campus == user.campus, User.userType == "Teacher").all()
     else:
-        users = User.query.filter(User.userType == 'Teacher', User.college == "College of Engineering").all()
+        return redirect(url_for('dashboard'))
 
-    return render_template('colleges/c_engr.html', back_campus=back_campus, title="College of Engineering", users=users)
+    return render_template('colleges/c_engr.html', back_campus=back_campus, title="College of Engineering", users=users, courses=courses)
 
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 def delete_teacher(teacher_id):
@@ -260,80 +324,180 @@ def delete_teacher(teacher_id):
     
     return redirect(request.referrer or url_for('dashboard'))
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'csv_file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
+@app.route('/get_teacher/<string:teacher_uName>')
+def get_teacher(teacher_uName):
+    # Query for teacher using their unique uName
+    teacher = User.query.filter_by(uName=teacher_uName, userType="Teacher").first()
     
-    file = request.files['csv_file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    if not teacher:
+        return jsonify({"error": "Teacher not found"}), 404
 
-    try:
-        df = pd.read_csv(file)
-    except Exception as e:
-        return jsonify({"error": f"Error reading CSV: {str(e)}"}), 400
+    # Get assigned courses for this teacher
+    courses = Course.query.filter_by(course_teacher=teacher.uName).all()
+    course_list = [f"{c.course_code} - {c.course_abbrev} ({c.course_sched})" for c in courses]
 
-    if 'comment' not in df.columns:
-        return jsonify({"error": "CSV file missing required 'comment' column."}), 400
-
-    # Convert comments to JSON format
-    comments_list = df['comment'].tolist()
-    print(comments_list)
-
-    # --- Sentiment Analysis ---
-    sentiment_result = sentiment_analyzer.predict(comments_list)
-
-    # Count positive and negative sentiments
-    neg_count = sentiment_result["predictions"].count("Negative")
-    pos_count = sentiment_result["predictions"].count("Positive")
-
-    """ TODO Guba pa ang topic modelling
-   --- Topic Modeling ---
-    topics, probs = topic_model.fit_transform(comments_list)
-    topic_info = topic_model.get_topic_info().to_dict(orient="records")
-
-    # Add strength and color attributes
-    for topic in topic_info:
-        frequency = topic.get("Count", 1)
-        if frequency > 10:
-            topic['strength'] = "Very Strong"
-            topic['color'] = "#FF0000"
-        elif frequency > 5:
-            topic['strength'] = "Strong"
-            topic['color'] = "#FF6600"
-        else:
-            topic['strength'] = "Weak"
-            topic['color'] = "#FFFF00"
-    """
-    # Generate recommendation
-    recommendation_text = (
-        "There are more negative comments. Consider scheduling professional development seminars."
-        if neg_count > pos_count else
-        "Feedback is generally positive, but keep monitoring for potential issues."
-    )
-
-    # Store data in the database
-    try:
-        upload_record = CSVUpload(
-            filename=file.filename,
-            comments=json.dumps(comments_list),  # Store original comments
-            sentiment=json.dumps(sentiment_result["predictions"]),  # Store sentiment results
-            #topics=json.dumps(topic_info),  # Store topic modeling results
-            recommendation=recommendation_text  # Store recommendation
-        )
-        db.session.add(upload_record)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
-
-    # Return response
-    results = {
-        "sentiment": sentiment_result["predictions"],
-        "comments": comments_list,
-        #"topics": topic_info,
-        "recommendation": recommendation_text
+    teacher_data = {
+        "firstName": teacher.firstName,
+        "lastName": teacher.lastName,
+        "emailAddress": teacher.emailAddress,
+        "phoneNumber": teacher.phoneNumber,
+        "profilePicture": url_for('static', filename=teacher.profilePicture) if teacher.profilePicture else None,
+        "courses": course_list
     }
     
-    return jsonify(results), 200
+    return jsonify(teacher_data)
+
+@app.route('/get_all_courses', methods=['GET'])
+def get_all_courses():
+    courses = Course.query.all()  # Fetch all courses from DB
+    courses_list = []
+    
+    for course in courses:
+        courses_list.append({
+            'course_code': course.course_code,
+            'course_abbrev': course.course_abbrev,
+            'course_sched': course.course_sched
+        })
+    
+    return jsonify(courses_list)
+
+@app.route('/assign_course', methods=['POST'])
+def assign_course():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    user = User.query.get(session['user_id'])
+    if user.userType != "Dean":
+        return jsonify({"error": "Only Deans can assign courses"}), 403
+
+    course_code = request.json.get('course_code')  
+    teacher_uName = request.json.get('teacher_uName')  # Use uName instead of id
+
+    if not course_code or not teacher_uName:
+        return jsonify({"error": "Invalid course or teacher username"}), 400
+
+    course = Course.query.filter_by(course_code=course_code).first()
+    teacher = User.query.filter_by(uName=teacher_uName, userType="Teacher").first()
+
+    if course and teacher and course.course_teacher is None:
+        course.course_teacher = teacher.uName  # Assign teacher using uName
+        db.session.commit()
+
+        # Fetch updated assigned courses
+        assigned_courses = [c.course_code for c in Course.query.filter_by(course_teacher=teacher.uName).all()]
+
+        return jsonify({
+            "message": "Course assigned successfully!",
+            "assignedCourses": assigned_courses
+        })
+
+    return jsonify({"error": "Invalid course or already assigned"}), 400
+
+@app.route('/remove_course/<string:course_code>', methods=['POST'])
+def remove_course(course_code):
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    user = User.query.get(session['user_id'])
+    if user.userType != "Dean":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    course = Course.query.filter_by(course_code=course_code).first()  # Query by course_code
+
+    if course and course.course_teacher is not None:
+        course.course_teacher = None  # Remove teacher assignment
+        db.session.commit()
+        return jsonify({"message": "Course removed successfully!"}), 200
+
+    return jsonify({"error": "Invalid course removal"}), 400
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+
+    courses = Course.query.all()  # Fetch all courses from DB
+
+    if request.method == 'POST':
+        if 'csv_file' not in request.files:
+            return jsonify({"error": "No file part"}), 400
+    
+        file = request.files['csv_file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        try:
+            df = pd.read_csv(file)
+        except Exception as e:
+            return jsonify({"error": f"Error reading CSV: {str(e)}"}), 400
+
+        if 'comment' not in df.columns:
+            return jsonify({"error": "CSV file missing required 'comment' column."}), 400
+
+        # Get selected course_code from form
+        course_code = request.form.get('course')
+
+        # Convert comments to JSON format
+        comments_list = df['comment'].tolist()
+        print(comments_list)
+
+        # --- Sentiment Analysis ---
+        sentiment_result = sentiment_analyzer.predict(comments_list)
+
+        # Count positive and negative sentiments
+        neg_count = sentiment_result["predictions"].count("Negative")
+        pos_count = sentiment_result["predictions"].count("Positive")
+
+        """ TODO Guba pa ang topic modelling
+       --- Topic Modeling ---
+        topics, probs = topic_model.fit_transform(comments_list)
+        topic_info = topic_model.get_topic_info().to_dict(orient="records")
+
+        # Add strength and color attributes
+        for topic in topic_info:
+            frequency = topic.get("Count", 1)
+            if frequency > 10:
+                topic['strength'] = "Very Strong"
+                topic['color'] = "#FF0000"
+            elif frequency > 5:
+                topic['strength'] = "Strong"
+                topic['color'] = "#FF6600"
+            else:
+                topic['strength'] = "Weak"
+                topic['color'] = "#FFFF00"
+        """
+        # Generate recommendation
+        recommendation_text = (
+            "There are more negative comments. Consider scheduling professional development seminars."
+            if neg_count > pos_count else
+            "Feedback is generally positive, but keep monitoring for potential issues."
+        )
+
+        # Store data in the database
+        try:
+            upload_record = CSVUpload(
+                filename=file.filename,
+                comments=json.dumps(comments_list),  # Store original comments
+                sentiment=json.dumps(sentiment_result["predictions"]),  # Store sentiment results
+                #topics=json.dumps(topic_info),  # Store topic modeling results
+                recommendation=recommendation_text,  # Store recommendation
+                upload_course=course_code  # Store selected course
+            )
+            db.session.add(upload_record)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+        #Send success response after transaction completes
+        jsonify({"success": True, "message": "File processed successfully!", "course": course_code}), 200
+
+        # Return response
+        results = {
+            "sentiment": sentiment_result["predictions"],
+            "comments": comments_list,
+            #"topics": topic_info,
+            "recommendation": recommendation_text
+        }
+    
+        return jsonify(results), 200
+
+    return render_template('upload.html', courses=courses)
