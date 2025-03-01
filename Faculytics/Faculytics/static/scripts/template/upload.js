@@ -267,6 +267,7 @@ function toggleGridView() {
 }
 
 function saveResultsToDatabase() {
+    let course = document.getElementById('courseSelect').value;
     fetch('/upload', { method: 'GET' })
         .then(response => {
             if (!response.ok) {
@@ -286,7 +287,7 @@ function saveResultsToDatabase() {
                     comments: data.comments,
                     sentiment: data.sentiment,
                     recommendation: data.recommendation,
-                    course: data.course
+                    course: course
                 })
             });
         })
