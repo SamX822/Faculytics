@@ -95,6 +95,7 @@
     <Content Include="Faculytics\templates\about.html" />
     <Content Include="Faculytics\templates\contact.html" />
     <Content Include="Faculytics\templates\upload.html" />
+    <Content Include="Faculytics\templates\uploadHistory.html" />
     <Content Include="Faculytics\templates\layout.html" />
   </ItemGroup>
   <ItemGroup>
