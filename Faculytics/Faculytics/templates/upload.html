@@ -1,25 +1,12 @@
-<div class="w-full bg-gray-100 rounded-[20px] flex flex-col p-4">
-    <div class="w-[80%] self-center bg-white p-7 shadow-lg rounded-lg">
+<div class="w-[100%] bg-gray-100 rounded-[20px] flex flex-col p-4">
+    <div class="w-[100%] self-center bg-white p-7 shadow-lg rounded-lg">
 
         <!-- 📂 Drag & Drop Upload Section -->
-        <div class="flex flex-row mb-6 h-[50vh]">
+        <div class="flex flex-row mb-6 h-[75vh] w-[100%]">
 
             <!-- Upload Form -->
             <form id="uploadForm" method="POST" enctype="multipart/form-data" class="flex flex-col w-[55%]">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Process Files</h2>
-
-                <!-- Course Selection Dropdown -->
-                <select id="courseSelect" name="course" class="border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700">
-                    {% if courses %}
-                    {% for course in courses %}
-                    <option value="{{ course.course_code }}">
-                        {{ course.course_code }} - {{ course.course_abbrev }} ({{ course.course_sched }})
-                    </option>
-                    {% endfor %}
-                    {% else %}
-                    <option disabled>No courses available</option>
-                    {% endif %}
-                </select>
 
                 <!-- Drag and Drop Area -->
                 <div id="drop-area" class="block w-full h-[80%] border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 hover:bg-gray-100 flex flex-col justify-center items-center">
@@ -66,37 +53,103 @@
     </div>
 
     <!-- 📊 Results Section -->
-    <div id="resultTabs" class="hidden w-[80%] mt-4 self-center bg-white p-7 shadow-lg rounded-lg">
-        <div class="flex border-b mb-4">
+    <div id="resultTabs" class="hidden w-[100%] mt-4 self-center bg-white p-7 shadow-lg rounded-lg">
+        <h2 class="text-center text-[var(--primary-color)] font-bold">RESULTS</h2>
+        <div class="flex border-b mb-4 mt-2">
             <button class="tab-link active-tab" id="sentiments-tab" data-target="sentiments">📈 Sentiments</button>
             <button class="tab-link" id="topics-tab" data-target="topics">📝 Topics</button>
             <button class="tab-link" id="recommendation-tab" data-target="recommendation">💡 Recommendations</button>
         </div>
 
         <!-- Scrollable Container -->
-        <div class="tab-content max-h-[50vh] overflow-y-auto p-2 border rounded-lg">
+        <div class="tab-content max-h-[150vh] overflow-y-auto p-2 border rounded-lg">
             <!-- 🔵 Sentiments Tab -->
             <div class="tab-pane active-pane" id="sentiments">
+                <!-- Sentiment Chart -->
                 <canvas id="sentimentChart"></canvas>
-                <!-- 🗨️ Comments Section -->
-                <div id="commentsSection" class="p-2 bg-[var(--primary-color)] rounded-lg">
-                    <h3 class="font-light text-white">Comments <span class="font-bold text-gray">(Number of Comments)</span></h3>
-                    <ul id="commentsList" class="mt-2 space-y-2">
+                    <!-- 🗨️ Comments Section -->
+                <div id="commentsSection" class="p-4 bg-gray-800 w-full rounded-lg shadow-lg">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                        <h3 class="font-light text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400 mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.48 1.5 1.405 1.5 2.489 0 1.083-.616 2.009-1.5 2.488m-4.5 0A2.25 2.25 0 0113.5 13.5h-3a2.25 2.25 0 01-2.25-2.25m10.5 0A2.25 2.25 0 0013.5 9H7.5a2.25 2.25 0 00-2.25 2.25m10.5 0v.75m-10.5-.75v.75m4.5 0V18m4.5 0v-.75m0 0a2.25 2.25 0 01-2.25-2.25m2.25 2.25a2.25 2.25 0 002.25-2.25m-4.5 0v-.75m4.5-2.25v-.75" />
+                            </svg>
+                            Comments
+                            <span class="font-bold text-gray-300 ml-1" id="commentCount">(0)</span>
+                        </h3>
+                        <button id="toggleComments" type="button" onclick="viewComments()" class="hover:text-yellow-500 transition flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m6 0a3 3 0 000-6H9a3 3 0 000 6m6 0a3 3 0 000 6H9a3 3 0 000-6" />
+                            </svg>
+                            View comments
+                        </button>
+                    </div>
+
+                    <!-- Filter & Sort Options -->
+                    <div id="uploadFilterSort" class="hidden flex gap-4 mt-3">
+                        <button id="sortSentiment" type="button" onclick="toggleSortSentiment()" class="text-gray-400 hover:text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5l4.5 4.5 4.5-4.5M3 7.5l4.5-4.5 4.5 4.5M13.5 16.5l4.5 4.5 4.5-4.5M13.5 7.5l4.5-4.5 4.5 4.5" />
+                            </svg>
+                            Sort by Sentiment
+                        </button>
+                        <button id="toggleGridView" type="button" onclick="toggleGridView()" class="text-gray-400 hover:text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5h16.5M3.75 9h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+                            </svg>
+                            Grid View
+                        </button>
+                    </div>
+
+                    <!-- Comments List (Initially Hidden) -->
+                    <div id="commentsList" class="mt-4 space-y-2 max-h-0 opacity-0 overflow-hidden transition-all duration-300">
                         <!-- Comments will be dynamically added here -->
-                    </ul>
+                    </div>
+                    <!--Save Information To Database-->
+                    <!--Add new information if you want!!!!!!!!!!!-->
+                    <div class="flex flex-col">
+                        <!-- Course Selection Dropdown -->
+                        <div class="flex flex-row items-center">
+                            <p>Course </p>
+                            <select id="courseSelect" name="course" class="ml-4 border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700">
+                                {% if courses %}
+                                {% for course in courses %}
+                                <option value="{{ course.course_code }}">
+                                    {{ course.course_code }} - {{ course.course_abbrev }} ({{ course.course_sched }})
+                                </option>
+                                {% endfor %}
+                                {% else %}
+                                <option disabled>No courses available</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Save Button (Centered) -->
+                    <div class="flex justify-center mt-4">
+                        <button type="button" onclick="saveResultsToDatabase()"
+                                class="flex flex-row items-center w-1/2 p-3 bg-gray-700 rounded-lg text-white text-center hover:bg-gray-600 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 9V5.25A2.25 2.25 0 017.5 3h9a2.25 2.25 0 012.25 2.25V9m-13.5 0v9.75A2.25 2.25 0 007.5 21h9a2.25 2.25 0 002.25-2.25V9m-13.5 0h13.5" />
+                            </svg>
+                            <span>Save Data</span>
+                        </button>
+                    </div>
+                </div>
+                </div>
+
+
+
+                <!-- 🟡 Topics Tab -->
+                <div class="tab-pane hidden" id="topics">
+                    <div id="wordCloudContainer" class="grid grid-cols-2 gap-4"></div>
+                </div>
+
+                <!-- 🟢 Recommendations Tab -->
+                <div class="tab-pane hidden" id="recommendation">
+                    <p id="recommendationText" class="text-gray-700 bg-gray-100 p-4 rounded-lg shadow-sm"></p>
                 </div>
             </div>
-
-            <!-- 🟡 Topics Tab -->
-            <div class="tab-pane hidden" id="topics">
-                <div id="wordCloudContainer" class="grid grid-cols-2 gap-4"></div>
-            </div>
-
-            <!-- 🟢 Recommendations Tab -->
-            <div class="tab-pane hidden" id="recommendation">
-                <p id="recommendationText" class="text-gray-700 bg-gray-100 p-4 rounded-lg shadow-sm"></p>
-            </div>
-        </div>
     </div>
 
 </div>
@@ -130,4 +183,14 @@
     .tab-pane {
         padding: 10px;
     }
+
+    #commentsList {
+        transition: opacity 0.3s ease-in-out;
+        opacity: 0;
+    }
+
+    #commentsList.opacity-100 {
+        opacity: 1;
+    }
+
 </style>

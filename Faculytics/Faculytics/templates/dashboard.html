@@ -5,10 +5,9 @@
 <div class="flex">
     <!-- Sidebar -->
     {% include "sidebar.html" %}
-
     <!-- Main Content -->
     {% if user.userType == "admin" %}
-    <main class="ml-[260px] p-6 mt-[60px] text-gray-300">
+    <main class="ml-[14rem] p-6 text-gray-300 w-[100%]">
         <div class="grid grid-cols-2 gap-6 mt-6">
             {% for campus in [
             {"acronym": "UC Main", "name": "University of Cebu - Main", "url": "ucm"},
@@ -26,16 +25,12 @@
     </main>
 
     {% elif user.userType == "Dean" %}
-    <main class="ml-[260px] p-6 mt-[60px] text-gray-300">
+    <main class="w-[100%] ml-[14rem] p-6 text-gray-300">
 
         <!-- Toggle Button for Upload Section -->
-        <button id="toggleUploadButton" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+        <a href="{{ url_for('uploadHistory') }}" class="bg-blue-800 text-white py-2 px-4 rounded-lg hover:bg-[var(--primary-color)] transition">
             Upload
-        </button>
-        <!-- Hidden upload section -->
-        <div id="uploadContainer" class="hidden mt-4">
-            {% include "upload.html" %}
-        </div>
+        </a>
 
         <div class="grid grid-cols-2 gap-6 mt-6">
             {% for campus in [
@@ -70,33 +65,4 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var toggleButton = document.getElementById("toggleUploadButton");
-        var uploadContainer = document.getElementById("uploadContainer");
-        if (toggleButton && uploadContainer) {
-            toggleButton.addEventListener("click", function() {
-                uploadContainer.classList.toggle("hidden");
-            });
-        }
-    });
-
-    document.getElementById("uploadForm").addEventListener("submit", function (event) {
-        event.preventDefault(); // Prevent normal form submission
-
-        let formData = new FormData(this);
-        let selectedCourse = document.getElementById("courseSelect").value;
-
-        formData.append("course", selectedCourse);
-
-        fetch("/upload", {
-            method: "POST",
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => console.log("Server Response:", data))
-            .catch(error => console.error("Upload Error:", error));
-    });
-
-</script>
 {% endblock %}
