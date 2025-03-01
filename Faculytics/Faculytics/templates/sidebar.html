@@ -53,12 +53,17 @@
         </a>
 
         {% if user.userType != 'admin' %}
-        <a href="#"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-blue-400">
+        <a href="{{ url_for('uploadHistory') }}"
+            class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300
+                      {% if request.path == url_for('uploadHistory') %}
+                          bg-gray-700 border-blue-400 shadow-md
+                      {% else %}
+                          border-transparent hover:bg-gray-800 hover:border-blue-400
+                      {% endif %}">
             <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            <span>Evaluation History</span>
+            <span>Upload and History</span>
         </a>
 
         <a href="#"
