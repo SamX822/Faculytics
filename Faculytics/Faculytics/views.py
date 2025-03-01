@@ -90,6 +90,15 @@ def dashboard():
     user = User.query.get(session['user_id'])
     return render_template('dashboard.html', user=user, title="Dashboard", year=datetime.now().year, courses=courses)
 
+@app.route('/uploadHistory')
+def uploadHistory():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    courses = Course.query.all()
+    
+    user = User.query.get(session['user_id'])
+    return render_template('uploadHistory.html', user=user, title="Upload", year=datetime.now().year, courses=courses)
+
 IMG_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
@@ -411,6 +420,9 @@ def remove_course(course_code):
 
     return jsonify({"error": "Invalid course removal"}), 400
 
+"""
+Function for upload
+"""
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 
@@ -423,7 +435,6 @@ def upload_file():
         file = request.files['csv_file']
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
-
         try:
             df = pd.read_csv(file)
         except Exception as e:
@@ -437,7 +448,6 @@ def upload_file():
 
         # Convert comments to JSON format
         comments_list = df['comment'].tolist()
-        print(comments_list)
 
         # --- Sentiment Analysis ---
         sentiment_result = sentiment_analyzer.predict(comments_list)
@@ -446,58 +456,69 @@ def upload_file():
         neg_count = sentiment_result["predictions"].count("Negative")
         pos_count = sentiment_result["predictions"].count("Positive")
 
-        """ TODO Guba pa ang topic modelling
-       --- Topic Modeling ---
-        topics, probs = topic_model.fit_transform(comments_list)
-        topic_info = topic_model.get_topic_info().to_dict(orient="records")
-
-        # Add strength and color attributes
-        for topic in topic_info:
-            frequency = topic.get("Count", 1)
-            if frequency > 10:
-                topic['strength'] = "Very Strong"
-                topic['color'] = "#FF0000"
-            elif frequency > 5:
-                topic['strength'] = "Strong"
-                topic['color'] = "#FF6600"
-            else:
-                topic['strength'] = "Weak"
-                topic['color'] = "#FFFF00"
-        """
         # Generate recommendation
         recommendation_text = (
             "There are more negative comments. Consider scheduling professional development seminars."
             if neg_count > pos_count else
             "Feedback is generally positive, but keep monitoring for potential issues."
         )
-
-        # Store data in the database
-        try:
-            upload_record = CSVUpload(
-                filename=file.filename,
-                comments=json.dumps(comments_list),  # Store original comments
-                sentiment=json.dumps(sentiment_result["predictions"]),  # Store sentiment results
-                #topics=json.dumps(topic_info),  # Store topic modeling results
-                recommendation=recommendation_text,  # Store recommendation
-                upload_course=course_code  # Store selected course
-            )
-            db.session.add(upload_record)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": f"Database error: {str(e)}"}), 500
-
         #Send success response after transaction completes
         jsonify({"success": True, "message": "File processed successfully!", "course": course_code}), 200
 
         # Return response
-        results = {
+        session["upload_results"] = {
+            "filename": file.filename,
             "sentiment": sentiment_result["predictions"],
             "comments": comments_list,
             #"topics": topic_info,
-            "recommendation": recommendation_text
+            "recommendation": recommendation_text,
+            "course": course_code
         }
-    
+        results = {
+            "filename": file.filename,
+            "sentiment": sentiment_result["predictions"],
+            "comments": comments_list,
+            #"topics": topic_info,
+            "recommendation": recommendation_text,
+            "course": course_code
+        }
+        return jsonify(results), 200
+    elif request.method == 'GET':
+        results = session.get('upload_results', {});
         return jsonify(results), 200
 
     return render_template('upload.html', courses=courses)
+
+@app.route('/saveToDatabase', methods=['POST'])
+def saveToDatabase():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data received"}), 400
+        
+        comments_list = data.get("comments")
+        sentiment_result = data.get("sentiment")
+        recommendation_text = data.get("recommendation")
+        course_code = data.get("course")
+        filename = data.get("filename")
+
+        if not comments_list or not sentiment_result or not recommendation_text or not course_code:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Save to database
+        upload_record = CSVUpload(
+            filename=filename,  
+            comments=json.dumps(comments_list),  
+            sentiment=json.dumps(sentiment_result),  
+            recommendation=recommendation_text,  
+            upload_course=course_code  
+        )
+
+        db.session.add(upload_record)
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Data saved successfully!"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
