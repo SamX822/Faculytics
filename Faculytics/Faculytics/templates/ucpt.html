@@ -20,6 +20,15 @@
         <!-- Inner scrollable pane for colleges -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-md h-[600px] overflow-y-auto">
             <div class="grid grid-cols-2 gap-6 justify-items-center">
+
+                {% if user.userType == 'Dean' %}
+                {# If the user is a Dean, display only their assigned college #}
+                <a href="{{ url_for('ccs', campus=campus_code) }}" class="block bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600">
+                    <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
+                    <p class="text-white text-lg font-bold text-center">College of Computer Studies</p>
+                </a>
+                {% elif user.userType == 'admin' or user.userType == 'Campus Director' or  user.userType == 'Vice Chancellor' %}
+                {# Display all colleges for Campus Directors and Vice Chancellors #}
                 {% for college in [
                 {"name": "College of Arts and Sciences", "url": "cas"},
                 {"name": "College of Computer Engineering", "url": "cce"},
@@ -33,6 +42,8 @@
                     <p class="text-white text-lg font-bold text-center">{{ college.name }}</p>
                 </a>
                 {% endfor %}
+                {% endif %}
+
             </div>
         </div>
     </main>

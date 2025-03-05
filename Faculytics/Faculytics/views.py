@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, request, jsonify, session,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
-from Faculytics.models import User, CSVUpload
+from Faculytics.models import User, CSVUpload, College
 import pandas as pd
 import json
 import os
@@ -184,9 +184,9 @@ def cas():
     back_campus = request.args.get('campus', user.campus)
 
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == user.campus.upper()).all()
+        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == back_campus.upper()).all()
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == user.campus.upper(), User.userType == "Teacher").all()
+        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == back_campus.upper(), User.userType == "Teacher").all()
     else:
         return redirect(url_for('dashboard'))
 
@@ -202,9 +202,9 @@ def cce():
     back_campus = request.args.get('campus', user.campus)
 
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == user.campus.upper()).all()
+        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == back_campus.upper()).all()
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == user.campus.upper(), User.userType == "Teacher").all()
+        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == back_campus.upper(), User.userType == "Teacher").all()
     else:
         return redirect(url_for('dashboard'))
 
@@ -240,9 +240,9 @@ def c_crim():
     back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
 
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Criminology", User.campus == user.campus.upper()).all()
+        users = User.query.filter(User.college == "College of Criminology", User.campus == back_campus.upper()).all()
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Criminology", User.campus == user.campus.upper(), User.userType == "Teacher").all()
+        users = User.query.filter(User.college == "College of Criminology", User.campus == back_campus.upper(), User.userType == "Teacher").all()
     else:
         return redirect(url_for('dashboard'))
 
@@ -258,9 +258,9 @@ def c_edu():
     back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
 
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Education", User.campus == user.campus.upper()).all()
+        users = User.query.filter(User.college == "College of Education", User.campus == back_campus.upper()).all()
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Education", User.campus == user.campus.upper(), User.userType == "Teacher").all()
+        users = User.query.filter(User.college == "College of Education", User.campus == back_campus.upper(), User.userType == "Teacher").all()
     else:
         return redirect(url_for('dashboard'))
 
@@ -276,9 +276,9 @@ def c_engr():
     back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
 
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Engineering", User.campus == user.campus.upper()).all()
+        users = User.query.filter(User.college == "College of Engineering", User.campus == back_campus.upper()).all()
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Engineering", User.campus == user.campus.upper(), User.userType == "Teacher").all()
+        users = User.query.filter(User.college == "College of Engineering", User.campus == back_campus.upper(), User.userType == "Teacher").all()
     else:
         return redirect(url_for('dashboard'))
 
@@ -426,3 +426,51 @@ def saveToDatabase():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route('/add_college/<campus>', methods=['POST'])
+def add_college(campus):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
+
+    college_name = request.form.get('college_name')
+    college_acronym = college_name[:4].upper()  # Simple acronym creation based on name (you can improve this logic)
+
+    # Check if the college already exists
+    existing_college = College.query.filter_by(college_name=college_name).first()
+    if existing_college:
+        flash(f'College "{college_name}" already exists.', 'danger')
+        return redirect(url_for('ucm'))
+
+    # Add new college to the Colleges table
+    new_college = College(college_name=college_name, college_acronym=college_acronym)
+    db.session.add(new_college)
+    db.session.commit()
+
+    flash(f'New college "{college_name}" has been added.', 'success')
+    return redirect(url_for('ucm'))
+
+@app.route('/remove_college/<campus>', methods=['POST'])
+def remove_college(campus):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
+
+    college_to_remove = request.form.get('college_to_remove')
+
+    # Query and delete the selected college
+    college = College.query.filter_by(college_name=college_to_remove).first()
+    if college:
+        db.session.delete(college)
+        db.session.commit()
+        flash(f'College "{college_to_remove}" has been removed.', 'success')
+    else:
+        flash(f'College "{college_to_remove}" not found.', 'danger')
+
+    return redirect(url_for('ucm'))

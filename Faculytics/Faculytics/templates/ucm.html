@@ -20,6 +20,15 @@
         <!-- Inner scrollable pane for colleges -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-md h-[600px] overflow-y-auto">
             <div class="grid grid-cols-2 gap-6 justify-items-center">
+
+                {% if user.userType == 'Dean' %}
+                {# If the user is a Dean, display only their assigned college #}
+                <a href="{{ url_for('ccs', campus=campus_code) }}" class="block bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600">
+                    <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
+                    <p class="text-white text-lg font-bold text-center">College of Computer Studies</p>
+                </a>
+                {% elif user.userType == 'admin' or user.userType == 'Campus Director' or  user.userType == 'Vice Chancellor' %}
+                {# Display all colleges for Campus Directors and Vice Chancellors #}
                 {% for college in [
                 {"name": "College of Arts and Sciences", "url": "cas"},
                 {"name": "College of Computer Engineering", "url": "cce"},
@@ -28,12 +37,53 @@
                 {"name": "College of Education", "url": "c_edu"},
                 {"name": "College of Engineering", "url": "c_engr"}
                 ] %}
-                {# Pass the current campus code as a query parameter (campus) #}
                 <a href="{{ url_for(college.url, campus=campus_code) }}" class="block bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600">
                     <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                     <p class="text-white text-lg font-bold text-center">{{ college.name }}</p>
                 </a>
                 {% endfor %}
+
+                <div class="mt-4">
+                    <h3 class="text-lg text-white mb-2">Add a New College</h3>
+                    <form method="POST" action="{{ url_for('add_college', campus=campus_code) }}">
+                        <div class="mb-4">
+                            <label for="college_name" class="text-white">College Name</label>
+                            <input type="text" id="college_name" name="college_name" class="w-full p-2 mt-2 rounded-lg" required>
+                            <label for="college_acronym" class="text-white">College Acronym</label>
+                            <input type="text" id="college_name" name="college_name" class="w-full p-2 mt-2 rounded-lg" required>
+                        </div>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg">
+                            Add College
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-lg text-white mb-2">Remove a College</h3>
+                    <form method="POST" action="{{ url_for('remove_college', campus=campus_code) }}">
+                        <div class="mb-4">
+                            <label for="college_to_remove" class="text-white">Select College to Remove</label>
+                            <select id="college_to_remove" name="college_to_remove" class="w-full p-2 mt-2 rounded-lg" required>
+                                {% for college in [
+                                {"name": "College of Arts and Sciences", "url": "cas"},
+                                {"name": "College of Computer Engineering", "url": "cce"},
+                                {"name": "College of Computer Studies", "url": "ccs"},
+                                {"name": "College of Criminology", "url": "c_crim"},
+                                {"name": "College of Education", "url": "c_edu"},
+                                {"name": "College of Engineering", "url": "c_engr"}
+                                ] %}
+                                <option value="{{ college.url }}">{{ college.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg">
+                            Remove College
+                        </button>
+                    </form>
+                </div>
+
+                {% endif %}
+
             </div>
         </div>
     </main>

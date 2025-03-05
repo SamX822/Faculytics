@@ -36,3 +36,10 @@ class CSVUpload(db.Model):
 
     def __repr__(self):
         return f'<CSVUpload {self.filename}>'
+
+class College(db.Model):
+    __tablename__ = 'Colleges'
+    
+    college_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    college_name = db.Column(db.String(50), unique=True, nullable=False)
+    college_acronym = db.Column(db.String(10), unique=True, nullable=False)
