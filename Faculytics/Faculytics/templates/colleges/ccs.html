@@ -22,7 +22,7 @@
             {% for director in users if director.userType == "Campus Director" %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600
                     {% if user.userType == 'admin' %} cursor-pointer {% endif %}"
-                 {% if user.userType =='admin' %}
+                 {% if user.userType=='admin' %}
                  onclick="confirmDeleteUser({{ director.id }})"
                  {% endif %}>
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
@@ -39,7 +39,7 @@
             {% for chancellor in users if chancellor.userType == "Vice Chancellor" %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600
                     {% if user.userType == 'admin' %} cursor-pointer {% endif %}"
-                 {% if user.userType =='admin' %}
+                 {% if user.userType=='admin' %}
                  onclick="confirmDeleteUser({{ chancellor.id }})"
                  {% endif %}>
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
@@ -56,7 +56,7 @@
             {% for dean in users if dean.userType == "Dean" %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600
                     {% if user.userType == 'admin' %} cursor-pointer {% endif %}"
-                 {% if user.userType =='admin' %}
+                 {% if user.userType=='admin' %}
                  onclick="confirmDeleteUser({{ dean.id }})"
                  {% endif %}>
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
@@ -73,8 +73,8 @@
             {% for teacher in users if teacher.userType == "Teacher" %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600
                     {% if user.userType == 'admin' %} cursor-pointer {% endif %}"
-                 {% if user.userType =='admin' %}
-                 onclick="confirmDeleteUser({{ teacher.uName }})"
+                 {% if user.userType=='admin' %}
+                 onclick="confirmDeleteUser({{ teacher.id }})"
                  {% endif %}>
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
@@ -90,8 +90,7 @@
         <h3 class="text-2xl font-bold text-white mb-4 mt-6">Teachers</h3>
         <div class="grid grid-cols-2 gap-6">
             {% for teacher in users if teacher.userType == "Teacher" %}
-            <div class="teacher-card bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
-                 onclick="viewTeacher('{{ teacher.uName }}')">
+            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
             </div>
@@ -99,6 +98,7 @@
             <p class="text-gray-400 col-span-2">No Teachers found for this college.</p>
             {% endfor %}
         </div>
+
 
         {% else %}
 
@@ -110,224 +110,33 @@
         {% endif %}
     </main>
 </div>
-
-<!-- Teacher Details Modal -->
-<div id="teacherModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-2xl text-white">
-        <h3 class="text-2xl font-bold text-yellow-400 mb-4">Teacher Details</h3>
-        <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white">&times;</button>
-
-        <div class="flex flex-col items-center">
-            <img id="teacherProfile" src="" alt="Profile Picture" class="h-24 w-24 rounded-full shadow-md border-2 border-yellow-400">
-            <p id="teacherName" class="text-lg font-bold mt-2"></p>
-        </div>
-
-        <div class="mt-4">
-            <p><span class="font-bold">Email:</span> <span id="teacherEmail"></span></p>
-            <p><span class="font-bold">Phone:</span> <span id="teacherPhone"></span></p>
-            <p><span class="font-bold">Courses:</span> <span id="teacherCourses"></span></p>
-        </div>
-
-        <!-- Course Assignment Section -->
-        <div class="mt-4">
-            <label for="assignCourse" class="font-bold">Assign Course</label>
-            <select id="assignCourse" class="border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 mt-2">
-                <!-- Courses will be dynamically populated -->
-                <!-- Options will be injected dynamically via JavaScript -->
-            </select>
-            <button onclick="assignCourseToTeacher()" class="bg-blue-600 text-white px-4 py-2 rounded-lg mt-2 hover:bg-blue-700">Assign Course</button>
-        </div>
-
-        <!-- Remove Course Section -->
-        <div class="mt-4">
-            <label for="removeCourse" class="font-bold">Remove Course</label>
-            <select id="removeCourse" class="border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 mt-2">
-                <!-- Courses will be dynamically populated -->
-                <!-- Options will be injected dynamically via JavaScript -->
-            </select>
-            <button onclick="removeCourseFromTeacher()" class="bg-red-600 text-white px-4 py-2 rounded-lg mt-2 hover:bg-red-700">Remove Course</button>
-        </div>
-
-        <div class="flex justify-end mt-4">
-            <button onclick="closeModal()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500">Close</button>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block scripts %}
     {% if user.userType == 'admin' %}
         {% for teacher in users %}
-<script>
-            function confirmDeleteUser(teacherId) {
-                console.log("confirmDeleteUser called with teacherId:", teacherId);
-                if (confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
-                    let deleteUrl = "{{ url_for('delete_teacher', teacher_uName=teacher.uName) }}";
-                    deleteUrl = deleteUrl.replace('teacher_uName_placeholder', teacherId);  // Replace the placeholder with actual teacherId
-                    console.log("Deleting account at:", deleteUrl);
+            <script>
+                function confirmDeleteUser(teacherId) {
+                    console.log("confirmDeleteUser called with teacherId:", teacherId);
+                    if (confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
+                        let deleteUrl = "{{ url_for('delete_teacher', teacher_id=teacher.id) }}";
+                        deleteUrl = deleteUrl.replace('teacher_id_placeholder', teacherId);
+                        console.log("Deleting account at:", deleteUrl);
 
-                    fetch(deleteUrl, { method: 'POST' })
-                        .then(response => {
-                            if (response.redirected) {
-                                window.location.href = response.url;
-                            } else {
-                                location.reload();
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Error deleting account:", error);
-                        });
+                        fetch(deleteUrl, { method: 'POST' })
+                            .then(response => {
+                                if (response.redirected) {
+                                    window.location.href = response.url;
+                                } else {
+                                    location.reload();
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error deleting account:", error);
+                            });
+                    }
                 }
-            }
-</script>
+            </script>
         {% endfor %}
-    {% endif %}
-
-    {% if user.userType == 'Dean' %}
-<script>
-    // Function to handle clicking a teacher card and displaying teacher details in a modal
-    function viewTeacher(teacherUName) {
-        const card = document.querySelector(`.teacher-card[onclick="viewTeacher('${teacherUName}')"]`);
-        card.classList.add("animate-scale-center"); // Add animation for scaling up
-
-        setTimeout(() => {
-            // Remove animation after execution
-            card.classList.remove("animate-scale-center");
-
-            // Fetch teacher data using uName instead of id
-            fetch(`/get_teacher/${teacherUName}`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Received teacher data:", data);
-
-                    // Populate modal with teacher details
-                    document.getElementById("teacherProfile").src = data.profilePicture || "../static/assets/default-avatar.png";
-                    document.getElementById("teacherName").innerText = data.firstName + " " + data.lastName;
-                    document.getElementById("teacherEmail").innerText = data.emailAddress || "No email provided";
-                    document.getElementById("teacherPhone").innerText = data.phoneNumber || "No phone number provided";
-                    document.getElementById("teacherCourses").innerText = data.courses.length > 0 ? data.courses.join(", ") : "No courses assigned";
-
-                    // Populate course dropdowns
-                    populateCourseDropdowns(data.courses, data.uName);
-
-                    // Show the modal
-                    document.getElementById("teacherModal").classList.remove("hidden");
-                })
-                .catch(error => console.error("Error fetching teacher data:", error));
-        }, 300); // Allow animation to finish before fetching data
-    }
-
-    // Function to populate course dropdowns for assign and remove
-    function populateCourseDropdowns(assignedCourses) {
-        const assignCourseSelect = document.getElementById("assignCourse");
-        const removeCourseSelect = document.getElementById("removeCourse");
-
-        // Clear previous options
-        assignCourseSelect.innerHTML = '';
-        removeCourseSelect.innerHTML = '';
-
-        // Get all courses (you might want to pass this data from the server)
-        fetch('/get_all_courses')  // This would return all courses available
-            .then(response => response.json())
-            .then(courses => {
-                // Populate the "Add Course" dropdown with all available courses
-                courses.forEach(course => {
-                    const option = document.createElement("option");
-                    option.value = course.course_code;
-                    option.textContent = `${course.course_code} - ${course.course_abbrev} (${course.course_sched})`;
-
-                    // If the course is already assigned to the teacher, don't show it in "Add" dropdown
-                    if (!assignedCourses.includes(course.course_code)) {
-                        assignCourseSelect.appendChild(option);
-                    }
-
-                    // Populate the "Remove Course" dropdown with the assigned courses
-                    const removeOption = document.createElement("option");
-                    removeOption.value = course.course_code;
-                    removeOption.textContent = `${course.course_code} - ${course.course_abbrev} (${course.course_sched})`;
-
-                    if (assignedCourses.includes(course.course_code)) {
-                        removeCourseSelect.appendChild(removeOption);
-                    }
-                });
-            })
-            .catch(error => console.error("Error fetching courses:", error));
-    }
-
-    // Function to assign course to the teacher
-    function assignCourseToTeacher() {
-        const courseCode = document.getElementById("assignCourse").value;
-        const teacherUName = document.getElementById("teacherName").innerText; // Get from modal
-
-        if (!courseCode) {
-            alert("Please select a course.");
-            return;
-        }
-
-        fetch("{{ url_for('assign_course') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                course_code: courseCode,
-                teacher_uName: teacherUName  // Use uName instead of id
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    if (data.assignedCourses) {
-                        populateCourseDropdowns(data.assignedCourses, teacherUName); // Refresh dropdowns
-                    }
-                } else {
-                    alert(data.error || "Unknown error occurred.");
-                }
-            })
-            .catch(error => console.error("Error:", error));
-    }
-
-    // Function to remove course from teacher
-    function removeCourseFromTeacher() {
-        const courseCode = document.getElementById("removeCourse").value;
-        const teacherId = "{{ user.id }}"; // Teacher's ID
-
-        if (!courseCode) {
-            alert("Please select a course.");
-            return;
-        }
-
-        fetch(`/remove_course/${courseCode}`, {
-            method: "POST"
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                populateCourseDropdowns(data.assignedCourses);  // Refresh dropdowns with updated course assignments
-            })
-            .catch(error => console.error("Error:", error));
-    }
-
-    // Function to close the modal
-    function closeModal() {
-        document.getElementById("teacherModal").classList.add("hidden");
-    }
-</script>
-
-<style>
-    @keyframes scaleUp {
-        0% {
-            transform: scale(1);
-        }
-
-        100% {
-            transform: scale(1.2);
-        }
-    }
-
-    .animate-scale-center {
-        animation: scaleUp 0.3s ease-out forwards;
-    }
-</style>
     {% endif %}
 {% endblock %}

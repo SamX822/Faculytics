@@ -108,23 +108,7 @@
                     </div>
                     <!--Save Information To Database-->
                     <!--Add new information if you want!!!!!!!!!!!-->
-                    <div class="flex flex-col">
-                        <!-- Course Selection Dropdown -->
-                        <div class="flex flex-row items-center">
-                            <p>Course </p>
-                            <select id="courseSelect" name="course" class="ml-4 border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700">
-                                {% if courses %}
-                                {% for course in courses %}
-                                <option value="{{ course.course_code }}">
-                                    {{ course.course_code }} - {{ course.course_abbrev }} ({{ course.course_sched }})
-                                </option>
-                                {% endfor %}
-                                {% else %}
-                                <option disabled>No courses available</option>
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
+                    
                     <!-- Save Button (Centered) -->
                     <div class="flex justify-center mt-4">
                         <button type="button" onclick="saveResultsToDatabase()"
