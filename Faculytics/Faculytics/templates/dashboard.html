@@ -5,84 +5,51 @@
 <div class="flex">
     <!-- Sidebar -->
     {% include "sidebar.html" %}
+
     <!-- Main Content -->
     {% if user.userType == "admin" %}
     <main class="ml-[14rem] p-6 text-gray-300 w-[100%]">
         <div class="grid grid-cols-2 gap-6 mt-6">
-            {% for campus in [
-            {"acronym": "UCM", "name": "University of Cebu - Main", "url": "ucm"},
-            {"acronym": "UCLM", "name": "University of Cebu - Lapu-lapu and Mandaue", "url": "uclm"},
-            {"acronym": "UCB", "name": "University of Cebu - Banilad", "url": "ucb"},
-            {"acronym": "UCPT", "name": "University of Cebu - Pardo and Talisay", "url": "ucpt"}
-            ] %}
-            <a href="{{ url_for(campus.url) }}" class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
+            {% for campus in campuses %}
+            <a href="{{ url_for('campus_page', campus_acronym=campus.campus_acronym|upper) }}"
+               class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
                 <div class="w-16 h-16 bg-white rounded-full mx-auto"></div>
-                <h3 class="text-lg font-bold text-white mt-4">{{ campus.acronym }}</h3>
-                <p class="text-gray-400">{{ campus.name }}</p>
+                <h3 class="text-lg font-bold text-white mt-4">{{ campus.campus_acronym }}</h3>
+                <p class="text-gray-400">{{ campus.campus_name }}</p>
             </a>
+            {% else %}
+            <p class="text-gray-400 text-center">No campuses found.</p>
             {% endfor %}
         </div>
     </main>
 
-    {% elif user.userType == "Dean" %}
+    {% elif user.userType in ["Dean", "Campus Director", "Vice Chancellor"] %}
     <main class="w-[100%] ml-[14rem] p-6 text-gray-300">
-        <!-- Upload Section -->
-        <a href="{{ url_for('uploadHistory') }}" class="bg-blue-800 text-white py-2 px-4 rounded-lg hover:bg-[var(--primary-color)] transition">
-            Upload
-        </a>
-
-        <!-- Show only the assigned campus for the Dean -->
-        {% set assigned_campus = {
-        "UCM": {"acronym": "UCM", "name": "University of Cebu - Main", "url": "ucm"},
-        "UCLM": {"acronym": "UCLM", "name": "University of Cebu - Lapu-lapu and Mandaue", "url": "uclm"},
-        "UCB": {"acronym": "UCB", "name": "University of Cebu - Banilad", "url": "ucb"},
-        "UCPT": {"acronym": "UCPT", "name": "University of Cebu - Pardo and Talisay", "url": "ucpt"}
-        }[user.campus] %}
-
-        <div class="grid grid-cols-1 gap-6 mt-6">
-            <a href="{{ url_for(assigned_campus.url) }}" class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
-                <div class="w-16 h-16 bg-white rounded-full mx-auto"></div>
-                <h3 class="text-lg font-bold text-white mt-4">{{ assigned_campus.acronym }}</h3>
-                <p class="text-gray-400">{{ assigned_campus.name }}</p>
-            </a>
-        </div>
-    </main>
-
-    {% elif user.userType == "Campus Director" or user.userType == "Vice Chancellor" %}
-    <main class="w-full ml-[260px] p-4 mt-1 transition-all duration-300 text-gray-300">
         <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
 
-        <!-- Show only their assigned campus -->
-        {% set assigned_campus = {
-        "UCM": {"acronym": "UCM", "name": "University of Cebu - Main", "url": "ucm"},
-        "UCLM": {"acronym": "UCLM", "name": "University of Cebu - Lapu-lapu and Mandaue", "url": "uclm"},
-        "UCB": {"acronym": "UCB", "name": "University of Cebu - Banilad", "url": "ucb"},
-        "UCPT": {"acronym": "UCPT", "name": "University of Cebu - Pardo and Talisay", "url": "ucpt"}
-        }[user.campus] %}
-
+        {% if assigned_campus %}
         <div class="grid grid-cols-1 gap-6 mt-6">
-            <a href="{{ url_for(assigned_campus.url) }}" class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
+            <a href="{{ url_for('campus_page', campus_acronym=assigned_campus.campus_acronym|upper) }}"
+               class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
                 <div class="w-16 h-16 bg-white rounded-full mx-auto"></div>
-                <h3 class="text-lg font-bold text-white mt-4">{{ assigned_campus.acronym }}</h3>
-                <p class="text-gray-400">{{ assigned_campus.name }}</p>
+                <h3 class="text-lg font-bold text-white mt-4">{{ assigned_campus.campus_acronym }}</h3>
+                <p class="text-gray-400">{{ assigned_campus.campus_name }}</p>
             </a>
         </div>
+        {% else %}
+        <p class="text-gray-400 text-center">No assigned campus found.</p>
+        {% endif %}
     </main>
 
-    {% elif user.userType == "Teacher" %}
-    <main class="w-full ml-[260px] p-4 mt-1 transition-all duration-300 text-gray-300">
+    {% elif user.userType in ["Teacher"] %}
+    <main class="w-[100%] ml-[14rem] p-6 text-gray-300">
         <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
     </main>
 
-    {% else %}
-    {# Redirect Unauthorized Users to Login #}
-    <script>
-    window.location.href = "{{ url_for('login') }}";
-    </script>
-
-    {% endif %}
+        {% else %}
+        <script>
+      window.location.href = "{{ url_for('login') }}";
+        </script>
+        {% endif %}
 </div>
-{% endblock %}
-
-{% block scripts %}
 {% endblock %}

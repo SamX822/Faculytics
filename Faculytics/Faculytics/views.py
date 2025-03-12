@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, request, jsonify, session,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
-from Faculytics.models import User, CSVUpload, College
+from Faculytics.models import User, CSVUpload, College, Campus
 import pandas as pd
 import json
 import os
@@ -52,24 +52,52 @@ def register():
         lastName = request.form.get('lastName')
         uName = request.form.get('uName')
         pWord = request.form.get('pWord')
-        campus = request.form.get('campus')
-        college = request.form.get('college')
+        campus_acronym = request.form.get('campus_acronym')
+        college_name = request.form.get('college_name')
+
+        # Check if the username already exists
         if User.query.filter_by(uName=uName).first():
-            return "Username already exists. Please choose another.", 400
-        hashed_password = generate_password_hash(pWord)
+            flash("Username already exists. Please choose another.", "danger")
+            return redirect(url_for('register'))
+
+        # Verify if the campus exists
+        campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+        if not campus:
+            flash("Invalid campus selected.", "danger")
+            return redirect(url_for('register'))
+
+        # Verify if the college exists (only if userType requires it)
+        college = None
+        if userType in ['Dean', 'Teacher']:
+            college = College.query.filter_by(college_name=college_name).first()
+            if not college:
+                flash("Invalid college selected.", "danger")
+                return redirect(url_for('register'))
+
+        # Hash the password
+        hashed_password = generate_password_hash(pWord, method='pbkdf2:sha256')
+
+        # Create new user
         new_user = User(
             userType=userType,
             firstName=firstName,
             lastName=lastName,
             uName=uName,
             pWord=hashed_password,
-            campus=campus,
-            college=college if userType in ['Dean', 'Teacher'] else None
+            campus_acronym=campus_acronym,
+            college_name=college_name if userType in ['Dean', 'Teacher'] else None
         )
         db.session.add(new_user)
         db.session.commit()
+
+        flash("Registration successful! You can now log in.", "success")
         return redirect(url_for('login'))
-    return render_template('register.html', title="Register", year=datetime.now().year)
+
+    # Fetch available campuses and colleges for the registration form
+    campuses = Campus.query.all()
+    colleges = College.query.all()
+
+    return render_template('register.html', title="Register", year=datetime.now().year, campuses=campuses, colleges=colleges)
 
 #Check username
 @app.route('/check_username', methods=['POST'])
@@ -85,7 +113,16 @@ def dashboard():
         return redirect(url_for('login'))
     
     user = User.query.get(session['user_id'])
-    return render_template('dashboard.html', user=user, title="Dashboard", year=datetime.now().year)
+    
+    # Fetch assigned campus for non-admin users
+    assigned_campus = None
+    if user.userType != "admin" and user.campus_acronym:
+        assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym).first()
+
+    # Admins see all campuses
+    campuses = Campus.query.all() if user.userType == "admin" else [assigned_campus] if assigned_campus else []
+
+    return render_template('dashboard.html', user=user, assigned_campus=assigned_campus, campuses=campuses, title="Dashboard", year=datetime.now().year)
 
 @app.route('/uploadHistory')
 def uploadHistory():
@@ -158,131 +195,72 @@ def contact():
 def about():
     return render_template('about.html', title="About", year=datetime.now().year, message="Your application description page.")
 
-@app.route('/ucm')
-def ucm():
-    return render_template('ucm.html')
-
-@app.route('/uclm')
-def uclm():
-    return render_template('uclm.html')
-
-@app.route('/ucb')
-def ucb():
-    return render_template('ucb.html')
-
-@app.route('/ucpt')
-def ucpt():
-    return render_template('ucpt.html')
-
-@app.route('/cas')
-def cas():
+@app.route('/campus/<string:campus_acronym>')
+def campus_page(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
+    # Convert campus_acronym to uppercase
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper()).first_or_404()
+    
+    # Access the colleges associated with this campus via the many-to-many relationship
+    campus_colleges = campus.colleges
 
+    # Get the logged-in user
     user = User.query.get(session['user_id'])
 
-    back_campus = request.args.get('campus', user.campus)
+    # Determine which colleges should be visible based on userType
+    visible_colleges = []
 
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == back_campus.upper()).all()
+        # Admins can see all colleges
+        visible_colleges = campus_colleges
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Arts and Sciences", User.campus == back_campus.upper(), User.userType == "Teacher").all()
-    else:
-        return redirect(url_for('dashboard'))
+        # Deans can only see their assigned college
+        visible_colleges = [college for college in campus_colleges if college.college_name == user.college_name]
+    elif user.userType in ['Campus Director', 'Vice Chancellor']:
+        # Campus Directors & Vice Chancellors can see all colleges but unclickable
+        visible_colleges = campus_colleges
 
-    return render_template('colleges/cas.html', back_campus=back_campus, title="College of Arts and Sciences", users=users)
+    return render_template(
+        'campus.html', campus=campus, visible_colleges=visible_colleges, user=user, title=campus.campus_name)
 
-@app.route('/cce')
-def cce():
+@app.route('/college/<string:college_acronym>/<string:campus_acronym>')
+def college_page(college_acronym, campus_acronym):  
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
+    # Find the college by its acronym
+    college = College.query.filter_by(college_acronym=college_acronym.upper()).first_or_404()
+
+    # Get the associated campus
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper()).first_or_404()
+
+    if not campus:
+        return "Associated campus not found", 404
+
+    # Get the logged-in user
     user = User.query.get(session['user_id'])
 
-    back_campus = request.args.get('campus', user.campus)
-
+    # User type restrictions and filter users by college and campus
     if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == back_campus.upper()).all()
+        # Admins can see all users for this college and campus
+        users = User.query.filter(
+            User.college.has(college_name=college.college_name),
+            User.campus_acronym == campus.campus_acronym
+        ).all()
     elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Computer Engineering", User.campus == back_campus.upper(), User.userType == "Teacher").all()
+        # Deans can only see Teachers from their assigned college and campus
+        users = User.query.filter(
+            User.college.has(college_name=college.college_name),
+            User.campus_acronym == campus.campus_acronym,
+            User.userType == "Teacher"
+        ).all()
     else:
         return redirect(url_for('dashboard'))
 
-    return render_template('colleges/cce.html', back_campus=back_campus, title="College of Computer Engineering", users=users)
-
-@app.route('/ccs')
-def ccs():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])  # Get logged-in user
-
-    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
-
-    users = [] # Default to empty
-
-    if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Computer Studies", User.campus == back_campus.upper()).all()
-    elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Computer Studies", User.campus == back_campus.upper(), User.userType == "Teacher").all()
-    else:
-        return redirect(url_for('dashboard'))
-
-    return render_template('colleges/ccs.html', back_campus=back_campus, title="College of Computer Studies", users=users)
-
-@app.route('/c_crim')
-def c_crim():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])  # Get logged-in user
-
-    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
-
-    if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Criminology", User.campus == back_campus.upper()).all()
-    elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Criminology", User.campus == back_campus.upper(), User.userType == "Teacher").all()
-    else:
-        return redirect(url_for('dashboard'))
-
-    return render_template('colleges/c_crim.html', back_campus=back_campus, title="College of Criminology", users=users)
-
-@app.route('/c_edu')
-def c_edu():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])  # Get logged-in user
-
-    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
-
-    if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Education", User.campus == back_campus.upper()).all()
-    elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Education", User.campus == back_campus.upper(), User.userType == "Teacher").all()
-    else:
-        return redirect(url_for('dashboard'))
-
-    return render_template('colleges/c_edu.html', back_campus=back_campus, title="College of Education", users=users)
-
-@app.route('/c_engr')
-def c_engr():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])  # Get logged-in user
-
-    back_campus = request.args.get('campus', user.campus)  # Get campus from query params (default to user's campus)
-
-    if user.userType == 'admin':
-        users = User.query.filter(User.college == "College of Engineering", User.campus == back_campus.upper()).all()
-    elif user.userType == 'Dean':
-        users = User.query.filter(User.college == "College of Engineering", User.campus == back_campus.upper(), User.userType == "Teacher").all()
-    else:
-        return redirect(url_for('dashboard'))
-
-    return render_template('colleges/c_engr.html', back_campus=back_campus, title="College of Engineering", users=users)
+    return render_template(
+        'college.html', campus=campus, college=college, users=users, title=college.college_name)
 
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 def delete_teacher(teacher_id):
@@ -323,6 +301,54 @@ def get_teacher(teacher_id):
     }
     
     return jsonify(teacher_data)
+
+@app.route('/add_college/<campus>', methods=['POST'])
+def add_college(campus):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
+
+    college_name = request.form.get('college_name')
+    college_acronym = college_name[:4].upper()  # Simple acronym creation based on name (you can improve this logic)
+
+    # Check if the college already exists
+    existing_college = College.query.filter_by(college_name=college_name).first()
+    if existing_college:
+        flash(f'College "{college_name}" already exists.', 'danger')
+        return redirect(url_for('ucm'))
+
+    # Add new college to the Colleges table
+    new_college = College(college_name=college_name, college_acronym=college_acronym)
+    db.session.add(new_college)
+    db.session.commit()
+
+    flash(f'New college "{college_name}" has been added.', 'success')
+    return redirect(url_for('ucm'))
+
+@app.route('/remove_college/<campus>', methods=['POST'])
+def remove_college(campus):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
+
+    college_to_remove = request.form.get('college_to_remove')
+
+    # Query and delete the selected college
+    college = College.query.filter_by(college_name=college_to_remove).first()
+    if college:
+        db.session.delete(college)
+        db.session.commit()
+        flash(f'College "{college_to_remove}" has been removed.', 'success')
+    else:
+        flash(f'College "{college_to_remove}" not found.', 'danger')
+
+    return redirect(url_for('ucm'))
 
 """
 Function for upload
@@ -426,51 +452,3 @@ def saveToDatabase():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
-
-@app.route('/add_college/<campus>', methods=['POST'])
-def add_college(campus):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])
-    if user.userType not in ['Campus Director', 'Vice Chancellor']:
-        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
-
-    college_name = request.form.get('college_name')
-    college_acronym = college_name[:4].upper()  # Simple acronym creation based on name (you can improve this logic)
-
-    # Check if the college already exists
-    existing_college = College.query.filter_by(college_name=college_name).first()
-    if existing_college:
-        flash(f'College "{college_name}" already exists.', 'danger')
-        return redirect(url_for('ucm'))
-
-    # Add new college to the Colleges table
-    new_college = College(college_name=college_name, college_acronym=college_acronym)
-    db.session.add(new_college)
-    db.session.commit()
-
-    flash(f'New college "{college_name}" has been added.', 'success')
-    return redirect(url_for('ucm'))
-
-@app.route('/remove_college/<campus>', methods=['POST'])
-def remove_college(campus):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])
-    if user.userType not in ['Campus Director', 'Vice Chancellor']:
-        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
-
-    college_to_remove = request.form.get('college_to_remove')
-
-    # Query and delete the selected college
-    college = College.query.filter_by(college_name=college_to_remove).first()
-    if college:
-        db.session.delete(college)
-        db.session.commit()
-        flash(f'College "{college_to_remove}" has been removed.', 'success')
-    else:
-        flash(f'College "{college_to_remove}" not found.', 'danger')
-
-    return redirect(url_for('ucm'))

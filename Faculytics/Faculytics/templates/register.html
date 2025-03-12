@@ -13,8 +13,8 @@
                 <label for="userType" class="block text-sm font-semibold text-gray-200">Position</label>
                 <select id="userType" name="userType"
                         class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
-               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
-               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+                               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
                     <option value="Unselected">Select your position</option>
                     <option value="Campus Director">Campus Director</option>
                     <option value="Vice Chancellor">Vice Chancellor</option>
@@ -52,32 +52,28 @@
             </div>
 
             <div class="relative">
-                <label for="campus" class="block text-sm font-medium text-gray-300">Campus</label>
-                <select id="campus" name="campus"
+                <label for="campus_acronym" class="block text-sm font-medium text-gray-300">Campus</label>
+                <select id="campus_acronym" name="campus_acronym"
                         class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
-               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
-               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+                               hover:bg-gray-800 hover:border-yellow-500 hover:text-white" required>
                     <option value="">Select your campus</option>
-                    <option value="UCM">UCM</option>
-                    <option value="UCLM">UCLM</option>
-                    <option value="UCB">UCB</option>
-                    <option value="UCPT">UCPT</option>
+                    {% for campus in campuses %}
+                    <option value="{{ campus.campus_acronym }}">{{ campus.campus_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
             <div class="relative hidden" id="collegeGroup">
-                <label for="college" class="block text-sm font-medium text-gray-300">College</label>
-                <select id="college" name="college"
+                <label for="college_name" class="block text-sm font-medium text-gray-300">College</label>
+                <select id="college_name" name="college_name"
                         class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
-               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
-               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                               focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+                               hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
                     <option value="">Select your college</option>
-                    <option value="College of Arts and Sciences">College of Arts and Sciences</option>
-                    <option value="College of Computer Engineering">College of Computer Engineering</option>
-                    <option value="College of Computer Studies">College of Computer Studies</option>
-                    <option value="College of Criminology">College of Criminology</option>
-                    <option value="College of Education">College of Education</option>
-                    <option value="College of Engineering">College of Engineering</option>
+                    {% for college in colleges %}
+                    <option value="{{ college.college_name }}">{{ college.college_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -105,6 +101,7 @@
                 collegeGroup.classList.remove("hidden");
             } else {
                 collegeGroup.classList.add("hidden");
+                document.getElementById("college_name").value = "";
             }
         });
     });
