@@ -10,6 +10,36 @@
             Back to Dashboard
         </a>
 
+        <!-- Manage Colleges Button -->
+        {% if user.userType in ['Dean', 'Campus Director', 'Vice Chancellor'] %}
+        <button id="manage-colleges-btn" class="mb-4 inline-block px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-white">
+            Manage Colleges
+        </button>
+        {% endif %}
+
+        <!-- Add College Form (Hidden by default) -->
+        <div id="add-college-form" style="display:none;">
+            <h3 class="text-2xl font-bold text-white mb-4 mt-6">Add a New College</h3>
+            <form action="{{ url_for('add_college', campus_acronym=campus.campus_acronym) }}" method="POST">
+                <input type="text" name="college_name" placeholder="Enter College Name" required class="w-full p-3 bg-gray-700 text-white rounded-lg mb-4" />
+                <input type="text" name="college_acronym" placeholder="Enter College Acronym" required class="w-full p-3 bg-gray-700 text-white rounded-lg mb-4" />
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg">Add College</button>
+            </form>
+        </div>
+
+        <!-- Remove College Form (Hidden by default) -->
+        <div id="remove-college-form" style="display:none;">
+            <h3 class="text-2xl font-bold text-white mb-4 mt-6">Remove a College</h3>
+            <form action="{{ url_for('remove_college', campus_acronym=campus.campus_acronym) }}" method="POST">
+                <select name="college_to_remove" class="w-full p-3 bg-gray-700 text-white rounded-lg mb-4">
+                    {% for college in campus.colleges %}
+                    <option value="{{ college.college_name }}">{{ college.college_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg">Remove College</button>
+            </form>
+        </div>
+
         <div class="bg-gray-800 p-6 rounded-lg shadow-md h-[600px] overflow-y-auto">
             <div class="grid grid-cols-2 gap-6 justify-items-center">
                 {% if visible_colleges %}
@@ -29,3 +59,21 @@
 </div>
 {% endblock %}
 
+{% block scripts %}
+<script>
+    // Toggle visibility of forms when "Manage Colleges" button is clicked
+    document.getElementById('manage-colleges-btn').addEventListener('click', function () {
+        var addForm = document.getElementById('add-college-form');
+        var removeForm = document.getElementById('remove-college-form');
+
+        // Toggle the visibility of the forms
+        if (addForm.style.display === 'none') {
+            addForm.style.display = 'block';
+            removeForm.style.display = 'block';
+        } else {
+            addForm.style.display = 'none';
+            removeForm.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

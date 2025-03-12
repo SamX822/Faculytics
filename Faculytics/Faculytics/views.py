@@ -302,53 +302,81 @@ def get_teacher(teacher_id):
     
     return jsonify(teacher_data)
 
-@app.route('/add_college/<campus>', methods=['POST'])
-def add_college(campus):
+@app.route('/add_college/<campus_acronym>', methods=['POST'])
+def add_college(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
-    if user.userType not in ['Campus Director', 'Vice Chancellor']:
-        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
+    
+    # Check if the user is a Dean, Campus Director, or Vice Chancellor
+    if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('dashboard'))  # Unauthorized if not a Dean, Campus Director, or Vice Chancellor
 
+    # Get the campus based on campus_acronym
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+    
+    if not campus:
+        flash("Campus not found.", "danger")
+        return redirect(url_for('dashboard'))
+    
+    # Get the college name and acronym from the form
     college_name = request.form.get('college_name')
-    college_acronym = college_name[:4].upper()  # Simple acronym creation based on name (you can improve this logic)
+    college_acronym = request.form.get('college_acronym').upper()  # Make sure the acronym is in uppercase
 
     # Check if the college already exists
     existing_college = College.query.filter_by(college_name=college_name).first()
     if existing_college:
         flash(f'College "{college_name}" already exists.', 'danger')
-        return redirect(url_for('ucm'))
+        return redirect(url_for('campus_page', campus_acronym=campus_acronym))
 
-    # Add new college to the Colleges table
+    # Add the new college to the database
     new_college = College(college_name=college_name, college_acronym=college_acronym)
     db.session.add(new_college)
     db.session.commit()
 
-    flash(f'New college "{college_name}" has been added.', 'success')
-    return redirect(url_for('ucm'))
+    # Create the connection in the Campus_Colleges association table
+    campus.colleges.append(new_college)  # Add the new college to the campus's college list
+    db.session.commit()
 
-@app.route('/remove_college/<campus>', methods=['POST'])
-def remove_college(campus):
+    flash(f'New college "{college_name}" has been added.', 'success')
+    return redirect(url_for('campus_page', campus_acronym=campus_acronym))
+
+@app.route('/remove_college/<campus_acronym>', methods=['POST'])
+def remove_college(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
-    if user.userType not in ['Campus Director', 'Vice Chancellor']:
-        return redirect(url_for('dashboard'))  # Unauthorized if not a Campus Director or Vice Chancellor
 
+    # Check if the user is a Dean, Campus Director, or Vice Chancellor
+    if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('dashboard'))  # Unauthorized if not a Dean, Campus Director, or Vice Chancellor
+
+    # Get the campus based on campus_acronym
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+    
+    if not campus:
+        flash("Campus not found.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Get the college to remove from the form
     college_to_remove = request.form.get('college_to_remove')
 
-    # Query and delete the selected college
+    # Find and remove the association entry
     college = College.query.filter_by(college_name=college_to_remove).first()
+
     if college:
-        db.session.delete(college)
+        # Remove the association entry between the college and the campus
+        campus.colleges.remove(college)
         db.session.commit()
-        flash(f'College "{college_to_remove}" has been removed.', 'success')
+        flash(f'College "{college_to_remove}" has been removed from {campus.campus_name}.', 'success')
     else:
         flash(f'College "{college_to_remove}" not found.', 'danger')
 
-    return redirect(url_for('ucm'))
+    return redirect(url_for('campus_page', campus_acronym=campus_acronym))
 
 """
 Function for upload
