@@ -9,6 +9,11 @@
     {% if user.userType == "Dean" %}
     <main class="ml-[14rem] p-6 text-gray-300 w-[100%]">
 
+        <!-- Back to Dashboard Button -->
+        <a href="{{ url_for('dashboard') }}" class="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+            Back to Dashboard
+        </a>
+
         <!-- Hidden upload section -->
         <div id="uploadContainer" class="mt-4">
             {% include "upload.html" %}
