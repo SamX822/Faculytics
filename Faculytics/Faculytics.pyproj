@@ -51,6 +51,7 @@
     <Folder Include="Faculytics\src\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Faculytics\templates\approval.html" />
     <Content Include="Faculytics\templates\campus.html" />
     <Content Include="Faculytics\templates\college.html" />
     <Content Include="Faculytics\templates\colleges\c_engr.html" />

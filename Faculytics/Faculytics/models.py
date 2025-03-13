@@ -71,6 +71,38 @@ class College(db.Model):
     def __repr__(self):
         return f'<College {self.college_name}>'
 
+class UserApproval(db.Model):
+    __tablename__ = 'UserApproval'
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    uName = db.Column(db.String(50), unique=True, nullable=False)
+    pWord = db.Column(db.String(200), nullable=False)  # Hashed password
+    userType = db.Column(db.String(50), nullable=False)
+    firstName = db.Column(db.String(50), nullable=False)
+    lastName = db.Column(db.String(50), nullable=False)
+    campus_acronym = db.Column(
+        db.String(10),
+        db.ForeignKey('Campuses.campus_acronym', onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True
+    )
+    college_name = db.Column(
+        db.String(50),
+        db.ForeignKey('Colleges.college_name', onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True
+    )
+    date_registered = db.Column(db.DateTime, default=lambda: datetime.now(PH_TZ))
+
+    # Relationships
+    campus = db.relationship('Campus', back_populates='pending_users')
+    college = db.relationship('College', back_populates='pending_users')
+
+    def __repr__(self):
+        return f'<UserApproval {self.uName}>'
+
+# Add relationship properties to Campus and College models
+Campus.pending_users = db.relationship('UserApproval', back_populates='campus', cascade="all, delete-orphan")
+College.pending_users = db.relationship('UserApproval', back_populates='college', cascade="all, delete-orphan")
+
 PH_TZ = pytz.timezone('Asia/Manila')
 class CSVUpload(db.Model):
     __tablename__ = 'Uploads'

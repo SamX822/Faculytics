@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, request, jsonify, session,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
-from Faculytics.models import User, CSVUpload, College, Campus
+from Faculytics.models import User, CSVUpload, College, Campus, UserApproval
 import pandas as pd
 import json
 import os
@@ -55,30 +55,16 @@ def register():
         campus_acronym = request.form.get('campus_acronym')
         college_name = request.form.get('college_name')
 
-        # Check if the username already exists
-        if User.query.filter_by(uName=uName).first():
+        # Check if the username already exists in Users or UserApproval
+        if User.query.filter_by(uName=uName).first() or UserApproval.query.filter_by(uName=uName).first():
             flash("Username already exists. Please choose another.", "danger")
             return redirect(url_for('register'))
 
-        # Verify if the campus exists
-        campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
-        if not campus:
-            flash("Invalid campus selected.", "danger")
-            return redirect(url_for('register'))
-
-        # Verify if the college exists (only if userType requires it)
-        college = None
-        if userType in ['Dean', 'Teacher']:
-            college = College.query.filter_by(college_name=college_name).first()
-            if not college:
-                flash("Invalid college selected.", "danger")
-                return redirect(url_for('register'))
-
-        # Hash the password
+        # Hash the password before storing
         hashed_password = generate_password_hash(pWord, method='pbkdf2:sha256')
 
-        # Create new user
-        new_user = User(
+        # Add the new user to the UserApproval table
+        new_user = UserApproval(
             userType=userType,
             firstName=firstName,
             lastName=lastName,
@@ -90,16 +76,15 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash("Registration successful! You can now log in.", "success")
+        flash("Registration submitted for approval.", "info")
         return redirect(url_for('login'))
 
-    # Fetch available campuses and colleges for the registration form
+    # Fetch available campuses and colleges
     campuses = Campus.query.all()
     colleges = College.query.all()
 
-    return render_template('register.html', title="Register", year=datetime.now().year, campuses=campuses, colleges=colleges)
+    return render_template('register.html', title="Register", campuses=campuses, colleges=colleges)
 
-#Check username
 @app.route('/check_username', methods=['POST'])
 def check_username():
     data = request.json
@@ -123,6 +108,95 @@ def dashboard():
     campuses = Campus.query.all() if user.userType == "admin" else [assigned_campus] if assigned_campus else []
 
     return render_template('dashboard.html', user=user, assigned_campus=assigned_campus, campuses=campuses, title="Dashboard", year=datetime.now().year)
+
+@app.route('/approval')
+def approval_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+
+    # Only Deans, Campus Directors, and Vice Chancellors can access this page
+    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor"]:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Apply filtering based on user type
+    if user.userType == "Dean":
+        pending_users = UserApproval.query.filter_by(
+            campus_acronym=user.campus_acronym, college_name=user.college_name
+        ).all()
+    else:
+        pending_users = UserApproval.query.filter_by(campus_acronym=user.campus_acronym).all()
+
+    return render_template('approval.html', pending_users=pending_users, title="User Approval")
+
+@app.route('/approve_user/<int:user_id>', methods=['POST'])
+def approve_user(user_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor"]:
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('dashboard'))
+
+    pending_user = UserApproval.query.get(user_id)
+    if not pending_user:
+        flash("User not found.", "danger")
+        return redirect(url_for('approval_page'))
+
+    # Deans can only approve users under their assigned campus AND college
+    if user.userType == "Dean" and (
+        pending_user.campus_acronym != user.campus_acronym or pending_user.college_name != user.college_name
+    ):
+        flash("You can only approve users under your assigned campus and college.", "danger")
+        return redirect(url_for('approval_page'))
+
+    # Move user from UserApproval to Users
+    approved_user = User(
+        userType=pending_user.userType,
+        firstName=pending_user.firstName,
+        lastName=pending_user.lastName,
+        uName=pending_user.uName,
+        pWord=pending_user.pWord,
+        campus_acronym=pending_user.campus_acronym,
+        college_name=pending_user.college_name
+    )
+    db.session.add(approved_user)
+    db.session.delete(pending_user)
+    db.session.commit()
+
+    flash(f"{pending_user.firstName} {pending_user.lastName} has been approved.", "success")
+    return redirect(url_for('approval_page'))
+
+@app.route('/reject_user/<int:user_id>', methods=['POST'])
+def reject_user(user_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor"]:
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('dashboard'))
+
+    pending_user = UserApproval.query.get(user_id)
+    if not pending_user:
+        flash("User not found.", "danger")
+        return redirect(url_for('approval_page'))
+
+    # Deans can only reject users under their assigned campus AND college
+    if user.userType == "Dean" and (
+        pending_user.campus_acronym != user.campus_acronym or pending_user.college_name != user.college_name
+    ):
+        flash("You can only reject users under your assigned campus and college.", "danger")
+        return redirect(url_for('approval_page'))
+
+    db.session.delete(pending_user)
+    db.session.commit()
+
+    flash(f"{pending_user.firstName} {pending_user.lastName} has been rejected.", "danger")
+    return redirect(url_for('approval_page'))
 
 @app.route('/uploadHistory')
 def uploadHistory():
