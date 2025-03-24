@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% set title = college.college_name %}
+{% set title = college.college_acronym %}
 
 {% block content %}
 <div class="flex">
@@ -84,10 +84,12 @@
             {% set teachers = users | selectattr("userType", "equalto", "Teacher") | list %}
             {% if teachers %}
             {% for teacher in teachers %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600">
+            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+                 onclick="redirectToUploadHistory('{{ teacher.uName }}', '{{ college.college_acronym }}')">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
             </div>
+
             {% endfor %}
             {% else %}
             <p class="text-gray-400 col-span-2">No Teachers found for this college.</p>
@@ -123,5 +125,11 @@
     }
   }
 </script>
+  {% elif user.userType == 'Dean' %}
+    <script>
+        function redirectToUploadHistory(uName, collegeAcronym) {
+            window.location.href = "{{ url_for('uploadHistory') }}?teacher=" + encodeURIComponent(uName) + "&college=" + encodeURIComponent(collegeAcronym);
+        }
+    </script>
   {% endif %}
 {% endblock %}

@@ -9,6 +9,9 @@ const progressContainer = document.getElementById('progress-container');
 const resultTab = document.getElementById('resultTabs');
 
 const checkIcon = document.getElementById('check-icon');
+
+const processBtn = document.getElementById('processBtn');
+const teacherUName = document.getElementById('teacherUName');
 /*
     TODO:
     
@@ -55,6 +58,8 @@ fileInput.addEventListener('change', (e) => {
  */
 document.getElementById('uploadForm').addEventListener('submit', function (e) {
     e.preventDefault();
+    console.log("File upload started...");
+
     const formData = new FormData();
     const fileField = document.getElementById('csv_file');
 
@@ -64,6 +69,12 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
     }
 
     formData.append('csv_file', fileField.files[0]);
+    formData.append('teacherUName', teacherUName.value);
+
+    // Show loading spinner
+    document.getElementById("loadingSpinner").classList.remove("hidden");
+
+    console.log("Processing the file... Please wait.");
 
     fetch('/upload', {
         method: 'POST',
@@ -75,6 +86,9 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
                 alert(data.error);
                 return;
             }
+
+            document.getElementById("loadingSpinner").classList.add("hidden");
+
             checkIcon.classList.add('hidden'); 
             fileInfo.classList.add('hidden'); 
             processBtn.classList.add('hidden');
@@ -94,7 +108,12 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
             //renderWordCloud(data.topics);
             document.getElementById('recommendationText').innerHTML = data.recommendation;
         })
-        .catch(error => console.error('Error:', error));
+        .catch((error) => {
+            console.error("Error processing file:", error);
+
+            document.getElementById("loadingSpinner").classList.add("hidden");
+            alert("An error occurred while processing the file.");
+        });
 });
 
 let sentimentChart = null;
@@ -267,7 +286,6 @@ function toggleGridView() {
 }
 
 function saveResultsToDatabase() {
-    let course = document.getElementById('courseSelect').value;
     fetch('/upload', { method: 'GET' })
         .then(response => {
             if (!response.ok) {
@@ -287,7 +305,7 @@ function saveResultsToDatabase() {
                     comments: data.comments,
                     sentiment: data.sentiment,
                     recommendation: data.recommendation,
-                    course: course
+                    teacherUName: teacherUName.value
                 })
             });
         })

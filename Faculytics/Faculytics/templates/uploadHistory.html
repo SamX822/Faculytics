@@ -9,9 +9,9 @@
     {% if user.userType == "Dean" %}
     <main class="ml-[14rem] p-6 text-gray-300 w-[100%]">
 
-        <!-- Back to Dashboard Button -->
-        <a href="{{ url_for('dashboard') }}" class="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
-            Back to Dashboard
+        <!-- Back to college Button -->
+        <a id="backToCollegeBtn" href="#" class="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+            Back to College
         </a>
 
         <!-- Hidden upload section -->
@@ -37,30 +37,23 @@
 {% endblock %}
 
 {% block scripts %}
-<script>document.addEventListener("DOMContentLoaded", function() {
-        var toggleButton = document.getElementById("toggleUploadButton");
-        var uploadContainer = document.getElementById("uploadContainer");
-        if (toggleButton && uploadContainer) {
-            toggleButton.addEventListener("click", function() {
-                uploadContainer.classList.toggle("hidden");
-            });
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const params = new URLSearchParams(window.location.search);
+        const teacherUName = params.get("teacher");
+        const collegeAcronym = params.get("college");
+
+        if (collegeAcronym) {
+            document.getElementById("backToCollegeBtn").href = "/college/" + encodeURIComponent(collegeAcronym) + "/{{ user.campus_acronym }}";
+        }
+
+        if (teacherUName) {
+            const teacherInput = document.getElementById("teacherUName");
+            if (teacherInput) {
+                teacherInput.value = teacherUName;
+            }
         }
     });
+</script>
 
-    document.getElementById("uploadForm").addEventListener("submit", function (event) {
-        event.preventDefault(); // Prevent normal form submission
-
-        let formData = new FormData(this);
-        let selectedCourse = document.getElementById("courseSelect").value;
-
-        formData.append("course", selectedCourse);
-
-        fetch("/upload", {
-            method: "POST",
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => console.log("Server Response:", data))
-            .catch(error => console.error("Upload Error:", error));
-    });</script>
 {% endblock %}

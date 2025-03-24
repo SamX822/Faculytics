@@ -11,7 +11,7 @@
         </a>
 
         <!-- Manage Colleges Button -->
-        {% if user.userType in ['Dean', 'Campus Director', 'Vice Chancellor'] %}
+        {% if user.userType in ['Campus Director', 'Vice Chancellor'] %}
         <button id="manage-colleges-btn" class="mb-4 inline-block px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-white">
             Manage Colleges
         </button>

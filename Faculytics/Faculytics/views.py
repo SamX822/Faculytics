@@ -458,13 +458,13 @@ Function for upload
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 
-      # Fetch all courses from DB
-
     if request.method == 'POST':
         if 'csv_file' not in request.files:
             return jsonify({"error": "No file part"}), 400
-    
+        
+        teacherUName = request.form.get("teacherUName")
         file = request.files['csv_file']
+
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
         try:
@@ -474,9 +474,6 @@ def upload_file():
 
         if 'comment' not in df.columns:
             return jsonify({"error": "CSV file missing required 'comment' column."}), 400
-
-        # Get selected course_code from form
-        course_code = request.form.get('course')
 
         # Convert comments to JSON format
         comments_list = df['comment'].tolist()
@@ -495,7 +492,7 @@ def upload_file():
             "Feedback is generally positive, but keep monitoring for potential issues."
         )
         #Send success response after transaction completes
-        jsonify({"success": True, "message": "File processed successfully!", "course": course_code}), 200
+        jsonify({"success": True, "message": "File processed successfully!"}), 200
 
         # Return response
         session["upload_results"] = {
@@ -504,7 +501,7 @@ def upload_file():
             "comments": comments_list,
             #"topics": topic_info,
             "recommendation": recommendation_text,
-            "course": course_code
+            "teacherUName": teacherUName
         }
         results = {
             "filename": file.filename,
@@ -512,29 +509,32 @@ def upload_file():
             "comments": comments_list,
             #"topics": topic_info,
             "recommendation": recommendation_text,
-            "course": course_code
+            "teacherUName": teacherUName
         }
         return jsonify(results), 200
+
     elif request.method == 'GET':
         results = session.get('upload_results', {});
         return jsonify(results), 200
 
-    return render_template('upload.html', )
+    return render_template('upload.html')
 
 @app.route('/saveToDatabase', methods=['POST'])
 def saveToDatabase():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data received"}), 400
-        
-        comments_list = data.get("comments")
-        sentiment_result = data.get("sentiment")
-        recommendation_text = data.get("recommendation")
-        course_code = data.get("course")
-        filename = data.get("filename")
+        # Retrieve stored session data
+        stored_results = session.get("upload_results", {})
 
-        if not comments_list or not sentiment_result or not recommendation_text or not course_code:
+        if not stored_results:
+            return jsonify({"error": "No data received!"}), 400
+        
+        filename = stored_results.get("filename")
+        comments_list = stored_results.get("comments")
+        sentiment_result = stored_results.get("sentiment")
+        recommendation_text = stored_results.get("recommendation")
+        teacherUName = stored_results.get("teacherUName")
+
+        if not comments_list or not sentiment_result or not recommendation_text or not teacherUName:
             return jsonify({"error": "Missing required fields"}), 400
 
         # Save to database
@@ -543,7 +543,7 @@ def saveToDatabase():
             comments=json.dumps(comments_list),  
             sentiment=json.dumps(sentiment_result),  
             recommendation=recommendation_text,  
-            upload_course=course_code  
+            teacher_uname=teacherUName  
         )
 
         db.session.add(upload_record)
