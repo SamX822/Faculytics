@@ -491,6 +491,7 @@ def upload_file():
             if neg_count > pos_count else
             "Feedback is generally positive, but keep monitoring for potential issues."
         )
+
         #Send success response after transaction completes
         jsonify({"success": True, "message": "File processed successfully!"}), 200
 
@@ -554,3 +555,112 @@ def saveToDatabase():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route('/analysis', methods=['GET'])
+def analysis():
+
+    teacherUName = request.args.get("teacher")
+    file_name = request.args.get("file_name", "overall")  # Default to "overall"
+
+    if not teacherUName:
+        return jsonify({"error": "Missing teacher username"}), 400
+
+    # Retrieve the uploads for the teacher
+    uploads = CSVUpload.query.filter_by(teacher_uname=teacherUName).all()
+
+    if not uploads:
+        return jsonify({"error": "No uploads found for this teacher."}), 404
+
+    # Initialize
+    positive_count = 0
+    negative_count = 0
+    recommendation_text = ""
+
+    # If "overall" is selected, aggregate sentiment from all files
+    if file_name == "overall":
+        for upload in uploads:
+            sentiment_data = upload.sentiment
+            positive_count += sentiment_data.count("Positive")
+            negative_count += sentiment_data.count("Negative")
+
+        # Generate overall recommendation
+        recommendation_text = (
+            "There are more negative comments. Consider scheduling professional development seminars."
+            if negative_count > positive_count else
+            "Feedback is generally positive, but keep monitoring for potential issues."
+        )
+
+    else:
+        # Get the specific file's data
+        upload = next((u for u in uploads if u.filename == file_name), None)
+        if not upload:
+            return jsonify({"error": "File not found"}), 404
+
+        sentiment_data = upload.sentiment
+        positive_count = sentiment_data.count("Positive")
+        negative_count = sentiment_data.count("Negative")
+        recommendation_text = upload.recommendation
+
+    # Return the sentiment counts and recommendation
+    return jsonify({
+        "files": [
+        {
+            "filename": upload.filename,
+            "sentiment": json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
+        }
+        for upload in uploads
+    ],
+        "positive": positive_count,
+        "negative": negative_count,
+        "recommendation": recommendation_text
+    }), 200
+
+@app.route('/college_analysis', methods=['GET'])
+def college_analysis():
+    college_acronym = request.args.get("college_acronym")
+
+    if not college_acronym:
+        return jsonify({"error": "Missing college acronym"}), 400
+
+    # Fetch the college using its acronym
+    college = College.query.filter_by(college_acronym=college_acronym).first()
+
+    if not college:
+        return jsonify({"error": "College not found."}), 404
+
+    # Retrieve all teachers from this college
+    teachers = User.query.filter(
+        User.college_name == college.college_name,  # Match by college name
+        User.userType == "Teacher"
+    ).all()
+
+    if not teachers:
+        return jsonify({"error": "No teachers found for this college."}), 404
+
+    # Retrieve all uploads related to these teachers
+    uploads = CSVUpload.query.filter(CSVUpload.teacher_uname.in_([t.uName for t in teachers])).all()
+
+    if not uploads:
+        return jsonify({"error": "No uploaded sentiment data found for this college."}), 404
+
+    # Aggregate sentiment data
+    positive_count = 0
+    negative_count = 0
+
+    for upload in uploads:
+        sentiment_data = json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
+        positive_count += sentiment_data.count("Positive")
+        negative_count += sentiment_data.count("Negative")
+
+    # Generate recommendation
+    recommendation_text = (
+        "There are more negative comments. Consider addressing faculty concerns."
+        if negative_count > positive_count else
+        "Feedback is generally positive, but continuous improvement is recommended."
+    )
+
+    return jsonify({
+        "positive": positive_count,
+        "negative": negative_count,
+        "recommendation": recommendation_text
+    }), 200

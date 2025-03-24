@@ -112,7 +112,6 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
             console.error("Error processing file:", error);
 
             document.getElementById("loadingSpinner").classList.add("hidden");
-            alert("An error occurred while processing the file.");
         });
 });
 

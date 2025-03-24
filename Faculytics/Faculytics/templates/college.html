@@ -85,11 +85,20 @@
             {% if teachers %}
             {% for teacher in teachers %}
             <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
-                 onclick="redirectToUploadHistory('{{ teacher.uName }}', '{{ college.college_acronym }}')">
+                 onclick="toggleTeacherActions('{{ teacher.uName }}')">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
+                <div id="actions-{{ teacher.uName }}" class="hidden mt-4 flex gap-2">
+                    <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                            onclick="redirectToUploadHistory('{{ teacher.uName }}', '{{ college.college_acronym }}')">
+                        Upload
+                    </button>
+                    <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                            onclick="openAnalysisModal('{{ teacher.uName }}')">
+                        Analysis
+                    </button>
+                </div>
             </div>
-
             {% endfor %}
             {% else %}
             <p class="text-gray-400 col-span-2">No Teachers found for this college.</p>
@@ -101,6 +110,22 @@
         </script>
         {% endif %}
     </main>
+</div>
+
+<!-- Analysis Modal -->
+<div id="analysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start p-4">
+    <div class="bg-gray-800 p-6 rounded-lg w-full max-w-3xl mt-4 overflow-y-auto">
+        <h3 class="text-xl font-bold text-white mb-4">Analysis</h3>
+        <canvas id="analysisChart"></canvas>
+        <select id="fileSelect" class="mt-4 p-2 w-full bg-gray-700 text-white rounded-lg">
+            <option value="overall">Overall</option> <!-- "Overall" option at the top -->
+        </select>
+        <div id="fileDetails" class="mt-4 text-white"></div>
+        <div class="mt-4 flex justify-between">
+            <button id="viewButton" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">View</button>
+            <button onclick="closeAnalysisModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Close</button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -126,10 +151,203 @@
   }
 </script>
   {% elif user.userType == 'Dean' %}
-    <script>
-        function redirectToUploadHistory(uName, collegeAcronym) {
-            window.location.href = "{{ url_for('uploadHistory') }}?teacher=" + encodeURIComponent(uName) + "&college=" + encodeURIComponent(collegeAcronym);
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let analysisChartInstance = null;
+    uname = "";
+
+    function toggleTeacherActions(uName) {
+        uname = uName;
+        document.querySelectorAll('[id^="actions-"]').forEach(el => el.classList.add('hidden'));
+        document.getElementById('actions-' + uName).classList.toggle('hidden');
+    }
+
+    function redirectToUploadHistory(uName, collegeAcronym) {
+        window.location.href = "{{ url_for('uploadHistory') }}?teacher=" + encodeURIComponent(uName) + "&college=" + encodeURIComponent(collegeAcronym);
+    }
+
+    function openAnalysisModal(uName) {
+        uname = uName;
+        document.getElementById('analysisModal').classList.remove('hidden');
+
+        // Clear previous options in the dropdown
+        let fileSelect = document.getElementById('fileSelect');
+        fileSelect.innerHTML = "<option value='overall'>Overall</option>"; // Add "Overall" option at the top
+
+        fetch("{{ url_for('analysis') }}?teacher=" + encodeURIComponent(uname))
+            .then(response => response.json())
+            .then(data => {
+                console.log("Received files:", data.files);
+
+                if (!data.files || data.files.length === 0) {
+                    document.getElementById('fileDetails').innerHTML = "<p>No uploads found for this teacher.</p>";
+                    return;
+                }
+
+                // Populate the file dropdown with all available files
+                data.files.forEach(file => {
+                    let option = document.createElement("option");
+                    option.value = file.filename;
+                    option.textContent = file.filename;
+                    fileSelect.appendChild(option);
+                });
+
+                // Default to the first file (which is "Overall")
+                fileSelect.value = "overall";
+                fileSelect.dispatchEvent(new Event('change')); // Trigger the chart update
+
+                // Automatically load the overall chart
+                loadChart(data, "overall");
+            })
+            .catch(error => console.error("Error fetching files:", error));
+    }
+
+    document.getElementById('viewButton').addEventListener('click', function () {
+        const fileName = document.getElementById('fileSelect').value;
+
+        fetch(`/analysis?teacher=${encodeURIComponent(uname)}&file_name=${fileName}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Analysis Data:", data);
+
+                // Update the chart with the selected file or overall data
+                loadChart(data, fileName);
+
+                // Update the recommendation message
+                document.getElementById('fileDetails').innerHTML = `<p>Recommendation: ${data.recommendation}</p>`;
+            })
+            .catch(error => console.error("Error fetching analysis data:", error));
+    });
+
+    function loadChart(data, fileName) {
+        if (analysisChartInstance) {
+            analysisChartInstance.destroy();
         }
-    </script>
+
+        const ctx = document.getElementById('analysisChart').getContext('2d'); // Get canvas context
+
+        if (fileName === "overall") {
+        // --- OVERALL VIEW (LINE CHART) ---
+            // Prepare the labels (files) and data
+            const labels = data.files.map(file => file.filename);  // X-axis: filenames
+            const positiveData = data.files.map(file => {
+                if (!file.sentiment) {
+                    console.warn(`Missing sentiment data for file: ${file.filename}`);
+                    return 0;
+                }
+                // Ensure sentiment is parsed if it's a string
+                const sentimentData = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
+                return sentimentData.filter(s => s === "Positive").length;  // Y-axis: positive sentiment counts
+            });
+            const negativeData = data.files.map(file => {
+                if (!file.sentiment) {
+                    console.warn(`Missing sentiment data for file: ${file.filename}`);
+                    return 0;
+                }
+                // Ensure sentiment is parsed if it's a string
+                const sentimentData = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
+                return sentimentData.filter(s => s === "Negative").length;  // Y-axis: negative sentiment counts
+            });
+
+            // Create a new chart with the files on the x-axis
+            analysisChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,  // Files on the x-axis
+                    datasets: [
+                        {
+                            label: 'Positive',
+                            data: positiveData,  // Positive sentiment counts
+                            borderColor: 'green',
+                            fill: false,
+                            pointStyle: 'circle',
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Negative',
+                            data: negativeData,  // Negative sentiment counts
+                            borderColor: 'red',
+                            fill: false,
+                            pointStyle: 'circle',
+                            pointRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Sentiment Count'  // Label for the y-axis
+                            },
+                            ticks: {
+                                stepSize: 1  // Ensure the y-axis has discrete steps
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Files'  // Label for the x-axis
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // --- SPECIFIC FILE VIEW (BAR CHART) ---
+            const selectedFile = data.files.find(file => file.filename === fileName);
+            if (!selectedFile) {
+                console.error("File not found in dataset.");
+                return;
+            }
+
+            const positiveCount = selectedFile.sentiment.filter(s => s === "Positive").length;
+            const negativeCount = selectedFile.sentiment.filter(s => s === "Negative").length;
+
+            analysisChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ["Positive", "Negative"],  // X-axis categories
+                    datasets: [{
+                        label: `Sentiment Breakdown for ${fileName}`,
+                        data: [positiveCount, negativeCount],  // Y-axis values
+                        backgroundColor: ['green', 'red']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Count' },
+                            ticks: { stepSize: 1 }
+                        },
+                        x: { title: { display: true, text: 'Sentiment Type' } }
+                    }
+                }
+            });
+        }
+    }
+
+    function closeAnalysisModal() {
+        document.getElementById('analysisModal').classList.add('hidden');
+    }
+</script>
   {% endif %}
 {% endblock %}
