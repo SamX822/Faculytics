@@ -7,7 +7,7 @@
     {% include "sidebar.html" %}
 
     <!-- Main Content -->
-    {% if user.userType == "admin" %}
+    {% if user.userType in ["admin", "Curriculum Developer"] %}
     <main class="ml-[14rem] p-6 text-gray-300 w-[100%]">
         <div class="grid grid-cols-2 gap-6 mt-6">
             {% for campus in campuses %}

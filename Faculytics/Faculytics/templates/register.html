@@ -20,6 +20,7 @@
                     <option value="Vice Chancellor">Vice Chancellor</option>
                     <option value="Dean">Dean</option>
                     <option value="Teacher">Teacher</option>
+                    <option value="Curriculum Developer">Curriculum Developer</option>
                 </select>
             </div>
 
@@ -51,7 +52,7 @@
                               focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Choose a password" required>
             </div>
 
-            <div class="relative">
+            <div class="relative hidden" id="campusGroup">
                 <label for="campus_acronym" class="block text-sm font-medium text-gray-300">Campus</label>
                 <select id="campus_acronym" name="campus_acronym"
                         class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
@@ -94,14 +95,26 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const userType = document.getElementById("userType");
+        const campusGroup = document.getElementById("campusGroup");
+        const campusField = document.getElementById("campus_acronym");
         const collegeGroup = document.getElementById("collegeGroup");
 
         userType.addEventListener("change", function () {
             if (this.value === "Dean" || this.value === "Teacher") {
                 collegeGroup.classList.remove("hidden");
+            } else if (this.value === "Curriculum Developer") {
+                campusGroup.classList.add("hidden");
+                document.getElementById("campus_acronym").value = "";
+                collegeGroup.classList.add("hidden");
+                document.getElementById("college_name").value = "";
+
+                campusField.removeAttribute("required");
             } else {
                 collegeGroup.classList.add("hidden");
                 document.getElementById("college_name").value = "";
+                campusGroup.classList.remove("hidden");
+
+                campusField.setAttribute("required", "required");
             }
         });
     });

@@ -77,8 +77,8 @@
             {% endif %}
         </div>
 
-        {% elif user.userType == 'Dean' %}
-        <!-- Dean View: Show only Teachers in this college -->
+        {% elif user.userType == 'Dean' or user.userType == 'Curriculum Developer' %}
+        <!-- Dean & Curriculum Developer View: Show only Teachers in this college -->
         <h3 class="text-2xl font-bold text-white mb-4 mt-6">Teachers</h3>
         <div class="grid grid-cols-2 gap-6">
             {% set teachers = users | selectattr("userType", "equalto", "Teacher") | list %}
@@ -89,10 +89,12 @@
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
                 <div id="actions-{{ teacher.uName }}" class="hidden mt-4 flex gap-2">
+                    {% if user.userType == 'Dean' %}
                     <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
                             onclick="redirectToUploadHistory('{{ teacher.uName }}', '{{ college.college_acronym }}')">
                         Upload
                     </button>
+                    {% endif %}
                     <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                             onclick="openAnalysisModal('{{ teacher.uName }}')">
                         Analysis
