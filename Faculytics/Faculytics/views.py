@@ -16,7 +16,10 @@ from sklearn.ensemble import RandomForestClassifier
 
 # MarkyBoyax Sentiment Analysis Model
 from Faculytics.src.SentimentAnalysis_functions import SentimentAnalyzer
+# Magax Topic Modeling Model
+from Faculytics.src.TopicModeling_functions import CommentProcessor
 sentiment_analyzer = SentimentAnalyzer()
+topic_modeling = CommentProcessor()
 
 @app.route('/')
 def index():
@@ -485,6 +488,9 @@ def upload_file():
         neg_count = sentiment_result["predictions"].count("Negative")
         pos_count = sentiment_result["predictions"].count("Positive")
 
+        #  Process comments using CommentProcessor
+        processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
+
         # Generate recommendation
         recommendation_text = (
             "There are more negative comments. Consider scheduling professional development seminars."
@@ -500,7 +506,9 @@ def upload_file():
             "filename": file.filename,
             "sentiment": sentiment_result["predictions"],
             "comments": comments_list,
-            #"topics": topic_info,
+            "processed_comments": processed_comments,
+            "top_words": top_words,
+            "category_counts": category_counts,
             "recommendation": recommendation_text,
             "teacherUName": teacherUName
         }
@@ -508,7 +516,9 @@ def upload_file():
             "filename": file.filename,
             "sentiment": sentiment_result["predictions"],
             "comments": comments_list,
-            #"topics": topic_info,
+            "processed_comments": processed_comments,
+            "top_words": top_words,
+            "category_counts": category_counts,
             "recommendation": recommendation_text,
             "teacherUName": teacherUName
         }
