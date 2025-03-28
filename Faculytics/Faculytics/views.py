@@ -491,6 +491,7 @@ def upload_file():
         #  Process comments using CommentProcessor
         processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
 
+
         # Generate recommendation
         recommendation_text = (
             "There are more negative comments. Consider scheduling professional development seminars."

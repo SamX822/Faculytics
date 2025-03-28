@@ -333,6 +333,8 @@ function renderProcessedComments(comments) {
     const tableBody = document.getElementById("commentsTableBody");
     tableBody.innerHTML = ''; // Clear previous content
 
+    console.log(comments);
+
     comments.forEach(commentData => {
         const row = document.createElement("tr");
         row.className = "hover:bg-gray-100 transition-colors";
@@ -354,6 +356,8 @@ function renderProcessedComments(comments) {
 function renderTopWords(topWords) {
     const wordCloud = document.getElementById("wordCloud");
     wordCloud.innerHTML = ''; // Clear previous content
+
+    console.log("Top Words:", topWords);
 
     topWords.forEach(wordData => {
         const wordSpan = document.createElement("span");

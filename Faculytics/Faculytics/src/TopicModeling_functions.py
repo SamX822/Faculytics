@@ -37,7 +37,7 @@ class CommentProcessor:
         """ Perform batch classification to improve speed """
         results = self.classifier(comments, self.candidate_labels)
         topics = [res["labels"][0] for res in results]
-        probabilities = [res["scores"][0] for res in results]
+        probabilities = [res["scores"][0] * 100 for res in results]  # Multiply by 100]
         return topics, probabilities
 
     def process_comments(self, df):
