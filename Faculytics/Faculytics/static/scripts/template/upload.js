@@ -9,6 +9,9 @@ const progressContainer = document.getElementById('progress-container');
 const resultTab = document.getElementById('resultTabs');
 
 const checkIcon = document.getElementById('check-icon');
+
+const processBtn = document.getElementById('processBtn');
+const teacherUName = document.getElementById('teacherUName');
 /*
     TODO:
     
@@ -55,6 +58,8 @@ fileInput.addEventListener('change', (e) => {
  */
 document.getElementById('uploadForm').addEventListener('submit', function (e) {
     e.preventDefault();
+    console.log("File upload started...");
+
     const formData = new FormData();
     const fileField = document.getElementById('csv_file');
 
@@ -64,6 +69,12 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
     }
 
     formData.append('csv_file', fileField.files[0]);
+    formData.append('teacherUName', teacherUName.value);
+
+    // Show loading spinner
+    document.getElementById("loadingSpinner").classList.remove("hidden");
+
+    console.log("Processing the file... Please wait.");
 
     fetch('/upload', {
         method: 'POST',
@@ -75,6 +86,9 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
                 alert(data.error);
                 return;
             }
+
+            document.getElementById("loadingSpinner").classList.add("hidden");
+
             checkIcon.classList.add('hidden'); 
             fileInfo.classList.add('hidden'); 
             processBtn.classList.add('hidden');
@@ -91,10 +105,16 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
 
             renderSentimentChart(sentimentCounts);
             renderComments(data.comments, data.sentiment);
-            //renderWordCloud(data.topics);
+            renderProcessedComments(data.processed_comments);
+            renderTopWords(data.top_words);
+            renderCategoryCounts(data.category_counts);
             document.getElementById('recommendationText').innerHTML = data.recommendation;
         })
-        .catch(error => console.error('Error:', error));
+        .catch((error) => {
+            console.error("Error processing file:", error);
+
+            document.getElementById("loadingSpinner").classList.add("hidden");
+        });
 });
 
 let sentimentChart = null;
@@ -267,7 +287,6 @@ function toggleGridView() {
 }
 
 function saveResultsToDatabase() {
-    let course = document.getElementById('courseSelect').value;
     fetch('/upload', { method: 'GET' })
         .then(response => {
             if (!response.ok) {
@@ -287,7 +306,7 @@ function saveResultsToDatabase() {
                     comments: data.comments,
                     sentiment: data.sentiment,
                     recommendation: data.recommendation,
-                    course: course
+                    teacherUName: teacherUName.value
                 })
             });
         })
@@ -308,18 +327,103 @@ function saveResultsToDatabase() {
         });
 }
 /*
-TODO: Not working for now
+ TOPIC MODELLING I GUESS
  */
-function renderWordCloud(topics) {
-    const container = document.getElementById('wordCloudContainer');
-    container.innerHTML = "";
-    topics.forEach(topic => {
-        const topicDiv = document.createElement('div');
-        topicDiv.className = "p-3 border rounded-lg shadow bg-gray-200";
-        topicDiv.innerHTML = `<strong>${topic.Name}:</strong> Strength: ${topic.strength}`;
-        container.appendChild(topicDiv);
+function renderProcessedComments(comments) {
+    const tableBody = document.getElementById("commentsTableBody");
+    tableBody.innerHTML = ''; // Clear previous content
+
+    console.log(comments);
+
+    comments.forEach(commentData => {
+        const row = document.createElement("tr");
+        row.className = "hover:bg-gray-100 transition-colors";
+        row.innerHTML = `
+            <td class="py-3 pr-4 max-w-xs truncate" title="${commentData.comment}">
+                ${commentData.comment}
+            </td>
+            <td class="py-3 font-medium text-gray-800">
+                ${commentData.Final_Topic}
+            </td>
+            <td class="py-3 text-right text-blue-600 font-semibold">
+                ${commentData.Topic_Probability.toFixed(2)}%
+            </td>
+        `;
+        tableBody.appendChild(row);
     });
 }
+
+function renderTopWords(topWords) {
+    const wordCloud = document.getElementById("wordCloud");
+    wordCloud.innerHTML = ''; // Clear previous content
+
+    console.log("Top Words:", topWords);
+
+    topWords.forEach(wordData => {
+        const wordSpan = document.createElement("span");
+        const fontSize = Math.max(12, 12 + wordData[1] * 1.5);
+
+        wordSpan.className = `
+            inline-block px-2 py-1 
+            bg-blue-100 text-blue-800 
+            rounded-md cursor-default
+            transition-all duration-200 
+            hover:bg-blue-200
+        `;
+        wordSpan.style.fontSize = `${fontSize}px`;
+        wordSpan.innerText = wordData[0];
+
+        wordCloud.appendChild(wordSpan);
+    });
+}
+
+function renderCategoryCounts(categoryCounts) {
+    if (!categoryCounts || categoryCounts.length === 0) {
+        console.error("Category counts data is missing or empty");
+        return;
+    }
+
+    console.log("Category Counts Data:", categoryCounts);
+
+    const ctx = document.getElementById("categoryChart").getContext("2d");
+
+    // Destroy previous chart instance
+    if (window.categoryChartInstance) {
+        window.categoryChartInstance.destroy();
+    }
+
+    window.categoryChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: categoryCounts.map(c => c.Category),
+            datasets: [{
+                label: "Category Probability",
+                data: categoryCounts.map(c => Number(c.Probability.toFixed(2))),
+                backgroundColor: "rgba(59, 130, 246, 0.7)", // Soft blue
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true, // Prevents height from expanding
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Probability (%)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
 
 document.querySelectorAll('.tab-link').forEach(button => {
     button.addEventListener('click', function () {

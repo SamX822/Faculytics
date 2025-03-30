@@ -16,7 +16,10 @@ from sklearn.ensemble import RandomForestClassifier
 
 # MarkyBoyax Sentiment Analysis Model
 from Faculytics.src.SentimentAnalysis_functions import SentimentAnalyzer
+# Magax Topic Modeling Model
+from Faculytics.src.TopicModeling_functions import CommentProcessor
 sentiment_analyzer = SentimentAnalyzer()
+topic_modeling = CommentProcessor()
 
 @app.route('/')
 def index():
@@ -458,13 +461,13 @@ Function for upload
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 
-      # Fetch all courses from DB
-
     if request.method == 'POST':
         if 'csv_file' not in request.files:
             return jsonify({"error": "No file part"}), 400
-    
+        
+        teacherUName = request.form.get("teacherUName")
         file = request.files['csv_file']
+
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
         try:
@@ -474,9 +477,6 @@ def upload_file():
 
         if 'comment' not in df.columns:
             return jsonify({"error": "CSV file missing required 'comment' column."}), 400
-
-        # Get selected course_code from form
-        course_code = request.form.get('course')
 
         # Convert comments to JSON format
         comments_list = df['comment'].tolist()
@@ -488,53 +488,65 @@ def upload_file():
         neg_count = sentiment_result["predictions"].count("Negative")
         pos_count = sentiment_result["predictions"].count("Positive")
 
+        #  Process comments using CommentProcessor
+        processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
+
+
         # Generate recommendation
         recommendation_text = (
             "There are more negative comments. Consider scheduling professional development seminars."
             if neg_count > pos_count else
             "Feedback is generally positive, but keep monitoring for potential issues."
         )
+
         #Send success response after transaction completes
-        jsonify({"success": True, "message": "File processed successfully!", "course": course_code}), 200
+        jsonify({"success": True, "message": "File processed successfully!"}), 200
 
         # Return response
         session["upload_results"] = {
             "filename": file.filename,
             "sentiment": sentiment_result["predictions"],
             "comments": comments_list,
-            #"topics": topic_info,
+            "processed_comments": processed_comments,
+            "top_words": top_words,
+            "category_counts": category_counts,
             "recommendation": recommendation_text,
-            "course": course_code
+            "teacherUName": teacherUName
         }
         results = {
             "filename": file.filename,
             "sentiment": sentiment_result["predictions"],
             "comments": comments_list,
-            #"topics": topic_info,
+            "processed_comments": processed_comments,
+            "top_words": top_words,
+            "category_counts": category_counts,
             "recommendation": recommendation_text,
-            "course": course_code
+            "teacherUName": teacherUName
         }
         return jsonify(results), 200
+
     elif request.method == 'GET':
         results = session.get('upload_results', {});
         return jsonify(results), 200
 
-    return render_template('upload.html', )
+    return render_template('upload.html')
 
 @app.route('/saveToDatabase', methods=['POST'])
 def saveToDatabase():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data received"}), 400
-        
-        comments_list = data.get("comments")
-        sentiment_result = data.get("sentiment")
-        recommendation_text = data.get("recommendation")
-        course_code = data.get("course")
-        filename = data.get("filename")
+        # Retrieve stored session data
+        stored_results = session.get("upload_results", {})
 
-        if not comments_list or not sentiment_result or not recommendation_text or not course_code:
+        if not stored_results:
+            return jsonify({"error": "No data received!"}), 400
+        
+        filename = stored_results.get("filename")
+        comments_list = stored_results.get("comments")
+        sentiment_result = stored_results.get("sentiment")
+        recommendation_text = stored_results.get("recommendation")
+        teacherUName = stored_results.get("teacherUName")
+
+        if not comments_list or not sentiment_result or not recommendation_text or not teacherUName:
             return jsonify({"error": "Missing required fields"}), 400
 
         # Save to database
@@ -543,7 +555,7 @@ def saveToDatabase():
             comments=json.dumps(comments_list),  
             sentiment=json.dumps(sentiment_result),  
             recommendation=recommendation_text,  
-            upload_course=course_code  
+            teacher_uname=teacherUName  
         )
 
         db.session.add(upload_record)
@@ -554,3 +566,112 @@ def saveToDatabase():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route('/analysis', methods=['GET'])
+def analysis():
+
+    teacherUName = request.args.get("teacher")
+    file_name = request.args.get("file_name", "overall")  # Default to "overall"
+
+    if not teacherUName:
+        return jsonify({"error": "Missing teacher username"}), 400
+
+    # Retrieve the uploads for the teacher
+    uploads = CSVUpload.query.filter_by(teacher_uname=teacherUName).all()
+
+    if not uploads:
+        return jsonify({"error": "No uploads found for this teacher."}), 404
+
+    # Initialize
+    positive_count = 0
+    negative_count = 0
+    recommendation_text = ""
+
+    # If "overall" is selected, aggregate sentiment from all files
+    if file_name == "overall":
+        for upload in uploads:
+            sentiment_data = upload.sentiment
+            positive_count += sentiment_data.count("Positive")
+            negative_count += sentiment_data.count("Negative")
+
+        # Generate overall recommendation
+        recommendation_text = (
+            "There are more negative comments. Consider scheduling professional development seminars."
+            if negative_count > positive_count else
+            "Feedback is generally positive, but keep monitoring for potential issues."
+        )
+
+    else:
+        # Get the specific file's data
+        upload = next((u for u in uploads if u.filename == file_name), None)
+        if not upload:
+            return jsonify({"error": "File not found"}), 404
+
+        sentiment_data = upload.sentiment
+        positive_count = sentiment_data.count("Positive")
+        negative_count = sentiment_data.count("Negative")
+        recommendation_text = upload.recommendation
+
+    # Return the sentiment counts and recommendation
+    return jsonify({
+        "files": [
+        {
+            "filename": upload.filename,
+            "sentiment": json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
+        }
+        for upload in uploads
+    ],
+        "positive": positive_count,
+        "negative": negative_count,
+        "recommendation": recommendation_text
+    }), 200
+
+@app.route('/college_analysis', methods=['GET'])
+def college_analysis():
+    college_acronym = request.args.get("college_acronym")
+
+    if not college_acronym:
+        return jsonify({"error": "Missing college acronym"}), 400
+
+    # Fetch the college using its acronym
+    college = College.query.filter_by(college_acronym=college_acronym).first()
+
+    if not college:
+        return jsonify({"error": "College not found."}), 404
+
+    # Retrieve all teachers from this college
+    teachers = User.query.filter(
+        User.college_name == college.college_name,  # Match by college name
+        User.userType == "Teacher"
+    ).all()
+
+    if not teachers:
+        return jsonify({"error": "No teachers found for this college."}), 404
+
+    # Retrieve all uploads related to these teachers
+    uploads = CSVUpload.query.filter(CSVUpload.teacher_uname.in_([t.uName for t in teachers])).all()
+
+    if not uploads:
+        return jsonify({"error": "No uploaded sentiment data found for this college."}), 404
+
+    # Aggregate sentiment data
+    positive_count = 0
+    negative_count = 0
+
+    for upload in uploads:
+        sentiment_data = json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
+        positive_count += sentiment_data.count("Positive")
+        negative_count += sentiment_data.count("Negative")
+
+    # Generate recommendation
+    recommendation_text = (
+        "There are more negative comments. Consider addressing faculty concerns."
+        if negative_count > positive_count else
+        "Feedback is generally positive, but continuous improvement is recommended."
+    )
+
+    return jsonify({
+        "positive": positive_count,
+        "negative": negative_count,
+        "recommendation": recommendation_text
+    }), 200
