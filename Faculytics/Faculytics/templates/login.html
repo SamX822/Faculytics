@@ -3,31 +3,31 @@
 {% set year = 2025 %}
 
 {% block content %}
-<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-    <div class="relative w-full max-w-md bg-white/10 backdrop-blur-lg p-8 rounded-xl shadow-lg border border-white/20">
-        <h2 class="text-3xl font-extrabold text-white text-center">Welcome Back</h2>
-        <p class="text-gray-300 text-center mt-2">Login to your account</p>
+<div class="flex items-center justify-center min-h-screen" style="background-color: #d6eaf8; ">
+    <div class="relative w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-300">
+        <h2 class="text-3xl font-extrabold text-black text-center">Welcome Back</h2>
+        <p class="text-gray-700 text-center mt-2">Login to your account</p>
 
         {% if error %}
-        <div class="mt-4 p-3 text-sm text-red-400 bg-red-800/20 rounded-lg border border-red-400">
+        <div class="mt-4 p-3 text-sm text-red-400 bg-red-800/20 rounded-lg border border-red-600">
             {{ error }}
         </div>
         {% endif %}
 
         <form method="POST" action="{{ url_for('login') }}" class="mt-6 space-y-4">
             <div class="relative">
-                <label for="uName" class="block text-sm font-medium text-gray-300">Username</label>
+                <label for="uName" class="block text-sm font-medium text-gray-700">Username</label>
                 <input type="text" id="uName" name="uName"
                        class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
-                           focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300 ease-in-out text-white placeholder-gray-400"
+                           focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300 ease-in-out text-black placeholder-gray-500"
                        placeholder="Enter your username" required>
             </div>
 
             <div class="relative">
-                <label for="pWord" class="block text-sm font-medium text-gray-300">Password</label>
+                <label for="pWord" class="block text-sm font-medium text-gray-700">Password</label>
                 <input type="password" id="pWord" name="pWord"
                        class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
-                           focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300 ease-in-out text-white placeholder-gray-400"
+                           focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300 ease-in-out text-black placeholder-gray-500"
                        placeholder="Enter your password" required>
             </div>
 
@@ -38,9 +38,9 @@
             </button>
         </form>
 
-        <p class="mt-4 text-center text-gray-400">
+        <p class="mt-4 text-center text-gray-700">
             Don't have an account?
-            <a href="{{ url_for('register') }}" class="text-blue-400 hover:text-blue-500 transition">Register</a>
+            <a href="{{ url_for('register') }}" class="text-blue-400 hover:text-blue-700 transition">Register</a>
         </p>
     </div>
 </div>

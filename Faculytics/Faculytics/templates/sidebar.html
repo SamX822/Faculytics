@@ -1,5 +1,5 @@
 <!-- sidebar.html -->
-<aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-gradient-to-b from-gray-800 to-gray-900 text-white shadow-xl overflow-y-auto transition-all duration-300 border-r border-gray-700">
+<aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-[#273746] text-white shadow-xl overflow-y-auto transition-all duration-300 border-r border-gray-700">
     <!-- Profile Section -->
     <div class="text-center py-6">
         <img src="{{ url_for('static', filename=user.profilePicture) if user.profilePicture else url_for('static', filename='assets/default-avatar.png') }}" alt="Profile Picture" class="h-24 w-24 rounded-full rounded-full mx-auto shadow-md border-2 border-yellow-400 mb-2">
