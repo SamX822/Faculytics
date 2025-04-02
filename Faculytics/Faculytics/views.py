@@ -73,8 +73,8 @@ def register():
             lastName=lastName,
             uName=uName,
             pWord=hashed_password,
-            campus_acronym=campus_acronym,
-            college_name=college_name if userType in ['Dean', 'Teacher'] else None
+            campus_acronym="NONE" if userType in ['Curriculum Developer'] else campus_acronym,
+            college_name=college_name if userType in ['Dean', 'Teacher'] else "NONE"
         )
         db.session.add(new_user)
         db.session.commit()
@@ -107,8 +107,11 @@ def dashboard():
     if user.userType != "admin" and user.campus_acronym:
         assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym).first()
 
-    # Admins see all campuses
-    campuses = Campus.query.all() if user.userType == "admin" else [assigned_campus] if assigned_campus else []
+    # Admins and Curriculum Developers see all campuses, excluding the "NONE" campus
+    if user.userType in ["admin", "Curriculum Developer"]:
+        campuses = Campus.query.filter(Campus.campus_acronym != "NONE").all()
+    else:
+        campuses = [assigned_campus] if assigned_campus else []
 
     return render_template('dashboard.html', user=user, assigned_campus=assigned_campus, campuses=campuses, title="Dashboard", year=datetime.now().year)
 
@@ -126,11 +129,18 @@ def approval_page():
 
     # Apply filtering based on user type
     if user.userType == "Dean":
-        pending_users = UserApproval.query.filter_by(
-            campus_acronym=user.campus_acronym, college_name=user.college_name
+        pending_users = UserApproval.query.filter(
+            (UserApproval.campus_acronym == user.campus_acronym) & 
+            (UserApproval.college_name == user.college_name) |
+            (UserApproval.campus_acronym == "NONE") & 
+            (UserApproval.college_name == "NONE")
         ).all()
     else:
-        pending_users = UserApproval.query.filter_by(campus_acronym=user.campus_acronym).all()
+        pending_users = UserApproval.query.filter(
+            (UserApproval.campus_acronym == user.campus_acronym) |
+            (UserApproval.campus_acronym == "NONE") & 
+            (UserApproval.college_name == "NONE")
+         ).all()
 
     return render_template('approval.html', pending_users=pending_users, title="User Approval")
 
@@ -289,7 +299,7 @@ def campus_page(campus_acronym):
     # Determine which colleges should be visible based on userType
     visible_colleges = []
 
-    if user.userType == 'admin':
+    if user.userType in ['admin', 'Curriculum Developer']:
         # Admins can see all colleges
         visible_colleges = campus_colleges
     elif user.userType == 'Dean':
@@ -320,7 +330,7 @@ def college_page(college_acronym, campus_acronym):
     user = User.query.get(session['user_id'])
 
     # User type restrictions and filter users by college and campus
-    if user.userType == 'admin':
+    if user.userType in ['admin', 'Curriculum Developer']:
         # Admins can see all users for this college and campus
         users = User.query.filter(
             User.college.has(college_name=college.college_name),

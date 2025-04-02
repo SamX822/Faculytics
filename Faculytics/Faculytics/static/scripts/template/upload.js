@@ -17,41 +17,114 @@ const teacherUName = document.getElementById('teacherUName');
     
     >> Change all alert dialogs to custom modals.
  */
-function updateFileStatus(file) {
-    if (!file) return;
-    fileNameSpan.textContent = file.name;
-    fileSizeSpan.textContent = (file.size / 1024).toFixed(2) + ' KB';
+document.addEventListener('DOMContentLoaded', function () {
+    const startYearDropdown = document.getElementById('startYear');
+    const endYearDropdown = document.getElementById('endYear');
+    const semesterDropdown = document.getElementById('semester');
+    const processBtn = document.getElementById('processBtn');
+    const fileInput = document.getElementById('csv_file');
+    const fileNamePreview = document.getElementById('fileNamePreview');
+    const form = document.getElementById('uploadForm');
 
-    checkIcon.classList.remove('hidden');
-    fileInfo.classList.remove('hidden'); 
-
-    processBtn.disabled = false;
-    processBtn.classList.remove('hidden');
-}
-// Drag & Drop Events
-dropArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropArea.classList.add('bg-gray-200');
-});
-
-dropArea.addEventListener('dragleave', () => {
-    dropArea.classList.remove('bg-gray-200');
-});
-
-dropArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropArea.classList.remove('bg-gray-200');
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        fileInput.files = files;
-        updateFileStatus(files[0]);
+    // Populate the year dropdowns (starting year from 1990 to current year)
+    const currentYear = new Date().getFullYear();
+    for (let year = 1990; year <= currentYear; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        startYearDropdown.appendChild(option);
     }
-});
 
-// Browse File Selection
-fileInput.addEventListener('change', (e) => {
-    updateFileStatus(e.target.files[0]);
+    // Enable/Disable end year based on start year
+    startYearDropdown.addEventListener('change', function () {
+        const startYear = parseInt(startYearDropdown.value);
+        if (startYear) {
+            endYearDropdown.innerHTML = '<option value="">Choose</option>';  // Reset end year dropdown
+            for (let year = startYear + 1; year <= currentYear; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                endYearDropdown.appendChild(option);
+            }
+            endYearDropdown.disabled = false;  // Enable end year dropdown
+        } else {
+            endYearDropdown.disabled = true;
+        }
+    });
+
+    // Enable process button only if all fields are valid
+    const validateForm = () => {
+        const startYear = startYearDropdown.value;
+        const endYear = endYearDropdown.value;
+        const semester = semesterDropdown.value;
+        if (startYear && endYear && semester) {
+            processBtn.disabled = false;
+        } else {
+            processBtn.disabled = true;
+        }
+    };
+
+    // Update the file name preview based on selections
+    startYearDropdown.addEventListener('change', updateFileName);
+    endYearDropdown.addEventListener('change', updateFileName);
+    semesterDropdown.addEventListener('change', updateFileName);
+
+    // Function to update the file name preview
+    function updateFileName() {
+        const startYear = startYearDropdown.value;
+        const endYear = endYearDropdown.value;
+        const semester = semesterDropdown.value;
+        if (startYear && endYear && semester) {
+            fileNamePreview.textContent = `${startYear}${endYear}${semester}.csv`;  // Preview filename
+        }
+        validateForm();
+    }
+
+    // Handle file selection and file renaming
+    fileInput.addEventListener('change', function () {
+        const file = fileInput.files[0];
+        if (file) {
+            fileNamePreview.textContent = file.name;  // Show original filename
+        }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();  // Prevent default form submission
+
+        const startYear = startYearDropdown.value;
+        const endYear = endYearDropdown.value;
+        const semester = semesterDropdown.value;
+        const file = fileInput.files[0];
+
+        // Prepare renamed file (add prefix or change the name)
+        if (startYear && endYear && semester && file) {
+            const newFileName = `${startYear}${endYear}${semester}.csv`;
+
+            // Create FormData object to send with AJAX
+            const formData = new FormData();
+            formData.append("csv_file", file, newFileName);  // Rename the file
+            formData.append("teacherUName", document.getElementById('teacherUName').value);  // Teacher's username
+
+            // Send AJAX request to upload file
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload', true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // Handle successful response (display results, etc.)
+                    console.log('File uploaded successfully:', xhr.responseText);
+                    alert('File processed successfully!');
+                    window.location.href = "/"; // Redirect to home or another page
+                } else {
+                    // Handle error response
+                    alert('Error processing file: ' + xhr.responseText);
+                }
+            };
+            xhr.send(formData);
+        } else {
+            alert('Please fill out all fields before uploading.');
+        }
+    });
 });
 /*
     All functions below processes the CSV files to return results

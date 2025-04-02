@@ -11,12 +11,14 @@
     <main class="ml-[14rem] p-6 text-gray-300 w-[100%]">
         <div class="grid grid-cols-2 gap-6 mt-6">
             {% for campus in campuses %}
+            {% if campus.campus_acronym != "NONE" %}
             <a href="{{ url_for('campus_page', campus_acronym=campus.campus_acronym|upper) }}"
                class="block bg-gray-800 p-6 rounded-lg shadow-md text-center transition hover:bg-gray-700">
                 <div class="w-16 h-16 bg-white rounded-full mx-auto"></div>
                 <h3 class="text-lg font-bold text-white mt-4">{{ campus.campus_acronym }}</h3>
                 <p class="text-gray-400">{{ campus.campus_name }}</p>
             </a>
+            {% endif %}
             {% else %}
             <p class="text-gray-400 text-center">No campuses found.</p>
             {% endfor %}

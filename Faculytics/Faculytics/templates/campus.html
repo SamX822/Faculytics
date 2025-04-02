@@ -41,6 +41,27 @@
         </div>
 
         <div class="grid grid-cols-2 gap-6 justify-items-center">
+            {% if user.userType == "Curriculum Developer" %}
+            <!-- Show all colleges for Curriculum Developers -->
+            {% for college in campus.colleges %}
+            <div class="college-card bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+                 onclick="toggleCollegeActions('{{ college.college_acronym }}')">
+                <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
+                <p class="text-white text-lg font-bold text-center">{{ college.college_name }}</p>
+                <div id="actions-{{ college.college_acronym }}" class="hidden mt-4 flex gap-2">
+                    <a href="{{ url_for('college_page', college_acronym=college.college_acronym, campus_acronym=campus.campus_acronym) }}"
+                       class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                        Enter
+                    </a>
+                    <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                            onclick="openCollegeAnalysisModal(event, '{{ college.college_acronym }}')">
+                        Analysis
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <!-- Normal behavior for other user types -->
             {% if visible_colleges %}
             {% for college in visible_colleges %}
             <div class="college-card bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
@@ -61,6 +82,7 @@
             {% endfor %}
             {% else %}
             <p class="text-gray-400 col-span-2">No colleges found or you are unauthorized to access them.</p>
+            {% endif %}
             {% endif %}
         </div>
 

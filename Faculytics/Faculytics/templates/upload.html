@@ -1,3 +1,4 @@
+<!-- upload.html -->
 <div class="w-[100%] bg-gray-100 rounded-[20px] flex flex-col p-4">
     <div class="w-[100%] self-center bg-white p-7 shadow-lg rounded-lg">
 
@@ -30,10 +31,32 @@
                 <!-- Hidden File Input -->
                 <input type="file" name="csv_file" id="csv_file" accept=".csv" class="hidden">
 
+                <!-- Academic Year and Semester Selection -->
+                <div>
+                    <label for="startYear">Starting Year:</label>
+                    <select id="startYear">
+                        <option value="">Choose</option>
+                    </select>
+
+                    <label for="endYear">Ending Year:</label>
+                    <select id="endYear" disabled>
+                        <option value="">Choose</option>
+                    </select>
+
+                    <label for="semester">Semester:</label>
+                    <select id="semester">
+                        <option value="">Choose</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+
                 <!-- Process File Button -->
-                <button id="processBtn" type="submit" class="w-full mt-4 bg-[var(--primary-color)] text-lg text-white px-6 py-2 rounded-lg transition-all hover:bg-[var(--neon-color)] hover:text-black hover:font-bold flex justify-center items-center">
+                <button id="processBtn" type="submit" class="w-full mt-4 bg-[var(--primary-color)] text-lg text-white px-6 py-2 rounded-lg transition-all hover:bg-[var(--neon-color)] hover:text-black hover:font-bold flex justify-center items-center" disabled>
                     Process File
                 </button>
+
+                <p id="fileNamePreview"></p>
 
                 <div id="loadingSpinner" class="hidden text-center mt-4">
                     <span>Processing...</span>
