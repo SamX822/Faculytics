@@ -8,6 +8,7 @@ from Faculytics.models import User, CSVUpload, College, Campus, UserApproval
 import pandas as pd
 import json
 import os
+import traceback
 
 # ML libraries
 from transformers import pipeline
@@ -217,7 +218,16 @@ def uploadHistory():
         return redirect(url_for('login'))
     
     user = User.query.get(session['user_id'])
-    return render_template('uploadHistory.html', user=user, title="Upload", year=datetime.now().year)
+
+    teacher_username = request.args.get('teacher')
+    teacher_full_name = None
+
+    if teacher_username:
+        teacher = User.query.filter_by(uName=teacher_username).first()
+        if teacher:
+            teacher_full_name = f"{teacher.firstName} {teacher.lastName}"
+
+    return render_template('uploadHistory.html', user=user, teacher_name=teacher_full_name, title="Upload", year=datetime.now().year)
 
 IMG_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -471,75 +481,96 @@ Function for upload
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 
-    if request.method == 'POST':
-        if 'csv_file' not in request.files:
-            return jsonify({"error": "No file part"}), 400
+    try:
+        if request.method == 'POST':
+            if 'csv_file' not in request.files:
+                return jsonify({"error": "No file part"}), 400
         
-        teacherUName = request.form.get("teacherUName")
-        file = request.files['csv_file']
+            teacherUName = request.form.get("teacherUName")
+            file = request.files['csv_file']
 
-        if file.filename == '':
-            return jsonify({"error": "No selected file"}), 400
-        try:
-            df = pd.read_csv(file)
-        except Exception as e:
-            return jsonify({"error": f"Error reading CSV: {str(e)}"}), 400
+            # Get values for Starting Year, Ending Year, and Semester from the form
+            starting_year = request.form.get("startYear")
+            ending_year = request.form.get("endYear")
+            semester = request.form.get("semester")
 
-        if 'comment' not in df.columns:
-            return jsonify({"error": "CSV file missing required 'comment' column."}), 400
+            print("Received startYear:", starting_year)
+            print("Received endYear:", ending_year)
+            print("Received semester:", semester)
 
-        # Convert comments to JSON format
-        comments_list = df['comment'].tolist()
+            if not all([starting_year, ending_year, semester]):
+                print("Received startYear:", starting_year)
+                print("Received endYear:", ending_year)
+                print("Received semester:", semester)
+                return jsonify({"error": "Missing required fields for the filename"}), 400
 
-        # --- Sentiment Analysis ---
-        sentiment_result = sentiment_analyzer.predict(comments_list)
+            if file.filename == '':
+                return jsonify({"error": "No selected file"}), 400
+            try:
+                df = pd.read_csv(file)
+            except Exception as e:
+                return jsonify({"error": f"Error reading CSV: {str(e)}"}), 400
 
-        # Count positive and negative sentiments
-        neg_count = sentiment_result["predictions"].count("Negative")
-        pos_count = sentiment_result["predictions"].count("Positive")
+            if 'comment' not in df.columns:
+                return jsonify({"error": "CSV file missing required 'comment' column."}), 400
 
-        #  Process comments using CommentProcessor
-        processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
+            # Convert comments to JSON format
+            comments_list = df['comment'].tolist()
+
+            # --- Sentiment Analysis ---
+            sentiment_result = sentiment_analyzer.predict(comments_list)
+
+            # Count positive and negative sentiments
+            neg_count = sentiment_result["predictions"].count("Negative")
+            pos_count = sentiment_result["predictions"].count("Positive")
+
+            #  Process comments using CommentProcessor
+            processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
 
 
-        # Generate recommendation
-        recommendation_text = (
-            "There are more negative comments. Consider scheduling professional development seminars."
-            if neg_count > pos_count else
-            "Feedback is generally positive, but keep monitoring for potential issues."
-        )
+            # Generate recommendation
+            recommendation_text = (
+                "There are more negative comments. Consider scheduling professional development seminars."
+                if neg_count > pos_count else
+                "Feedback is generally positive, but keep monitoring for potential issues."
+            )
 
-        #Send success response after transaction completes
-        jsonify({"success": True, "message": "File processed successfully!"}), 200
+            # set new filename
+            new_filename = f"{starting_year}_{ending_year}_{semester}.csv"
 
-        # Return response
-        session["upload_results"] = {
-            "filename": file.filename,
-            "sentiment": sentiment_result["predictions"],
-            "comments": comments_list,
-            "processed_comments": processed_comments,
-            "top_words": top_words,
-            "category_counts": category_counts,
-            "recommendation": recommendation_text,
-            "teacherUName": teacherUName
-        }
-        results = {
-            "filename": file.filename,
-            "sentiment": sentiment_result["predictions"],
-            "comments": comments_list,
-            "processed_comments": processed_comments,
-            "top_words": top_words,
-            "category_counts": category_counts,
-            "recommendation": recommendation_text,
-            "teacherUName": teacherUName
-        }
-        return jsonify(results), 200
+            # Return response
+            session["upload_results"] = {
+                "filename": new_filename,
+                "sentiment": sentiment_result["predictions"],
+                "comments": comments_list,
+                "processed_comments": processed_comments,
+                "top_words": top_words,
+                "category_counts": category_counts,
+                "recommendation": recommendation_text,
+                "teacherUName": teacherUName
+            }
+            results = {
+                "filename": new_filename,
+                "sentiment": sentiment_result["predictions"],
+                "comments": comments_list,
+                "processed_comments": processed_comments,
+                "top_words": top_words,
+                "category_counts": category_counts,
+                "recommendation": recommendation_text,
+                "teacherUName": teacherUName
+            }
+            return jsonify(results), 200
 
-    elif request.method == 'GET':
-        results = session.get('upload_results', {});
-        return jsonify(results), 200
+        elif request.method == 'GET':
+            results = session.get('upload_results', {});
+            return jsonify(results), 200
 
-    return render_template('upload.html')
+        return render_template('upload.html')
+
+    except Exception as e:
+        print("Error processing file:", e)
+        traceback.print_exc()
+        return jsonify({"error": f"Error processing file: {str(e)}"}), 500
 
 @app.route('/saveToDatabase', methods=['POST'])
 def saveToDatabase():
@@ -553,6 +584,7 @@ def saveToDatabase():
         filename = stored_results.get("filename")
         comments_list = stored_results.get("comments")
         sentiment_result = stored_results.get("sentiment")
+        topic_result = stored_results.get("category_counts")
         recommendation_text = stored_results.get("recommendation")
         teacherUName = stored_results.get("teacherUName")
 
@@ -563,7 +595,8 @@ def saveToDatabase():
         upload_record = CSVUpload(
             filename=filename,  
             comments=json.dumps(comments_list),  
-            sentiment=json.dumps(sentiment_result),  
+            sentiment=json.dumps(sentiment_result), 
+            topics=json.dumps(topic_result),
             recommendation=recommendation_text,  
             teacher_uname=teacherUName  
         )

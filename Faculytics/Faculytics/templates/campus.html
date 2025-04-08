@@ -44,7 +44,7 @@
             {% if user.userType == "Curriculum Developer" %}
             <!-- Show all colleges for Curriculum Developers -->
             {% for college in campus.colleges %}
-            <div class="college-card bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="college-card bg-gray-800 p-4 rounded-lg shadow-md flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="toggleCollegeActions('{{ college.college_acronym }}')">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ college.college_name }}</p>
@@ -61,10 +61,10 @@
             </div>
             {% endfor %}
             {% else %}
-            <!-- Normal behavior for other user types -->
+            <!-- for other user types -->
             {% if visible_colleges %}
             {% for college in visible_colleges %}
-            <div class="college-card bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="college-card bg-gray-800 p-4 rounded-lg shadow-md flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="toggleCollegeActions('{{ college.college_acronym }}')">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ college.college_name }}</p>

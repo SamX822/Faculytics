@@ -18,7 +18,7 @@
             {% set directors = users | selectattr("userType", "equalto", "Campus Director") | list %}
             {% if directors %}
             {% for director in directors %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="confirmDeleteUser({{ director.id }})">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ director.firstName }} {{ director.lastName }}</p>
@@ -34,7 +34,7 @@
             {% set chancellors = users | selectattr("userType", "equalto", "Vice Chancellor") | list %}
             {% if chancellors %}
             {% for chancellor in chancellors %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="confirmDeleteUser({{ chancellor.id }})">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ chancellor.firstName }} {{ chancellor.lastName }}</p>
@@ -50,7 +50,7 @@
             {% set deans = users | selectattr("userType", "equalto", "Dean") | list %}
             {% if deans %}
             {% for dean in deans %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="confirmDeleteUser({{ dean.id }})">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ dean.firstName }} {{ dean.lastName }}</p>
@@ -66,7 +66,7 @@
             {% set teachers = users | selectattr("userType", "equalto", "Teacher") | list %}
             {% if teachers %}
             {% for teacher in teachers %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="confirmDeleteUser({{ teacher.id }})">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
@@ -84,7 +84,7 @@
             {% set teachers = users | selectattr("userType", "equalto", "Teacher") | list %}
             {% if teachers %}
             {% for teacher in teachers %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="toggleTeacherActions('{{ teacher.uName }}')">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>
@@ -114,7 +114,7 @@
             {% set teachers = users | selectattr("userType", "equalto", "Teacher") | list %}
             {% if teachers %}
             {% for teacher in teachers %}
-            <div class="bg-gray-700 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-600 cursor-pointer"
+            <div class="bg-gray-800 p-4 rounded-lg flex flex-col items-center transition hover:bg-gray-700 cursor-pointer"
                  onclick="toggleTeacherActions('{{ teacher.uName }}')">
                 <div class="w-20 h-20 bg-white rounded-full mb-4"></div>
                 <p class="text-white text-lg font-bold text-center">{{ teacher.firstName }} {{ teacher.lastName }}</p>

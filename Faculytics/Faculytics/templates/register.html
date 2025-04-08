@@ -68,7 +68,6 @@
                                focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
                                hover:bg-gray-800 hover:border-yellow-500 hover:text-white" required>
                     <option value="">Select your campus</option>
-                    <option value="NONE">None</option>
                     {% for campus in campuses %}
                     <option value="{{ campus.campus_acronym }}">{{ campus.campus_name }}</option>
                     {% endfor %}
@@ -82,7 +81,6 @@
                                focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
                                hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
                     <option value="">Select your college</option>
-                    <option value="NONE">None</option>
                     {% for college in colleges %}
                     <option value="{{ college.college_name }}">{{ college.college_name }}</option>
                     {% endfor %}

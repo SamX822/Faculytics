@@ -19,10 +19,9 @@ const teacherUName = document.getElementById('teacherUName');
  */
 document.addEventListener('DOMContentLoaded', function () {
     const startYearDropdown = document.getElementById('startYear');
-    const endYearDropdown = document.getElementById('endYear');
+    const endYearInput = document.getElementById('endYear');
     const semesterDropdown = document.getElementById('semester');
     const processBtn = document.getElementById('processBtn');
-    const fileInput = document.getElementById('csv_file');
     const fileNamePreview = document.getElementById('fileNamePreview');
     const form = document.getElementById('uploadForm');
 
@@ -35,44 +34,41 @@ document.addEventListener('DOMContentLoaded', function () {
         startYearDropdown.appendChild(option);
     }
 
-    // Enable/Disable end year based on start year
     startYearDropdown.addEventListener('change', function () {
         const startYear = parseInt(startYearDropdown.value);
         if (startYear) {
-            endYearDropdown.innerHTML = '<option value="">Choose</option>';  // Reset end year dropdown
-            for (let year = startYear + 1; year <= currentYear; year++) {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                endYearDropdown.appendChild(option);
-            }
-            endYearDropdown.disabled = false;  // Enable end year dropdown
+            const endYear = startYear + 1;
+            endYearInput.value = endYear;
         } else {
-            endYearDropdown.disabled = true;
+            endYearInput.value = ''; // Clear if no start year selected
         }
+        updateFileName();
     });
 
     // Enable process button only if all fields are valid
     const validateForm = () => {
         const startYear = startYearDropdown.value;
-        const endYear = endYearDropdown.value;
+        const endYear = endYearInput.value;
         const semester = semesterDropdown.value;
         if (startYear && endYear && semester) {
             processBtn.disabled = false;
         } else {
             processBtn.disabled = true;
         }
+        console.log('Start Year:', document.getElementById('startYear').value +
+            ' ; End Year:', document.getElementById('endYear').value +
+            ' ; Semester:', document.getElementById('semester').value);
     };
 
     // Update the file name preview based on selections
     startYearDropdown.addEventListener('change', updateFileName);
-    endYearDropdown.addEventListener('change', updateFileName);
+    endYearInput.addEventListener('change', updateFileName);
     semesterDropdown.addEventListener('change', updateFileName);
 
     // Function to update the file name preview
     function updateFileName() {
         const startYear = startYearDropdown.value;
-        const endYear = endYearDropdown.value;
+        const endYear = endYearInput.value;
         const semester = semesterDropdown.value;
         if (startYear && endYear && semester) {
             fileNamePreview.textContent = `${startYear}${endYear}${semester}.csv`;  // Preview filename
@@ -84,92 +80,76 @@ document.addEventListener('DOMContentLoaded', function () {
     fileInput.addEventListener('change', function () {
         const file = fileInput.files[0];
         if (file) {
-            fileNamePreview.textContent = file.name;  // Show original filename
-        }
-    });
-
-    // Handle form submission
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();  // Prevent default form submission
-
-        const startYear = startYearDropdown.value;
-        const endYear = endYearDropdown.value;
-        const semester = semesterDropdown.value;
-        const file = fileInput.files[0];
-
-        // Prepare renamed file (add prefix or change the name)
-        if (startYear && endYear && semester && file) {
-            const newFileName = `${startYear}${endYear}${semester}.csv`;
-
-            // Create FormData object to send with AJAX
-            const formData = new FormData();
-            formData.append("csv_file", file, newFileName);  // Rename the file
-            formData.append("teacherUName", document.getElementById('teacherUName').value);  // Teacher's username
-
-            // Send AJAX request to upload file
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/upload', true);
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    // Handle successful response (display results, etc.)
-                    console.log('File uploaded successfully:', xhr.responseText);
-                    alert('File processed successfully!');
-                    window.location.href = "/"; // Redirect to home or another page
-                } else {
-                    // Handle error response
-                    alert('Error processing file: ' + xhr.responseText);
-                }
-            };
-            xhr.send(formData);
-        } else {
-            alert('Please fill out all fields before uploading.');
+            // Update both the file preview and the status section.
+            document.getElementById('fileNamePreview').textContent = file.name; // show original file name
+            fileNameSpan.textContent = file.name;
+            const sizeInKB = (file.size / 1024).toFixed(2);
+            fileSizeSpan.textContent = `${sizeInKB} KB`;
         }
     });
 });
 /*
     All functions below processes the CSV files to return results
  */
-document.getElementById('uploadForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    console.log("File upload started...");
+document.getElementById('uploadForm').addEventListener('submit', function (event) {
+    event.preventDefault();
 
-    const formData = new FormData();
-    const fileField = document.getElementById('csv_file');
+    const startYearDropdown = document.getElementById('startYear');
+    const endYearInput = document.getElementById('endYear');
+    const semesterDropdown = document.getElementById('semester');
+    const fileInput = document.getElementById('csv_file');
 
-    if (fileField.files.length === 0) {
-        alert("Please select a CSV file.");
+    const startYear = startYearDropdown.value;
+    const endYear = endYearInput.value;
+    const semester = semesterDropdown.value;
+    const file = fileInput.files[0];
+
+    if (!startYear || !endYear || !semester || !file) {
+        alert('Please fill out all fields and select a file before uploading.');
         return;
     }
 
-    formData.append('csv_file', fileField.files[0]);
-    formData.append('teacherUName', teacherUName.value);
+    const newFileName = `${startYear}${endYear}${semester}.csv`;
 
-    // Show loading spinner
+    const formData = new FormData();
+    formData.append("csv_file", file, newFileName);
+    formData.append("teacherUName", teacherUName.value);
+    formData.append('startYear', startYear);
+    formData.append('endYear', endYear);
+    formData.append('semester', semester);
+
+    console.log("New File Name: " + newFileName);
+
     document.getElementById("loadingSpinner").classList.remove("hidden");
 
-    console.log("Processing the file... Please wait.");
+    console.log("Processing...");
 
     fetch('/upload', {
         method: 'POST',
         body: formData
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Server error ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            document.getElementById("loadingSpinner").classList.add("hidden");
+
             if (data.error) {
                 alert(data.error);
                 return;
             }
 
-            document.getElementById("loadingSpinner").classList.add("hidden");
-
-            checkIcon.classList.add('hidden'); 
-            fileInfo.classList.add('hidden'); 
+            // Hide status indicators and show results
+            checkIcon.classList.add('hidden');
+            fileInfo.classList.add('hidden');
             processBtn.classList.add('hidden');
             resultTabs.classList.remove("hidden");
-            commentsList.innerHTML = ''; 
-
-            fileNameSpan.textContent = "No file selected";
-            fileSizeSpan.textContent = "0KB";
+            commentsList.innerHTML = '';
 
             const sentimentCounts = {
                 positive: data.sentiment.filter(s => s === "Positive").length,
@@ -182,11 +162,13 @@ document.getElementById('uploadForm').addEventListener('submit', function (e) {
             renderTopWords(data.top_words);
             renderCategoryCounts(data.category_counts);
             document.getElementById('recommendationText').innerHTML = data.recommendation;
-        })
-        .catch((error) => {
-            console.error("Error processing file:", error);
 
+            console.log('File uploaded successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
             document.getElementById("loadingSpinner").classList.add("hidden");
+            alert('Error processing file: ' + error.message);
         });
 });
 

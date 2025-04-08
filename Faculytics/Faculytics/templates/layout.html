@@ -16,11 +16,11 @@
             --hover-color: #2e467d;
             --active-color: #1d335c;
             --neon-color: #00f6fa;
-            --background-color: #d6eaf8;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200" style="background-color: var(--background-color)">
+<body class="bg-gray-900 text-gray-200">
+
     <!-- Navbar -->
     <nav class="fixed top-0 w-full bg-[var(--primary-color)] shadow-lg border-b border-white/20 z-50">
         <div class="container mx-auto flex justify-between items-center p-2">
@@ -29,12 +29,12 @@
     </nav>
 
     <!-- Page Content -->
-    <div class="w-full mx-auto mt-24 px-4" style="background-color: #d6eaf8; border-radius: 5px; ">
+    <div class="w-full mx-auto mt-24 px-4 bg-gray-800 rounded-md shadow-lg">
         {% block content %}{% endblock %}
     </div>
 
     <!-- Footer -->
-    <footer class="mt-16 p-6 text-center text-black border-t border-gray-700">
+    <footer class="mt-16 p-6 text-center text-white border-t border-white/20 bg-[var(--primary-color)]">
         <p>&copy; {{ year }} - Faculytics</p>
     </footer>
 

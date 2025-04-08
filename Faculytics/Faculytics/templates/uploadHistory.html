@@ -14,6 +14,18 @@
             Back to College
         </a>
 
+        <div class="flex items-center justify-between bg-gray-700 px-6 py-4 rounded-xl shadow-lg mb-6 border-l-4 border-blue-500 mt-4">
+            <div class="flex items-center gap-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8 8 0 1116.88 6.196M15 12h.01" />
+                </svg>
+                <div>
+                    <p class="text-sm text-gray-400 uppercase tracking-wider">Currently Uploading For</p>
+                    <h2 class="text-2xl font-bold text-white">{{ teacher_name }}</h2>
+                </div>
+            </div>
+        </div>
+
         <!-- Hidden upload section -->
         <div id="uploadContainer" class="mt-4">
             {% include "upload.html" %}
@@ -21,10 +33,9 @@
     </main>
 
     {% elif user.userType == "Campus Director" or  user.userType == "Vice Chancellor" or user.userType == "Teacher" %}
-    <main class="w-full ml-[260px] p-4 mt-1 transition-all duration-300 text-gray-300">
-        <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
-
-    </main>
+    <script>
+        window.location.href = "{{ url_for('dashboard') }}";
+    </script>
 
     {% else %}
     {# Redirect Unauthorized Users to Login #}
