@@ -697,24 +697,31 @@ def college_analysis():
     if not uploads:
         return jsonify({"error": "No uploaded sentiment data found for this college."}), 404
 
-    # Aggregate sentiment data
-    positive_count = 0
-    negative_count = 0
+    # Prepare the aggregated data
+    positive_count = []
+    negative_count = []
+    file_data = []
 
-    for upload in uploads:
-        sentiment_data = json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
-        positive_count += sentiment_data.count("Positive")
-        negative_count += sentiment_data.count("Negative")
+    # Iterate through the uploads and combine data
+    for upload in sorted(uploads, key=lambda x: x.upload_date):
+        sentiments = json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
+        file_data.append({
+            "filename": upload.filename,
+            "sentiment": sentiments
+        })
+
 
     # Generate recommendation
     recommendation_text = (
         "There are more negative comments. Consider addressing faculty concerns."
-        if negative_count > positive_count else
+        if sum(negative_count) > sum(positive_count) else
         "Feedback is generally positive, but continuous improvement is recommended."
     )
 
     return jsonify({
+        "files": file_data,
         "positive": positive_count,
         "negative": negative_count,
         "recommendation": recommendation_text
     }), 200
+

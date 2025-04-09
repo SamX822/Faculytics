@@ -153,14 +153,50 @@
                     collegeChartInstance.destroy();
                 }
 
+                // Group sentiments by identical filename
+                const groupedSentiments = {};
+                data.files.forEach(file => {
+                    const filename = file.filename;
+                    const sentiments = Array.isArray(file.sentiment)
+                        ? file.sentiment
+                        : JSON.parse(file.sentiment || "[]");
+
+                    if (!groupedSentiments[filename]) {
+                        groupedSentiments[filename] = { positive: 0, negative: 0 };
+                    }
+
+                    sentiments.forEach(s => {
+                        if (s === "Positive") groupedSentiments[filename].positive++;
+                        else if (s === "Negative") groupedSentiments[filename].negative++;
+                    });
+                });
+
+                // Sort filenames chronologically
+                function parseFilename(filename) {
+                    const [startYear, endYear, semester] = filename.split('_').map(Number);
+                    return { startYear, endYear, semester };
+                }
+
+                const sortedFilenames = Object.keys(groupedSentiments).sort((a, b) => {
+                    const aParts = parseFilename(a);
+                    const bParts = parseFilename(b);
+                    if (aParts.startYear !== bParts.startYear) return aParts.startYear - bParts.startYear;
+                    if (aParts.endYear !== bParts.endYear) return aParts.endYear - bParts.endYear;
+                    return aParts.semester - bParts.semester;
+                });
+
+                const labels = sortedFilenames;
+                const positiveData = sortedFilenames.map(filename => groupedSentiments[filename].positive);
+                const negativeData = sortedFilenames.map(filename => groupedSentiments[filename].negative);
+
                 collegeChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: ["Overall Sentiment"],
+                        labels: labels,
                         datasets: [
                             {
                                 label: 'Positive',
-                                data: [data.positive],
+                                data: positiveData,
                                 borderColor: 'green',
                                 fill: false,
                                 pointStyle: 'circle',
@@ -168,7 +204,7 @@
                             },
                             {
                                 label: 'Negative',
-                                data: [data.negative],
+                                data: negativeData,
                                 borderColor: 'red',
                                 fill: false,
                                 pointStyle: 'circle',
@@ -178,14 +214,45 @@
                     },
                     options: {
                         responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'College Sentiment Trends'
+                            },
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`;
+                                    }
+                                }
+                            }
+                        },
                         scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Filename (Semester)'
+                                },
+                                ticks: {
+                                    color: 'white'
+                                }
+                            },
                             y: {
                                 beginAtZero: true,
-                                title: { display: true, text: 'Sentiment Count' },
-                                ticks: { stepSize: 1 }
-                            },
-                            x: {
-                                title: { display: true, text: 'Sentiment' }
+                                stepSize: 1,
+                                title: {
+                                    display: true,
+                                    text: 'Sentiment Count',
+                                    color: 'white'
+                                },
+                                ticks: {
+                                    color: 'white'
+                                }
                             }
                         }
                     }
