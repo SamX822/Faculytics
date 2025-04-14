@@ -3,7 +3,56 @@
 {% set year = 2025 %}
 
 {% block content %}
-<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+<style>
+    .input-textui {
+        background-color: #93c9b7;
+        width: 100%;
+        height: 40px;
+        padding: 10px;
+        border: 2px solid white;
+        border-radius: 5px;
+    }
+
+    .input-textui:focus {
+        color: rgb(147,201,183);
+        background-color: #93c9b7;
+        outline-color: rgb(147,201,183);
+        box-shadow: -3px -3px 15px rgb(147,201,183);
+        transition: 0.1s;
+        transition-property: box-shadow;
+    }
+
+    button {
+        font-size: 18px;
+        display: inline-block;
+        outline: 0;
+        border: 0;
+        cursor: pointer;
+        will-change: box-shadow,transform;
+        background: radial-gradient( 100% 100% at 100% 0%, #89E5FF 0%, #5468FF 100% );
+        box-shadow: 0px 0.01em 0.01em rgb(45 35 66 / 40%), 0px 0.3em 0.7em -0.01em rgb(45 35 66 / 30%), inset 0px -0.01em 0px rgb(58 65 111 / 50%);
+        padding: 0 2em;
+        border-radius: 0.3em;
+        color: #fff;
+        width: 100%;
+        height: 2.6em;
+        text-shadow: 0 1px 0 rgb(0 0 0 / 40%);
+        transition: box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+        button:hover {
+            box-shadow: 0px 0.1em 0.2em rgb(45 35 66 / 40%), 0px 0.4em 0.7em -0.1em rgb(45 35 66 / 30%), inset 0px -0.1em 0px #3c4fe0;
+            transform: translateY(-0.1em);
+        }
+
+        button:active {
+            box-shadow: inset 0px 0.1em 0.6em #3c4fe0;
+            transform: translateY(0em);
+        }
+
+</style>
+
+<div class="flex items-center justify-center min-h-screen bg-[#003153]">
     <div class="relative w-full max-w-md bg-white/10 backdrop-blur-lg p-8 rounded-xl shadow-lg border border-white/20">
         <h2 class="text-3xl font-extrabold text-white text-center">Welcome Back</h2>
         <p class="text-gray-300 text-center mt-2">Login to your account</p>
@@ -18,24 +67,20 @@
             <div class="relative">
                 <label for="uName" class="block text-sm font-medium text-gray-300">Username</label>
                 <input type="text" id="uName" name="uName"
-                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
-                           focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300 ease-in-out text-white placeholder-gray-400"
+                       class="input-textui text-white placeholder-gray-400"
                        placeholder="Enter your username" required>
             </div>
 
             <div class="relative">
                 <label for="pWord" class="block text-sm font-medium text-gray-300">Password</label>
                 <input type="password" id="pWord" name="pWord"
-                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
-                           focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300 ease-in-out text-white placeholder-gray-400"
+                       class="input-textui text-white placeholder-gray-400"
                        placeholder="Enter your password" required>
             </div>
 
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg
-                       hover:bg-blue-700 hover:scale-105 transition-all duration-300 ease-in-out shadow-lg">
-                Login
-            </button>
+            <button type="submit" class="button">
+                <span class="text">Login</span>
+</button>
         </form>
 
         <p class="mt-4 text-center text-gray-400">
