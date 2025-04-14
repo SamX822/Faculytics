@@ -527,7 +527,6 @@ def upload_file():
             #  Process comments using CommentProcessor
             processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
 
-
             # Generate recommendation
             recommendation_text = (
                 "There are more negative comments. Consider scheduling professional development seminars."
@@ -546,6 +545,7 @@ def upload_file():
                 "processed_comments": processed_comments,
                 "top_words": top_words,
                 "category_counts": category_counts,
+                "topics": [item["Final_Topic"] for item in processed_comments],
                 "recommendation": recommendation_text,
                 "teacherUName": teacherUName
             }
@@ -556,6 +556,7 @@ def upload_file():
                 "processed_comments": processed_comments,
                 "top_words": top_words,
                 "category_counts": category_counts,
+                "topics": [item["Final_Topic"] for item in processed_comments],
                 "recommendation": recommendation_text,
                 "teacherUName": teacherUName
             }
@@ -584,22 +585,42 @@ def saveToDatabase():
         filename = stored_results.get("filename")
         comments_list = stored_results.get("comments")
         sentiment_result = stored_results.get("sentiment")
-        topic_result = stored_results.get("category_counts")
+        topic_result = stored_results.get("topics")
         recommendation_text = stored_results.get("recommendation")
         teacherUName = stored_results.get("teacherUName")
 
         if not comments_list or not sentiment_result or not recommendation_text or not teacherUName:
             return jsonify({"error": "Missing required fields"}), 400
 
-        # Save to database
-        upload_record = CSVUpload(
-            filename=filename,  
-            comments=json.dumps(comments_list),  
-            sentiment=json.dumps(sentiment_result), 
-            topics=json.dumps(topic_result),
-            recommendation=recommendation_text,  
-            teacher_uname=teacherUName  
-        )
+        # Check row count limit
+        max_allowed_rows = 1500
+        if len(comments_list) > max_allowed_rows:
+            return jsonify({"error": "Data rows exceed 1500 limit"}), 400
+
+        # Helper function to split into chunks of 500
+        def split_chunks(lst, size):
+            return [lst[i:i + size] for i in range(0, len(lst), size)]
+
+        comments_chunks = split_chunks(comments_list, 500)
+        sentiment_chunks = split_chunks(sentiment_result, 500)
+        topics_chunks = split_chunks(topic_result, 500)
+
+        # Prepare field data
+        upload_data = {
+            "filename": filename,
+            "recommendation": recommendation_text,
+            "teacher_uname": teacherUName
+        }
+
+        # Map chunks to dynamic column names (up to 3)
+        for i in range(len(comments_chunks)):
+            idx = i + 1
+            upload_data[f"comments{idx}"] = json.dumps(comments_chunks[i])
+            upload_data[f"sentiment{idx}"] = json.dumps(sentiment_chunks[i])
+            upload_data[f"topics{idx}"] = json.dumps(topics_chunks[i])
+
+        # Create CSVUpload instance dynamically with only the fields present
+        upload_record = CSVUpload(**upload_data)
 
         db.session.add(upload_record)
         db.session.commit()
@@ -609,6 +630,25 @@ def saveToDatabase():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+        # Save to database
+    #    upload_record = CSVUpload(
+    #        filename=filename,  
+    #        comments=json.dumps(comments_list),  
+    #        sentiment=json.dumps(sentiment_result), 
+    #        topics=json.dumps(topic_result),
+    #        recommendation=recommendation_text,  
+    #        teacher_uname=teacherUName  
+    #    )
+
+    #    db.session.add(upload_record)
+    #    db.session.commit()
+
+    #    return jsonify({"success": True, "message": "Data saved successfully!"}), 200
+
+    #except Exception as e:
+    #    db.session.rollback()
+    #    return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @app.route('/analysis', methods=['GET'])
 def analysis():
@@ -626,44 +666,54 @@ def analysis():
         return jsonify({"error": "No uploads found for this teacher."}), 404
 
     # Initialize
-    positive_count = 0
-    negative_count = 0
-    recommendation_text = ""
+    file_data = []
+    total_positive = 0
+    total_negative = 0
 
-    # If "overall" is selected, aggregate sentiment from all files
-    if file_name == "overall":
-        for upload in uploads:
-            sentiment_data = upload.sentiment
-            positive_count += sentiment_data.count("Positive")
-            negative_count += sentiment_data.count("Negative")
+    for upload in uploads:
+        import re
 
-        # Generate overall recommendation
+        def extract_json_chunks(prefix, upload):
+            chunks = []
+            for attr in dir(upload):
+                if re.match(f"{prefix}\\d+", attr):
+                    chunk = getattr(upload, attr)
+                    if chunk:
+                        parsed = json.loads(chunk) if isinstance(chunk, str) else chunk
+                        chunks.extend(parsed)
+            return chunks
+
+        sentiments = extract_json_chunks('sentiment', upload)
+        topics = extract_json_chunks('topics', upload)
+
+        file_data.append({
+            "filename": upload.filename,
+            "sentiment": sentiments,
+            "topics": topics
+        })
+
+        total_positive += sentiments.count("Positive")
+        total_negative += sentiments.count("Negative")
+
+    # Find specific file if needed
+    if file_name != "overall":
+        target = next((f for f in file_data if f["filename"] == file_name), None)
+        if not target:
+            return jsonify({"error": "File not found"}), 404
+        positive_count = target["sentiment"].count("Positive")
+        negative_count = target["sentiment"].count("Negative")
+        recommendation_text = next((u.recommendation for u in uploads if u.filename == file_name), "")
+    else:
+        positive_count = total_positive
+        negative_count = total_negative
         recommendation_text = (
             "There are more negative comments. Consider scheduling professional development seminars."
-            if negative_count > positive_count else
+            if total_negative > total_positive else
             "Feedback is generally positive, but keep monitoring for potential issues."
         )
 
-    else:
-        # Get the specific file's data
-        upload = next((u for u in uploads if u.filename == file_name), None)
-        if not upload:
-            return jsonify({"error": "File not found"}), 404
-
-        sentiment_data = upload.sentiment
-        positive_count = sentiment_data.count("Positive")
-        negative_count = sentiment_data.count("Negative")
-        recommendation_text = upload.recommendation
-
-    # Return the sentiment counts and recommendation
     return jsonify({
-        "files": [
-        {
-            "filename": upload.filename,
-            "sentiment": json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
-        }
-        for upload in uploads
-    ],
+        "files": file_data,
         "positive": positive_count,
         "negative": negative_count,
         "recommendation": recommendation_text
@@ -697,31 +747,66 @@ def college_analysis():
     if not uploads:
         return jsonify({"error": "No uploaded sentiment data found for this college."}), 404
 
+    # Dynamic extraction function
+    import re
+
+    def extract_json_chunks(prefix, upload):
+        chunks = []
+        for attr in dir(upload):
+            if re.match(f"{prefix}\\d+", attr):
+                chunk = getattr(upload, attr)
+                if chunk:
+                    parsed = json.loads(chunk) if isinstance(chunk, str) else chunk
+                    chunks.extend(parsed)
+        return chunks
+
     # Prepare the aggregated data
     positive_count = []
     negative_count = []
-    file_data = []
+    file_data = {}
 
     # Iterate through the uploads and combine data
     for upload in sorted(uploads, key=lambda x: x.upload_date):
-        sentiments = json.loads(upload.sentiment) if isinstance(upload.sentiment, str) else upload.sentiment
-        file_data.append({
-            "filename": upload.filename,
-            "sentiment": sentiments
-        })
+        sentiments = extract_json_chunks('sentiment', upload)
+        topics = extract_json_chunks('topics', upload)
 
+        if upload.filename not in file_data:
+            file_data[upload.filename] = {
+                "filename": upload.filename,
+                "positive": 0,
+                "negative": 0,
+                "sentiment": [],
+                "topics": []
+            }
+
+        file_data[upload.filename]["sentiment"].extend(sentiments)
+        file_data[upload.filename]["topics"].extend(topics)
+        file_data[upload.filename]["positive"] += sentiments.count("Positive")
+        file_data[upload.filename]["negative"] += sentiments.count("Negative")
+
+    # Sort files by semester/year (assumes filename format: start_end_semester)
+    def sort_key(filename):
+        try:
+            start, end, sem = map(int, filename.split('_'))
+            return (start, end, sem)
+        except:
+            return (9999, 9999, 9)  # fallback if filename format is unexpected
+
+    sorted_file_data = [file_data[f] for f in sorted(file_data.keys(), key=sort_key)]
+
+    total_positive = sum(f["positive"] for f in sorted_file_data)
+    total_negative = sum(f["negative"] for f in sorted_file_data)
 
     # Generate recommendation
     recommendation_text = (
         "There are more negative comments. Consider addressing faculty concerns."
-        if sum(negative_count) > sum(positive_count) else
+        if total_negative > total_positive else
         "Feedback is generally positive, but continuous improvement is recommended."
     )
 
     return jsonify({
-        "files": file_data,
-        "positive": positive_count,
-        "negative": negative_count,
+        "files": sorted_file_data,
+        "positive": total_positive,
+        "negative": total_negative,
         "recommendation": recommendation_text
     }), 200
-

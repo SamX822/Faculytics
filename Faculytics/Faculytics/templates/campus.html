@@ -55,7 +55,7 @@
                     </a>
                     <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                             onclick="openCollegeAnalysisModal(event, '{{ college.college_acronym }}')">
-                        Analysis
+                        Analytics
                     </button>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                     </a>
                     <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                             onclick="openCollegeAnalysisModal(event, '{{ college.college_acronym }}')">
-                        Analysis
+                        Analytics
                     </button>
                 </div>
             </div>
@@ -86,12 +86,29 @@
             {% endif %}
         </div>
 
-        <!-- College Analysis Modal -->
-        <div id="collegeAnalysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start p-4">
-            <div class="bg-gray-800 p-6 rounded-lg w-full max-w-3xl mt-4 overflow-y-auto">
-                <h3 class="text-xl font-bold text-white mb-4">College-Wide Analysis</h3>
-                <canvas id="collegeAnalysisChart"></canvas>
+        <!-- College Analysis Modal with Tabs -->
+        <div id="collegeAnalysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
+            <div class="bg-gray-800 p-6 rounded-lg w-full max-w-3xl mt-4 overflow-y-auto max-h-[90vh]">
+                <h3 class="text-xl font-bold text-white mb-4">College-Wide Analytics</h3>
+
+                <!-- Tabs Navigation -->
+                <div class="flex border-b border-gray-700 mb-4">
+                    <button id="collegeSentimentTab" class="py-2 px-4 text-white bg-blue-600 rounded-t-lg mr-2">Sentiment Analysis</button>
+                    <button id="collegeTopicTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg">Topic Modeling</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="collegeSentimentContent" class="block">
+                    <canvas id="collegeAnalysisChart"></canvas>
+                </div>
+                <div id="collegeTopicContent" class="hidden">
+                    <canvas id="collegeTopicChart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Details -->
                 <div id="collegeDetails" class="mt-4 text-white"></div>
+
+                <!-- Actions -->
                 <div class="mt-4 flex justify-between">
                     <button onclick="closeCollegeAnalysisModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Close</button>
                 </div>
@@ -106,13 +123,43 @@
 
 <script>
     let collegeChartInstance = null;
+    let collegeTopicChartInstance = null;
 
-    // Toggle visibility of forms when "Manage Colleges" button is clicked
+    // College Modal Tab Logic
+    document.getElementById('collegeSentimentTab').addEventListener('click', function () {
+        console.log("Sentiment tab clicked");
+
+        // Show Sentiment content and hide Topic content
+        document.getElementById('collegeSentimentContent').classList.remove('hidden');
+        document.getElementById('collegeTopicContent').classList.add('hidden');
+
+        // Update button styles for active tab
+        this.classList.add('bg-blue-600');
+        this.classList.remove('bg-gray-700');
+
+        document.getElementById('collegeTopicTab').classList.remove('bg-blue-600');
+        document.getElementById('collegeTopicTab').classList.add('bg-gray-700');
+    });
+
+    document.getElementById('collegeTopicTab').addEventListener('click', function () {
+        console.log("Topic tab clicked");
+
+        // Show Topic content and hide Sentiment content
+        document.getElementById('collegeSentimentContent').classList.add('hidden');
+        document.getElementById('collegeTopicContent').classList.remove('hidden');
+
+        // Update button styles for active tab
+        this.classList.add('bg-blue-600');
+        this.classList.remove('bg-gray-700');
+
+        document.getElementById('collegeSentimentTab').classList.remove('bg-blue-600');
+        document.getElementById('collegeSentimentTab').classList.add('bg-gray-700');
+    });
+
     document.getElementById('manage-colleges-btn').addEventListener('click', function () {
-        var addForm = document.getElementById('add-college-form');
-        var removeForm = document.getElementById('remove-college-form');
+        const addForm = document.getElementById('add-college-form');
+        const removeForm = document.getElementById('remove-college-form');
 
-        // Toggle the visibility of the forms
         if (addForm.style.display === 'none') {
             addForm.style.display = 'block';
             removeForm.style.display = 'block';
@@ -123,20 +170,19 @@
     });
 
     function toggleCollegeActions(collegeAcronym) {
-        // Hide all actions first
         document.querySelectorAll('[id^="actions-"]').forEach(el => el.classList.add('hidden'));
-
-        // Toggle the specific college actions
         const actions = document.getElementById('actions-' + collegeAcronym);
         actions.classList.toggle('hidden');
     }
 
     function openCollegeAnalysisModal(event, collegeAcronym) {
         event.stopPropagation();
-
         document.getElementById('collegeAnalysisModal').classList.remove('hidden');
 
-        fetch(`/college_analysis?college_acronym=${encodeURIComponent(collegeAcronym)}`)
+        // Default to Sentiment tab
+        document.getElementById('collegeSentimentTab').click();
+
+        fetch(`/college_analysis?college_acronym=${encodeURIComponent(collegeAcronym)}&include_topics=true`)
             .then(response => response.json())
             .then(data => {
                 console.log("College Analysis Data:", data);
@@ -146,14 +192,12 @@
                     return;
                 }
 
-                const ctx = document.getElementById('collegeAnalysisChart').getContext('2d');
-
-                // Destroy previous chart instance if it exists
+                // ---------- SENTIMENT CHART ----------
+                const sentimentCtx = document.getElementById('collegeAnalysisChart').getContext('2d');
                 if (collegeChartInstance) {
                     collegeChartInstance.destroy();
                 }
 
-                // Group sentiments by identical filename
                 const groupedSentiments = {};
                 data.files.forEach(file => {
                     const filename = file.filename;
@@ -171,7 +215,6 @@
                     });
                 });
 
-                // Sort filenames chronologically
                 function parseFilename(filename) {
                     const [startYear, endYear, semester] = filename.split('_').map(Number);
                     return { startYear, endYear, semester };
@@ -186,10 +229,10 @@
                 });
 
                 const labels = sortedFilenames;
-                const positiveData = sortedFilenames.map(filename => groupedSentiments[filename].positive);
-                const negativeData = sortedFilenames.map(filename => groupedSentiments[filename].negative);
+                positiveData = sortedFilenames.map(filename => groupedSentiments[filename].positive);
+                negativeData = sortedFilenames.map(filename => groupedSentiments[filename].negative);
 
-                collegeChartInstance = new Chart(ctx, {
+                collegeChartInstance = new Chart(sentimentCtx, {
                     type: 'line',
                     data: {
                         labels: labels,
@@ -217,7 +260,8 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'College Sentiment Trends'
+                                text: 'College Sentiment Trends',
+                                color: 'white'
                             },
                             legend: {
                                 labels: {
@@ -236,7 +280,8 @@
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Filename (Semester)'
+                                    text: 'Files',
+                                    color: 'white'
                                 },
                                 ticks: {
                                     color: 'white'
@@ -244,7 +289,6 @@
                             },
                             y: {
                                 beginAtZero: true,
-                                stepSize: 1,
                                 title: {
                                     display: true,
                                     text: 'Sentiment Count',
@@ -258,9 +302,132 @@
                     }
                 });
 
+                // ---------- TOPIC CHART ----------
+                const topicCtx = document.getElementById('collegeTopicChart').getContext('2d');
+                if (collegeTopicChartInstance) {
+                    collegeTopicChartInstance.destroy();
+                }
+
+                const topicCounts = {};
+                const topicSentiments = {};
+
+                // Count the topics and their sentiments (positive/negative)
+                data.files.forEach(file => {
+                    const topics = Array.isArray(file.topics) ? file.topics : JSON.parse(file.topics || "[]");
+                    const sentiments = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
+
+                    topics.forEach((topic, index) => {
+                        if (!topic || topic.trim() === "") return;
+
+                        // Initialize topic count and sentiment data
+                        if (!topicCounts[topic]) {
+                            topicCounts[topic] = 0;
+                            topicSentiments[topic] = { positive: 0, negative: 0 };
+                        }
+
+                        topicCounts[topic]++;
+
+                        // Map sentiment to the corresponding topic
+                        if (index < sentiments.length) {
+                            if (sentiments[index] === "Positive") {
+                                topicSentiments[topic].positive++;
+                            } else {
+                                topicSentiments[topic].negative++;
+                            }
+                        } else {
+                            console.warn(`Mismatched sentiment for topic: "${topic}" at index ${index}`);
+                        }
+                    });
+                });
+
+                console.log("All Topic Counts:", topicCounts);
+                console.log("All Topic Sentiments:", topicSentiments);
+
+                // Sort topics by frequency and get top 10
+                const topTopics = Object.keys(topicCounts)
+                    .sort((a, b) => topicCounts[b] - topicCounts[a])
+                    .slice(0, 10);
+
+                // Build positive and negative data arrays aligned with topTopics
+                positiveData = topTopics.map(topic => topicSentiments[topic]?.positive || 0);
+                negativeData = topTopics.map(topic => topicSentiments[topic]?.negative || 0);
+
+                collegeTopicChartInstance = new Chart(topicCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topTopics,
+                        datasets: [
+                            {
+                                label: 'Positive',
+                                data: positiveData,
+                                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                                borderColor: 'rgba(40, 167, 69, 1)',
+                                borderWidth: 1,
+                                categoryPercentage: 0.8,
+                                barPercentage: 0.4
+                            },
+                            {
+                                label: 'Negative',
+                                data: negativeData,
+                                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                                borderColor: 'rgba(220, 53, 69, 1)',
+                                borderWidth: 1,
+                                categoryPercentage: 0.8,
+                                barPercentage: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Count',
+                                    color: 'white'
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    color: 'white'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Topics',
+                                    color: 'white'
+                                },
+                                ticks: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: 'white'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return `${tooltipItem.dataset.label}: ${tooltipItem.raw} comments`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // ---------- DETAILS ----------
                 document.getElementById('collegeDetails').innerHTML = `<p>Recommendation: ${data.recommendation}</p>`;
             })
-            .catch(error => console.error("Error fetching college analysis data:", error));
+            .catch(error => {
+                console.error("Error fetching college analysis data:", error);
+                document.getElementById('collegeDetails').innerHTML = `<p class="text-red-500">Failed to load analysis data.</p>`;
+            });
     }
 
     function closeCollegeAnalysisModal() {
