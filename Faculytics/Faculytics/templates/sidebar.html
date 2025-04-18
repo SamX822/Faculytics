@@ -1,5 +1,5 @@
 <!-- sidebar.html -->
-<aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-[#273746] text-white shadow-xl overflow-y-auto transition-all duration-300 border-r border-gray-700">
+<aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-[#273746] text-white shadow-xl overflow-y-auto transition-all duration-300 border-r border-gray-700 rounded-md">
     <!-- Profile Section -->
     <div class="text-center py-6">
         <img src="{{ url_for('static', filename=user.profilePicture) if user.profilePicture else url_for('static', filename='assets/default-avatar.png') }}" alt="Profile Picture" class="h-24 w-24 rounded-full rounded-full mx-auto shadow-md border-2 border-yellow-400 mb-2">
@@ -39,80 +39,221 @@
 
     <!-- Menu Items -->
     <nav class="space-y-2">
-        <a href="{{ url_for('dashboard') }}"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300
-                      {% if request.path == url_for('dashboard') %}
-                          bg-gray-700 border-blue-400 shadow-md
-                      {% else %}
-                          border-transparent hover:bg-gray-800 hover:border-blue-400
-                      {% endif %}">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V10z" />
-            </svg>
-            <span>Dashboard</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="{{ url_for('dashboard') }}"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+       {% if request.path == url_for('dashboard') %}
+         bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+       {% else %}
+          text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+       {% endif %}">
+                    <svg stroke="#000000"
+                         class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+           {% if request.path == url_for('dashboard') %} fill-white stroke-white {% endif %}"
+                         id="dashboard-alt"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path d="M14,10V22H4a2,2,0,0,1-2-2V10Z"></path>
+                            <path d="M22,10V20a2,2,0,0,1-2,2H16V10Z"></path>
+                            <path d="M22,4V8H2V4A2,2,0,0,1,4,2H20A2,2,0,0,1,22,4Z"></path>
+                        </g>
+                    </svg>
+                    Dashboard
+                </a>
+            </li>
+        </ul>
 
         {% if user.userType != 'admin' %}
-        <a href="{{ url_for('uploadHistory') }}"
-            class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300
-                      {% if request.path == url_for('uploadHistory') %}
-                          bg-gray-700 border-blue-400 shadow-md
-                      {% else %}
-                          border-transparent hover:bg-gray-800 hover:border-blue-400
-                      {% endif %}">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Upload and History</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="{{ url_for('uploadHistory') }}"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+              {% if request.path == url_for('uploadHistory') %}
+                  bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+              {% else %}
+                  text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+              {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == url_for('uploadHistory') %} fill-white stroke-white {% endif %}"
+                         id="arrow-from-shape-up"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="#ffffff">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                            <path d="M8.00003 8C7.59557 8 7.23093 7.75636 7.07615 7.38268C6.92137 7.00901 7.00692 6.57889 7.29292 6.29289L11.2929 2.29289C11.6834 1.90237 12.3166 1.90237 12.7071 2.29289L16.7071 6.29289C16.9931 6.57889 17.0787 7.00901 16.9239 7.38268C16.7691 7.75636 16.4045 8 16 8H13.5V16C13.5 16.5523 13.0523 17 12.5 17H11.5C10.9477 17 10.5 16.5523 10.5 16V8H8.00003Z"/>
+                            <path d="M4.5 16.5C4.5 15.9477 4.05228 15.5 3.5 15.5H2.5C1.94772 15.5 1.5 15.9477 1.5 16.5V20C1.5 21.3807 2.61929 22.5 4 22.5H20C21.3807 22.5 22.5 21.3807 22.5 20V16.5C22.5 15.9477 22.0523 15.5 21.5 15.5H20.5C19.9477 15.5 19.5 15.9477 19.5 16.5V19.5H4.5V16.5Z"/>
+                    </svg>
+                    Upload and History
+                </a>
+            </li>
+        </ul>
 
-        <a href="#"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-blue-400">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18M9 8h6m-6 4h6m-6 4h3" />
-            </svg>
-            <span>Reports & Analytics</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="#"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+                   {% if request.path == '#' %}
+                       bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+                   {% else %}
+                       text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+                   {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == '#' %} fill-white stroke-white {% endif %}"
+                         id="docs"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                        <path d="M11 9V1L5 1C3.89543 1 3 1.89543 3 3V21C3 22.1046 3.89543 23 5 23H19C20.1046 23 21 22.1046 21 21V11H13C11.8954 11 11 10.1046 11 9Z" />
+                        <path d="M13 1V9H21L13 1Z" />
+                    </svg>
+                    Reports & Analytics
+                </a>
+            </li>
+        </ul>
 
-        <a href="#"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-blue-400">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11m4 0h4M4 18h16" />
-            </svg>
-            <span>Data Management</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="#"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+                   {% if request.path == '#' %}
+                       bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+                   {% else %}
+                       text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+                   {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == '#' %} fill-white stroke-white {% endif %}"
+                         id="chatbar"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                        <path d="M13.1602 21C13.1602 21.5523 13.6079 22 14.1602 22H15.1602C15.7124 22 16.1602 21.5523 16.1602 21L16.1602 3C16.1602 2.44772 15.7124 2 15.1602 2H14.1602C13.6079 2 13.1602 2.44772 13.1602 3L13.1602 21Z"/>
+                        <path d="M2.5 21C2.5 21.5523 2.94772 22 3.5 22H4.5C5.05228 22 5.5 21.5523 5.5 21V11C5.5 10.4477 5.05228 10 4.5 10H3.5C2.94772 10 2.5 10.4477 2.5 11V21Z"/>
+                        <path d="M8.83008 22C8.27779 22 7.83008 21.5523 7.83008 21L7.83008 13C7.83008 12.4477 8.27779 12 8.83008 12H9.83008C10.3824 12 10.8301 12.4477 10.8301 13V21C10.8301 21.5523 10.3824 22 9.83008 22H8.83008Z"/>
+                        <path d="M18.4902 21C18.4902 21.5523 18.938 22 19.4902 22H20.4902C21.0425 22 21.4902 21.5523 21.4902 21V7C21.4902 6.44772 21.0425 6 20.4902 6H19.4902C18.938 6 18.4902 6.44772 18.4902 7V21Z"/>
+                    </svg>
+                    Data Management
+                </a>
+            </li>
+        </ul>
+        
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="#"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+                   {% if request.path == '#' %}
+                       bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+                   {% else %}
+                       text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+                   {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == '#' %} fill-white stroke-white {% endif %}"
+                         id="gear"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M12.7848 0.449982C13.8239 0.449982 14.7167 1.16546 14.9122 2.15495L14.9991 2.59495C15.3408 4.32442 17.1859 5.35722 18.9016 4.7794L19.3383 4.63233C20.3199 4.30175 21.4054 4.69358 21.9249 5.56605L22.7097 6.88386C23.2293 7.75636 23.0365 8.86366 22.2504 9.52253L21.9008 9.81555C20.5267 10.9672 20.5267 13.0328 21.9008 14.1844L22.2504 14.4774C23.0365 15.1363 23.2293 16.2436 22.7097 17.1161L21.925 18.4339C21.4054 19.3064 20.3199 19.6982 19.3382 19.3676L18.9017 19.2205C17.1859 18.6426 15.3408 19.6754 14.9991 21.405L14.9122 21.845C14.7167 22.8345 13.8239 23.55 12.7848 23.55H11.2152C10.1761 23.55 9.28331 22.8345 9.08781 21.8451L9.00082 21.4048C8.65909 19.6754 6.81395 18.6426 5.09822 19.2205L4.66179 19.3675C3.68016 19.6982 2.59465 19.3063 2.07505 18.4338L1.2903 17.1161C0.770719 16.2436 0.963446 15.1363 1.74956 14.4774L2.09922 14.1844C3.47324 13.0327 3.47324 10.9672 2.09922 9.8156L1.74956 9.52254C0.963446 8.86366 0.77072 7.75638 1.2903 6.8839L2.07508 5.56608C2.59466 4.69359 3.68014 4.30176 4.66176 4.63236L5.09831 4.77939C6.81401 5.35722 8.65909 4.32449 9.00082 2.59506L9.0878 2.15487C9.28331 1.16542 10.176 0.449982 11.2152 0.449982H12.7848ZM12 15.3C13.8225 15.3 15.3 13.8225 15.3 12C15.3 10.1774 13.8225 8.69998 12 8.69998C10.1774 8.69998 8.69997 10.1774 8.69997 12C8.69997 13.8225 10.1774 15.3 12 15.3Z" />
+                    </svg>
+                    Settings
+                </a>
+            </li>
+        </ul>
 
-        <a href="#"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-blue-400">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4h4M4 10h16M4 14h16M10 20h4" />
-            </svg>
-            <span>Settings</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="#"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+                   {% if request.path == '#' %}
+                       bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+                   {% else %}
+                       text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+                   {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == '#' %} fill-white stroke-white {% endif %}"
+                         id="alert_circle"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                        <path fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12ZM10.0586 6.05547C10.0268 5.48227 10.483 5 11.0571 5H12.9429C13.517 5 13.9732 5.48227 13.9414 6.05547L13.5525 13.0555C13.523 13.5854 13.0847 14 12.554 14H11.446C10.9153 14 10.477 13.5854 10.4475 13.0555L10.0586 6.05547ZM14 17C14 18.1046 13.1046 19 12 19C10.8954 19 10 18.1046 10 17C10 15.8954 10.8954 15 12 15C13.1046 15 14 15.8954 14 17Z" />
+                    </svg>
+                    About
+                </a>
+            </li>
+        </ul>
 
-        <a href="#"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-blue-400">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-1.415 1.415M6.343 17.657l1.415-1.415M5.636 5.636l1.415 1.415M17.657 17.657l1.415-1.415M12 10V3M9.636 7.636l1.414-1.414M12 15v3M14.364 16.364l-1.414 1.414" />
-            </svg>
-            <span>About</span>
-        </a>
-
-        <a href="#"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-blue-400">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-blue-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-1.415 1.415M6.343 17.657l1.415-1.415M5.636 5.636l1.415 1.415M17.657 17.657l1.415-1.415M12 10V3M9.636 7.636l1.414-1.414M12 15v3M14.364 16.364l-1.414 1.414" />
-            </svg>
-            <span>Contact</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="#"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+                   {% if request.path == '#' %}
+                   bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+                   {% else %}
+                   text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+                   {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == '#' %} fill-white stroke-white {% endif %}"
+                         id="phone"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                        <path d="M2.00589 4.54166C1.905 3.11236 3.11531 2 4.54522 2H7.60606C8.34006 2 9.00207 2.44226 9.28438 3.1212L10.5643 6.19946C10.8761 6.94932 10.6548 7.81544 10.0218 8.32292L9.22394 8.96254C8.86788 9.24798 8.74683 9.74018 8.95794 10.1448C10.0429 12.2241 11.6464 13.9888 13.5964 15.2667C14.008 15.5364 14.5517 15.4291 14.8588 15.0445L15.6902 14.003C16.1966 13.3687 17.0609 13.147 17.8092 13.4594L20.8811 14.742C21.5587 15.0249 22 15.6883 22 16.4238V19.5C22 20.9329 20.8489 22.0955 19.4226 21.9941C10.3021 21.3452 2.65247 13.7017 2.00589 4.54166Z" />
+                    </svg>
+                    Contact
+                </a>
+            </li>
+        </ul>
         {% endif %}
 
-        <a href="{{ url_for('login') }}"
-           class="group flex items-center space-x-3 py-4 px-6 border-l-4 transition-all duration-300 hover:bg-gray-800 hover:border-red-500">
-            <svg class="w-6 h-6 text-gray-300 group-hover:text-red-400 transition" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2h-4a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
-            </svg>
-            <span>Logout</span>
-        </a>
+        <ul class="w-full flex flex-col gap-2">
+            <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
+                <a href="{{ url_for('login') }}"
+                   class="p-16-semibold flex size-full gap-4 p-4 group font-semibold rounded-full bg-cover transition-all ease-linear
+                   {% if request.path == url_for('login') %}
+                   bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-inner
+                   {% else %}
+                   text-black-700 hover:bg-gradient-to-r from-gray-400 to-gray-600 shadow-inner
+                   {% endif %}">
+                    <svg class="icon glyph size-6 group-focus:fill-white group-focus:stroke-white
+                         {% if request.path == url_for('login') %} fill-white stroke-white {% endif %}"
+                         id="arrow-from-shape-right"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
+                        <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
+                        <g id="SVGRepo_iconCarrier"></g>
+                        <path d="M7.75 4.75C8.30228 4.75 8.75 4.30228 8.75 3.75V2.75C8.75 2.19772 8.30228 1.75 7.75 1.75H4.25C2.86929 1.75 1.75 2.86929 1.75 4.25V20.25C1.75 21.6307 2.86929 22.75 4.25 22.75H7.75C8.30228 22.75 8.75 22.3023 8.75 21.75V20.75C8.75 20.1977 8.30228 19.75 7.75 19.75H4.75V4.75H7.75Z" />
+                        <path d="M16.25 8.25003C16.25 7.84557 16.4936 7.48093 16.8673 7.32615C17.241 7.17137 17.6711 7.25692 17.9571 7.54292L21.9571 11.5429C22.3476 11.9334 22.3476 12.5666 21.9571 12.9571L17.9571 16.9571C17.6711 17.2431 17.241 17.3287 16.8673 17.1739C16.4936 17.0191 16.25 16.6545 16.25 16.25V13.75H8.25C7.69771 13.75 7.25 13.3023 7.25 12.75V11.75C7.25 11.1977 7.69772 10.75 8.25 10.75H16.25V8.25003Z" />
+                    </svg>
+                    Logout
+                </a>
+            </li>
+        </ul>
     </nav>
 </aside>
+
