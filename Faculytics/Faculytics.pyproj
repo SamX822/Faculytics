@@ -48,19 +48,13 @@
     <Folder Include="Faculytics\static\scripts\template" />
     <Folder Include="Faculytics\static\assets\" />
     <Folder Include="Faculytics\templates\" />
-    <Folder Include="Faculytics\templates\colleges\" />
     <Folder Include="Faculytics\src\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Faculytics\templates\approval.html" />
     <Content Include="Faculytics\templates\campus.html" />
     <Content Include="Faculytics\templates\college.html" />
-    <Content Include="Faculytics\templates\colleges\c_engr.html" />
-    <Content Include="Faculytics\templates\colleges\c_edu.html" />
-    <Content Include="Faculytics\templates\colleges\c_crim.html" />
-    <Content Include="Faculytics\templates\colleges\ccs.html" />
-    <Content Include="Faculytics\templates\colleges\cce.html" />
-    <Content Include="Faculytics\templates\colleges\cas.html" />
+    <Content Include="Faculytics\templates\college_analytics.html" />
     <Content Include="Faculytics\templates\uclm.html" />
     <Content Include="Faculytics\templates\ucb.html" />
     <Content Include="Faculytics\templates\ucpt.html" />
