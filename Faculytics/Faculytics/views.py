@@ -107,14 +107,38 @@ def dashboard():
     assigned_campus = None
     if user.userType != "admin" and user.campus_acronym:
         assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym).first()
-
+    
     # Admins and Curriculum Developers see all campuses, excluding the "NONE" campus
     if user.userType in ["admin", "Curriculum Developer"]:
         campuses = Campus.query.filter(Campus.campus_acronym != "NONE").all()
     else:
         campuses = [assigned_campus] if assigned_campus else []
-
-    return render_template('dashboard.html', user=user, assigned_campus=assigned_campus, campuses=campuses, title="Dashboard", year=datetime.now().year)
+    
+    # Get pending approval counts for Deans, Campus Directors, and Vice Chancellors
+    pending_approvals = 0
+    if user.userType in ["Dean", "Campus Director", "Vice Chancellor"]:
+        # Build query based on user type and assignment
+        query = UserApproval.query
+        
+        if user.userType == "Dean" and user.college_name:
+            # Deans only see approvals for their college
+            query = query.filter_by(college_name=user.college_name)
+        elif user.userType == "Campus Director" and user.campus_acronym:
+            # Campus Directors only see approvals for their campus
+            query = query.filter_by(campus_acronym=user.campus_acronym)
+        # Vice Chancellors see all approvals (no filter)
+        
+        pending_approvals = query.count()
+    
+    return render_template(
+        'dashboard.html', 
+        user=user, 
+        assigned_campus=assigned_campus, 
+        campuses=campuses,
+        pending_approvals=pending_approvals,
+        title="Dashboard", 
+        year=datetime.now().year
+    )
 
 @app.route('/approval')
 def approval_page():

@@ -1,37 +1,32 @@
 <!-- sidebar.html -->
-<aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-[#273746] text-white shadow-xl overflow-y-auto transition-all duration-300 border-r border-gray-700 rounded-md">
+<aside class="fixed top-[50px] left-0 w-[250px] h-[calc(100vh-50px)] bg-gradient-to-b from-[#1a2a3f] to-[#273746] text-white overflow-y-auto transition-all duration-300 border-r border-gray-700 rounded-tr-lg shadow-2xl hidden lg:block">
     <!-- Profile Section -->
-    <div class="text-center py-6">
-        <img src="{{ url_for('static', filename=user.profilePicture) if user.profilePicture else url_for('static', filename='assets/default-avatar.png') }}" alt="Profile Picture" class="h-24 w-24 rounded-full rounded-full mx-auto shadow-md border-2 border-yellow-400 mb-2">
-
-        <a href="{{ url_for('my_account') }}"
-           class="font-bold mt-2 text-gray-200 hover:text-yellow-400 hover:font-extrabold transition">
-            {{ user.firstName }} {{ user.lastName }}
-        </a>
-
-        <div class="flex items-center justify-center space-x-2 mt-2 text-gray-300">
-            {% if user.userType == 'Vice Chancellor' %}
-            <svg class="w-6 h-6 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2a7 7 0 00-7 7v1H4a3 3 0 00-3 3v4a3 3 0 003 3h16a3 3 0 003-3v-4a3 3 0 00-3-3h-1V9a7 7 0 00-7-7zm0 2a5 5 0 015 5v1H7V9a5 5 0 015-5zm-8 9h16a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4a1 1 0 011-1z" />
-            </svg>
-
-            {% elif user.userType == 'Campus Director' %}
-            <svg class="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L3 7v2h1v9h16V9h1V7l-9-5zm0 2.2L18.5 7H5.5L12 4.2zM6 9h12v7H6V9zm1 1v5h2v-5H7zm8 0v5h2v-5h-2z" />
-            </svg>
-
-            {% elif user.userType == 'Dean' %}
-            <svg class="w-6 h-6 text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2a7 7 0 00-7 7v1H4a3 3 0 00-3 3v4a3 3 0 003 3h16a3 3 0 003-3v-4a3 3 0 00-3-3h-1V9a7 7 0 00-7-7zm0 2a5 5 0 015 5v1H7V9a5 5 0 015-5zm-8 9h16a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4a1 1 0 011-1z" />
-            </svg>
-
-            {% elif user.userType == 'Teacher' %}
-            <svg class="w-6 h-6 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7v2l10 5 10-5V7l-10-5zm0 2.2L18.5 7H5.5L12 4.2zM4 10v6h1v-4h14v4h1v-6l-8 4-8-4z" />
-            </svg>
-            {% endif %}
-
-            <span class="text-gray-300">{{ user.userType }}</span>
+    <div class="relative py-6 px-4">
+        <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-900/30 to-purple-900/30 opacity-50"></div>
+        <div class="relative flex items-center gap-3">
+            <div class="relative">
+                <img src="{{ url_for('static', filename=user.profilePicture) if user.profilePicture else url_for('static', filename='assets/default-avatar.png') }}"
+                     alt="Profile Picture"
+                     class="h-16 w-16 rounded-full object-cover border-2 border-yellow-400 ring-2 ring-blue-500/50 shadow-lg transform hover:scale-105 transition-all duration-300">
+                <span class="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full border-2 border-white"></span>
+            </div>
+            <div class="flex flex-col">
+                <a href="{{ url_for('my_account') }}" class="font-bold text-lg text-white hover:text-yellow-400 transition">
+                    {{ user.firstName }} {{ user.lastName }}
+                </a>
+                <div class="flex items-center text-sm text-gray-300">
+                    {% if user.userType == 'Vice Chancellor' %}
+                    <i class="fas fa-user-tie text-blue-400 mr-2"></i>
+                    {% elif user.userType == 'Campus Director' %}
+                    <i class="fas fa-university text-green-400 mr-2"></i>
+                    {% elif user.userType == 'Dean' %}
+                    <i class="fas fa-graduation-cap text-yellow-400 mr-2"></i>
+                    {% elif user.userType == 'Teacher' %}
+                    <i class="fas fa-chalkboard-teacher text-orange-400 mr-2"></i>
+                    {% endif %}
+                    <span>{{ user.userType }}</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -87,8 +82,8 @@
                         <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
                         <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
                         <g id="SVGRepo_iconCarrier"></g>
-                            <path d="M8.00003 8C7.59557 8 7.23093 7.75636 7.07615 7.38268C6.92137 7.00901 7.00692 6.57889 7.29292 6.29289L11.2929 2.29289C11.6834 1.90237 12.3166 1.90237 12.7071 2.29289L16.7071 6.29289C16.9931 6.57889 17.0787 7.00901 16.9239 7.38268C16.7691 7.75636 16.4045 8 16 8H13.5V16C13.5 16.5523 13.0523 17 12.5 17H11.5C10.9477 17 10.5 16.5523 10.5 16V8H8.00003Z"/>
-                            <path d="M4.5 16.5C4.5 15.9477 4.05228 15.5 3.5 15.5H2.5C1.94772 15.5 1.5 15.9477 1.5 16.5V20C1.5 21.3807 2.61929 22.5 4 22.5H20C21.3807 22.5 22.5 21.3807 22.5 20V16.5C22.5 15.9477 22.0523 15.5 21.5 15.5H20.5C19.9477 15.5 19.5 15.9477 19.5 16.5V19.5H4.5V16.5Z"/>
+                        <path d="M8.00003 8C7.59557 8 7.23093 7.75636 7.07615 7.38268C6.92137 7.00901 7.00692 6.57889 7.29292 6.29289L11.2929 2.29289C11.6834 1.90237 12.3166 1.90237 12.7071 2.29289L16.7071 6.29289C16.9931 6.57889 17.0787 7.00901 16.9239 7.38268C16.7691 7.75636 16.4045 8 16 8H13.5V16C13.5 16.5523 13.0523 17 12.5 17H11.5C10.9477 17 10.5 16.5523 10.5 16V8H8.00003Z" />
+                        <path d="M4.5 16.5C4.5 15.9477 4.05228 15.5 3.5 15.5H2.5C1.94772 15.5 1.5 15.9477 1.5 16.5V20C1.5 21.3807 2.61929 22.5 4 22.5H20C21.3807 22.5 22.5 21.3807 22.5 20V16.5C22.5 15.9477 22.0523 15.5 21.5 15.5H20.5C19.9477 15.5 19.5 15.9477 19.5 16.5V19.5H4.5V16.5Z" />
                     </svg>
                     Upload and History
                 </a>
@@ -139,16 +134,16 @@
                         <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
                         <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
                         <g id="SVGRepo_iconCarrier"></g>
-                        <path d="M13.1602 21C13.1602 21.5523 13.6079 22 14.1602 22H15.1602C15.7124 22 16.1602 21.5523 16.1602 21L16.1602 3C16.1602 2.44772 15.7124 2 15.1602 2H14.1602C13.6079 2 13.1602 2.44772 13.1602 3L13.1602 21Z"/>
-                        <path d="M2.5 21C2.5 21.5523 2.94772 22 3.5 22H4.5C5.05228 22 5.5 21.5523 5.5 21V11C5.5 10.4477 5.05228 10 4.5 10H3.5C2.94772 10 2.5 10.4477 2.5 11V21Z"/>
-                        <path d="M8.83008 22C8.27779 22 7.83008 21.5523 7.83008 21L7.83008 13C7.83008 12.4477 8.27779 12 8.83008 12H9.83008C10.3824 12 10.8301 12.4477 10.8301 13V21C10.8301 21.5523 10.3824 22 9.83008 22H8.83008Z"/>
-                        <path d="M18.4902 21C18.4902 21.5523 18.938 22 19.4902 22H20.4902C21.0425 22 21.4902 21.5523 21.4902 21V7C21.4902 6.44772 21.0425 6 20.4902 6H19.4902C18.938 6 18.4902 6.44772 18.4902 7V21Z"/>
+                        <path d="M13.1602 21C13.1602 21.5523 13.6079 22 14.1602 22H15.1602C15.7124 22 16.1602 21.5523 16.1602 21L16.1602 3C16.1602 2.44772 15.7124 2 15.1602 2H14.1602C13.6079 2 13.1602 2.44772 13.1602 3L13.1602 21Z" />
+                        <path d="M2.5 21C2.5 21.5523 2.94772 22 3.5 22H4.5C5.05228 22 5.5 21.5523 5.5 21V11C5.5 10.4477 5.05228 10 4.5 10H3.5C2.94772 10 2.5 10.4477 2.5 11V21Z" />
+                        <path d="M8.83008 22C8.27779 22 7.83008 21.5523 7.83008 21L7.83008 13C7.83008 12.4477 8.27779 12 8.83008 12H9.83008C10.3824 12 10.8301 12.4477 10.8301 13V21C10.8301 21.5523 10.3824 22 9.83008 22H8.83008Z" />
+                        <path d="M18.4902 21C18.4902 21.5523 18.938 22 19.4902 22H20.4902C21.0425 22 21.4902 21.5523 21.4902 21V7C21.4902 6.44772 21.0425 6 20.4902 6H19.4902C18.938 6 18.4902 6.44772 18.4902 7V21Z" />
                     </svg>
                     Data Management
                 </a>
             </li>
         </ul>
-        
+
         <ul class="w-full flex flex-col gap-2">
             <li class="flex-center cursor-pointer p-16-semibold w-full whitespace-nowrap">
                 <a href="#"
