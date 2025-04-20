@@ -175,4 +175,48 @@
         {% endif %}
     </main>
 </div>
+<script>
+    // Wait for the DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the search input element
+    const searchInput = document.querySelector('input[placeholder="Search users..."]');
+    
+    // If there's no search input or no table, exit early
+    if (!searchInput) return;
+    
+    // Add event listener for input changes
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        const tableRows = document.querySelectorAll('tbody tr');
+        
+        // Loop through all table rows and filter based on search term
+        tableRows.forEach(row => {
+            // Get text from all cells except the actions column
+            const rowData = Array.from(row.querySelectorAll('td:not(:last-child)')).map(cell => 
+                cell.textContent.toLowerCase()
+            ).join(' ');
+            
+            // Show or hide row based on search term
+            if (searchTerm === '' || rowData.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update the "Showing X users" count in the footer
+        updateUserCount();
+    });
+    
+    // Function to update the displayed user count in table footer
+    function updateUserCount() {
+        const visibleRows = document.querySelectorAll('tbody tr[style=""]').length;
+        const countElement = document.querySelector('.text-sm.text-gray-400 span');
+        
+        if (countElement) {
+            countElement.textContent = visibleRows;
+        }
+    }
+});
+</script>
 {% endblock %}

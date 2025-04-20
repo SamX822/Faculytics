@@ -602,6 +602,7 @@ def saveToDatabase():
     try:
         # Retrieve stored session data
         stored_results = session.get("upload_results", {})
+        print("# Retrieve stored session data");
 
         if not stored_results:
             return jsonify({"error": "No data received!"}), 400
@@ -612,6 +613,7 @@ def saveToDatabase():
         topic_result = stored_results.get("topics")
         recommendation_text = stored_results.get("recommendation")
         teacherUName = stored_results.get("teacherUName")
+        print("# Storing data");
 
         if not comments_list or not sentiment_result or not recommendation_text or not teacherUName:
             return jsonify({"error": "Missing required fields"}), 400
@@ -625,8 +627,11 @@ def saveToDatabase():
         def split_chunks(lst, size):
             return [lst[i:i + size] for i in range(0, len(lst), size)]
 
+        print("Comments Chunk");
         comments_chunks = split_chunks(comments_list, 500)
+        print("Sentiment Chunk");
         sentiment_chunks = split_chunks(sentiment_result, 500)
+        print("Topic Chunk");
         topics_chunks = split_chunks(topic_result, 500)
 
         # Prepare field data
@@ -642,7 +647,7 @@ def saveToDatabase():
             upload_data[f"comments{idx}"] = json.dumps(comments_chunks[i])
             upload_data[f"sentiment{idx}"] = json.dumps(sentiment_chunks[i])
             upload_data[f"topics{idx}"] = json.dumps(topics_chunks[i])
-
+        print("# Map Chunking");
         # Create CSVUpload instance dynamically with only the fields present
         upload_record = CSVUpload(**upload_data)
 
