@@ -13,6 +13,24 @@ campus_colleges = db.Table(
     db.UniqueConstraint('campus_acronym', 'college_name', name='campus_college_unique')
 )
 
+# Association table for the many-to-many relationship between Campus and Program.
+campus_programs = db.Table(
+    'Campus_Programs',
+    db.Column('campus_acronym', db.String(10), db.ForeignKey('Campuses.campus_acronym', ondelete="CASCADE"), primary_key=True),
+    db.Column('program_acronym', db.String(10), db.ForeignKey('Programs.program_acronym', ondelete="CASCADE"), primary_key=True),
+    db.Column('isDeleted', db.Boolean, default=False),
+    db.UniqueConstraint('campus_acronym', 'program_acronym', name='campus_program_unique')
+)
+
+# Association table for the many-to-many relationship between College and Program.
+college_programs = db.Table(
+    'College_Programs',
+    db.Column('college_acronym', db.String(10), db.ForeignKey('Colleges.college_acronym', ondelete="CASCADE"), primary_key=True),
+    db.Column('program_acronym', db.String(10), db.ForeignKey('Programs.program_acronym', ondelete="CASCADE"), primary_key=True),
+    db.Column('isDeleted', db.Boolean, default=False),
+    db.UniqueConstraint('college_acronym', 'program_acronym', name='college_program_unique')
+)
+
 class User(db.Model):
     __tablename__ = 'Users'
 
@@ -32,13 +50,21 @@ class User(db.Model):
         db.ForeignKey('Colleges.college_name', onupdate="CASCADE", ondelete="NO ACTION"),
         nullable=True
     )
+    program_acronym = db.Column(
+        db.String(10),
+        db.ForeignKey('Programs.program_acronym', onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True
+    )
     profilePicture = db.Column(db.String(255), nullable=True, default='../static/assets/default-avatar.png')
     emailAddress = db.Column(db.String(100), nullable=True)
     phoneNumber = db.Column(db.String(20), nullable=True)
+    isDeleted = db.Column(db.Boolean, default=False)
+    allowUpdate = db.Column(db.Boolean, default=False)
 
     # Relationships
     campus = db.relationship('Campus', back_populates='users')
     college = db.relationship('College', back_populates='users')
+    program = db.relationship('Program', back_populates='users')
     uploads = db.relationship('CSVUpload', back_populates='user', cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -50,6 +76,7 @@ class Campus(db.Model):
     campus_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     campus_name = db.Column(db.String(50), unique=True, nullable=False)
     campus_acronym = db.Column(db.String(10), unique=True, nullable=False)
+    isDeleted = db.Column(db.Boolean, default=False)
 
     # Relationships
     users = db.relationship('User', back_populates='campus')
@@ -64,6 +91,7 @@ class College(db.Model):
     college_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     college_name = db.Column(db.String(50), unique=True, nullable=False)
     college_acronym = db.Column(db.String(10), unique=True, nullable=False)
+    isDeleted = db.Column(db.Boolean, default=False)
 
     # Relationships
     users = db.relationship('User', back_populates='college')
@@ -71,6 +99,22 @@ class College(db.Model):
 
     def __repr__(self):
         return f'<College {self.college_name}>'
+
+class Program(db.Model):
+    __tablename__ = 'Programs'
+
+    program_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    program_name = db.Column(db.String(50), unique=True, nullable=False)
+    program_acronym = db.Column(db.String(10), unique=True, nullable=False)
+    isDeleted = db.Column(db.Boolean, default=False)
+
+    # Relationships
+    users = db.relationship('User', back_populates='program', foreign_keys='User.program_acronym', primaryjoin="Program.program_acronym==User.program_acronym", lazy=True)
+    colleges = db.relationship('College', secondary=college_programs, backref='programs')
+    campuses = db.relationship('Campus', secondary=campus_programs, backref='programs')
+
+    def __repr__(self):
+        return f'<Program {self.program_name}>'
 
 class UserApproval(db.Model):
     __tablename__ = 'UserApproval'
@@ -82,7 +126,7 @@ class UserApproval(db.Model):
     firstName = db.Column(db.String(50), nullable=False)
     lastName = db.Column(db.String(50), nullable=False)
     campus_acronym = db.Column(
-        db.String(10),
+        db.String(50),
         db.ForeignKey('Campuses.campus_acronym', onupdate="CASCADE", ondelete="SET NULL"),
         nullable=True
     )
@@ -91,11 +135,22 @@ class UserApproval(db.Model):
         db.ForeignKey('Colleges.college_name', onupdate="CASCADE", ondelete="SET NULL"),
         nullable=True
     )
+    program_acronym = db.Column(
+        db.String(10),
+        db.ForeignKey('Programs.program_acronym', onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True
+    )
     date_registered = db.Column(db.DateTime, default=lambda: datetime.now(PH_TZ))
 
     # Relationships
     campus = db.relationship('Campus', back_populates='pending_users')
     college = db.relationship('College', back_populates='pending_users')
+    program = db.relationship(
+        'Program',
+        back_populates='pending_users',
+        foreign_keys=[program_acronym],
+        primaryjoin="Program.program_acronym==UserApproval.program_acronym"
+    )
 
     def __repr__(self):
         return f'<UserApproval {self.uName}>'
@@ -103,6 +158,7 @@ class UserApproval(db.Model):
 # Add relationship properties to Campus and College models
 Campus.pending_users = db.relationship('UserApproval', back_populates='campus', cascade="all, delete-orphan")
 College.pending_users = db.relationship('UserApproval', back_populates='college', cascade="all, delete-orphan")
+Program.pending_users = db.relationship('UserApproval', back_populates='program', cascade="all, delete-orphan")
 
 PH_TZ = pytz.timezone('Asia/Manila')
 class CSVUpload(db.Model):

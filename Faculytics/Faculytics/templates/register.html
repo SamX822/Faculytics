@@ -4,14 +4,6 @@
 
 {% block content %}
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-<script>
-            alert("{{ messages[0] }}");  // Shows the first flash message
-</script>
-    {% endif %}
-{% endwith %}
-
 <div class="flex items-center justify-center min-h-screen bg-[#003153]">
     <div class="relative w-full max-w-md bg-white/10 backdrop-blur-lg p-8 rounded-xl shadow-lg border border-white/20">
         <h2 class="text-3xl font-extrabold text-white text-center">Create an Account</h2>
@@ -25,11 +17,13 @@
                                focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
                                hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
                     <option value="Unselected">Select your position</option>
+                    <option value="Vice Chancellor for Academic Affairs">Vice Chancellor for Academic Affairs</option>
+                    <option value="Curriculum Developer">Curriculum Developer</option>
                     <option value="Campus Director">Campus Director</option>
                     <option value="Vice Chancellor">Vice Chancellor</option>
                     <option value="Dean">Dean</option>
+                    <option value="Chairperson">Chairperson</option>
                     <option value="Teacher">Teacher</option>
-                    <option value="Curriculum Developer">Curriculum Developer</option>
                 </select>
             </div>
 
@@ -61,6 +55,15 @@
                               focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white" placeholder="Choose a password" required>
             </div>
 
+            <div class="relative">
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-300">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword"
+                       class="mt-1 w-full px-4 py-2 bg-transparent border border-gray-500 rounded-lg shadow-sm
+                  focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-white"
+                       placeholder="Re-enter your password" required>
+                <p id="passwordMismatch" class="text-red-400 text-xs mt-1 hidden">Passwords do not match.</p>
+            </div>
+
             <div class="relative" id="campusGroup">
                 <label for="campus_acronym" class="block text-sm font-medium text-gray-300">Campus</label>
                 <select id="campus_acronym" name="campus_acronym"
@@ -87,6 +90,19 @@
                 </select>
             </div>
 
+            <div class="relative hidden" id="programGroup">
+                <label for="program_acronym" class="block text-sm font-medium text-gray-300">Program</label>
+                <select id="program_acronym" name="program_acronym"
+                        class="mt-1 w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-lg text-gray-300
+                   focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
+                   hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
+                    <option value="">Select your program</option>
+                    {% for program in programs %}
+                    <option value="{{ program.program_acronym }}">{{ program.program_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <button type="submit" id="registerButton"
                     class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg
                            hover:bg-blue-700 hover:scale-105 transition-all duration-300 ease-in-out shadow-lg">
@@ -100,4 +116,130 @@
         </p>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const userTypeSelect = document.getElementById('userType');
+    const campusGroup = document.getElementById('campusGroup');
+    const collegeGroup = document.getElementById('collegeGroup');
+    const programGroup = document.getElementById('programGroup');
+    const campusSelect = document.getElementById('campus_acronym');
+    const collegeSelect = document.getElementById('college_name');
+    const programSelect = document.getElementById('program_acronym');
+    const registerButton = document.getElementById('registerButton');
+    const form = document.getElementById('registerForm');
+    const passwordInput = document.getElementById('pWord');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const mismatchWarning = document.getElementById('passwordMismatch');
+
+    const errorMsg = document.createElement('p');
+    errorMsg.className = 'text-red-400 text-sm mt-2 text-center';
+    errorMsg.textContent = 'Please fill out all required fields.';
+    errorMsg.style.display = 'none';
+    form.appendChild(errorMsg);
+
+    const flashButton = () => {
+        registerButton.classList.remove('bg-blue-600');
+        registerButton.classList.add('bg-gradient-to-r', 'from-yellow-400', 'via-red-500', 'to-yellow-400');
+        setTimeout(() => {
+            registerButton.classList.remove('bg-gradient-to-r', 'from-yellow-400', 'via-red-500', 'to-yellow-400');
+            registerButton.classList.add('bg-blue-600');
+        }, 1500);
+    };
+
+    const resetStyles = () => {
+        [campusSelect, collegeSelect, programSelect].forEach(select => {
+            select.classList.remove('border-red-500');
+        });
+        confirmPasswordInput.classList.remove('border-red-500'); // <-- Reset red border
+        mismatchWarning.classList.add('hidden');                 // <-- Hide mismatch text
+        errorMsg.style.display = 'none';
+    };
+
+    userTypeSelect.addEventListener('change', () => {
+        const userType = userTypeSelect.value;
+        resetStyles();
+
+        // Default: Hide all
+        campusGroup.classList.add('hidden');
+        collegeGroup.classList.add('hidden');
+        programGroup.classList.add('hidden');
+        campusSelect.removeAttribute('required');
+        collegeSelect.removeAttribute('required');
+        programSelect.removeAttribute('required');
+
+        if (["Vice Chancellor for Academic Affairs", "Vice Chancellor", "Campus Director", "Dean", "Chairperson", "Teacher"].includes(userType)) {
+            campusGroup.classList.remove('hidden');
+            campusSelect.setAttribute('required', 'required');
+        }
+
+        if (["Dean", "Chairperson", "Teacher"].includes(userType)) {
+            collegeGroup.classList.remove('hidden');
+            collegeSelect.setAttribute('required', 'required');
+        }
+
+        if (["Chairperson", "Teacher"].includes(userType)) {
+            programGroup.classList.remove('hidden');
+            programSelect.setAttribute('required', 'required');
+        }
+
+        if (["Curriculum Developer"].includes(userType)) {
+            // Hide all fields
+            campusGroup.classList.add('hidden');
+            collegeGroup.classList.add('hidden');
+            programGroup.classList.add('hidden');
+        }
+
+        // Clear values if not visible
+        if (campusGroup.classList.contains('hidden')) campusSelect.value = '';
+        if (collegeGroup.classList.contains('hidden')) collegeSelect.value = '';
+        if (programGroup.classList.contains('hidden')) programSelect.value = '';
+    });
+
+    form.addEventListener('submit', function (e) {
+        resetStyles();
+        let valid = true;
+
+        // Only check if field is visible and required
+        if (!campusGroup.classList.contains('hidden') && !campusSelect.value) {
+            campusSelect.classList.add('border-red-500');
+            valid = false;
+        }
+
+        if (!collegeGroup.classList.contains('hidden') && !collegeSelect.value) {
+            collegeSelect.classList.add('border-red-500');
+            valid = false;
+        }
+
+        if (!programGroup.classList.contains('hidden') && !programSelect.value) {
+            programSelect.classList.add('border-red-500');
+            valid = false;
+        }
+
+        if (passwordInput.value !== confirmPasswordInput.value) {
+            confirmPasswordInput.classList.add('border-red-500');
+            mismatchWarning.classList.remove('hidden');
+            valid = false;
+        }
+
+        if (!valid) {
+            e.preventDefault();
+            flashButton();
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        // Set N/A for hidden fields
+        if (campusGroup.classList.contains('hidden')) {
+            campusSelect.innerHTML = '<option value="N/A" selected>N/A</option>';
+        }
+        if (collegeGroup.classList.contains('hidden')) {
+            collegeSelect.innerHTML = '<option value="N/A" selected>N/A</option>';
+        }
+        if (programGroup.classList.contains('hidden')) {
+            programSelect.innerHTML = '<option value="N/A" selected>N/A</option>';
+        }
+    });
+</script>
 {% endblock %}

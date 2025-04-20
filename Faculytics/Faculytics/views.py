@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, request, jsonify, session,
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
-from Faculytics.models import User, CSVUpload, College, Campus, UserApproval
+from Faculytics.models import User, CSVUpload, College, Campus, UserApproval, Program
 import pandas as pd
 import json
 import os
@@ -58,24 +58,23 @@ def register():
         pWord = request.form.get('pWord')
         campus_acronym = request.form.get('campus_acronym')
         college_name = request.form.get('college_name')
+        program_acronym = request.form.get('program_acronym') if userType in ['Teacher', 'Chairperson'] else None
 
-        # Check if the username already exists in Users or UserApproval
         if User.query.filter_by(uName=uName).first() or UserApproval.query.filter_by(uName=uName).first():
             flash("Username already exists. Please choose another.", "danger")
             return redirect(url_for('register'))
 
-        # Hash the password before storing
         hashed_password = generate_password_hash(pWord, method='pbkdf2:sha256')
 
-        # Add the new user to the UserApproval table
         new_user = UserApproval(
             userType=userType,
             firstName=firstName,
             lastName=lastName,
             uName=uName,
             pWord=hashed_password,
-            campus_acronym="NONE" if userType in ['Curriculum Developer'] else campus_acronym,
-            college_name=college_name if userType in ['Dean', 'Teacher'] else "NONE"
+            campus_acronym="N/A" if userType in ['Curriculum Developer'] else campus_acronym,
+            college_name=college_name if userType in ['Dean', 'Teacher', 'Chairperson'] else "N/A",
+            program_acronym=program_acronym if userType in ['Teacher', 'Chairperson'] else "N/A"
         )
         db.session.add(new_user)
         db.session.commit()
@@ -83,11 +82,11 @@ def register():
         flash("Registration submitted for approval.", "info")
         return redirect(url_for('login'))
 
-    # Fetch available campuses and colleges
     campuses = Campus.query.all()
     colleges = College.query.all()
+    programs = Program.query.all()
 
-    return render_template('register.html', title="Register", campuses=campuses, colleges=colleges)
+    return render_template('register.html', title="Register", campuses=campuses, colleges=colleges, programs=programs)
 
 @app.route('/check_username', methods=['POST'])
 def check_username():
@@ -148,24 +147,32 @@ def approval_page():
     user = User.query.get(session['user_id'])
 
     # Only Deans, Campus Directors, and Vice Chancellors can access this page
-    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor"]:
+    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor", "Vice Chancellor for Academic Affairs"]:
         flash("Unauthorized access.", "danger")
         return redirect(url_for('dashboard'))
 
     # Apply filtering based on user type
-    if user.userType == "Dean":
+    if user.userType == "Vice Chancellor for Academic Affairs":
+        # Can approve or reject all users
+        pending_users = UserApproval.query.all()
+
+    elif user.userType == "Dean":
+        # Can approve users in the same campus and college, or "N/A" users aka Curriculum Developers
         pending_users = UserApproval.query.filter(
-            (UserApproval.campus_acronym == user.campus_acronym) & 
-            (UserApproval.college_name == user.college_name) |
-            (UserApproval.campus_acronym == "NONE") & 
-            (UserApproval.college_name == "NONE")
+            ((UserApproval.campus_acronym == user.campus_acronym) & 
+             (UserApproval.college_name == user.college_name)) |
+            ((UserApproval.campus_acronym == "N/A") & 
+             (UserApproval.college_name == "N/A"))
         ).all()
+
     else:
+        # For user type Campus Director
         pending_users = UserApproval.query.filter(
             (UserApproval.campus_acronym == user.campus_acronym) |
-            (UserApproval.campus_acronym == "NONE") & 
-            (UserApproval.college_name == "NONE")
-         ).all()
+            ((UserApproval.campus_acronym == "N/A") & 
+             (UserApproval.college_name == "N/A"))
+        ).all()
+
 
     return render_template('approval.html', pending_users=pending_users, title="User Approval")
 
@@ -175,7 +182,7 @@ def approve_user(user_id):
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
-    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor"]:
+    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor", "Vice Chancellor for Academic Affairs"]:
         flash("Unauthorized action.", "danger")
         return redirect(url_for('dashboard'))
 
@@ -214,7 +221,7 @@ def reject_user(user_id):
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
-    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor"]:
+    if user.userType not in ["Dean", "Campus Director", "Vice Chancellor", "Vice Chancellor for Academic Affairs"]:
         flash("Unauthorized action.", "danger")
         return redirect(url_for('dashboard'))
 
@@ -301,7 +308,7 @@ def delete_account():
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
-    db.session.delete(user)
+    user.isDeleted = True  # Mark the user as deleted
     db.session.commit()
     session.pop('user_id', None)  # Remove user from session
 
@@ -394,10 +401,10 @@ def delete_teacher(teacher_id):
         flash("Unauthorized action.", "danger")
         return redirect(request.referrer or url_for('dashboard'))
     
-    # Find the account and delete if found
+    # Find the account and mark it as deleted if found
     teacher = User.query.get(teacher_id)
     if teacher and teacher.userType != 'admin':
-        db.session.delete(teacher)
+        teacher.isDeleted = True  # Mark the teacher as deleted
         db.session.commit()
         flash("Account deleted successfully.", "success")
     else:
@@ -471,32 +478,72 @@ def remove_college(campus_acronym):
 
     user = User.query.get(session['user_id'])
 
-    # Check if the user is a Dean, Campus Director, or Vice Chancellor
     if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
         flash("Unauthorized action.", "danger")
-        return redirect(url_for('dashboard'))  # Unauthorized if not a Dean, Campus Director, or Vice Chancellor
+        return redirect(url_for('dashboard'))
 
-    # Get the campus based on campus_acronym
     campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
-    
     if not campus:
         flash("Campus not found.", "danger")
         return redirect(url_for('dashboard'))
 
-    # Get the college to remove from the form
-    college_to_remove = request.form.get('college_to_remove')
+    college_name = request.form.get('college_to_remove')
+    college = College.query.filter_by(college_name=college_name, isDeleted=False).first()
 
-    # Find and remove the association entry
-    college = College.query.filter_by(college_name=college_to_remove).first()
-
-    if college:
-        # Remove the association entry between the college and the campus
+    if college and college in campus.colleges:
         campus.colleges.remove(college)
         db.session.commit()
-        flash(f'College "{college_to_remove}" has been removed from {campus.campus_name}.', 'success')
-    else:
-        flash(f'College "{college_to_remove}" not found.', 'danger')
 
+        # If this college is not connected to any other campus, mark it as deleted
+        if not college.campuses:  # Assuming backref from College to campuses
+            college.isDeleted = True
+            db.session.commit()
+
+        flash(f'College "{college_name}" has been removed from {campus.campus_name}.', 'success')
+    else:
+        flash(f'College "{college_name}" not found or already removed.', 'danger')
+
+    return redirect(url_for('campus_page', campus_acronym=campus_acronym))
+
+@app.route('/renameCollege/<campus_acronym>', methods=['POST'])
+def rename_college(campus_acronym):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('dashboard'))
+
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+    if not campus:
+        flash("Campus not found.", "danger")
+        return redirect(url_for('dashboard'))
+
+    old_name = request.form.get('old_college_name')
+    new_name = request.form.get('new_college_name')
+    new_acronym = request.form.get('new_college_acronym').upper()
+
+    college = College.query.filter_by(college_name=old_name, isDeleted=False).first()
+
+    if not college or college not in campus.colleges:
+        flash(f'College "{old_name}" not found in {campus.campus_name}.', 'danger')
+        return redirect(url_for('campus_page', campus_acronym=campus_acronym))
+
+    # Check for conflicts
+    name_conflict = College.query.filter_by(college_name=new_name).first()
+    acronym_conflict = College.query.filter_by(college_acronym=new_acronym).first()
+
+    if name_conflict or acronym_conflict:
+        flash("The new college name or acronym already exists.", "danger")
+        return redirect(url_for('campus_page', campus_acronym=campus_acronym))
+
+    # Update the college name and acronym
+    college.college_name = new_name
+    college.college_acronym = new_acronym
+    db.session.commit()
+
+    flash(f'College "{old_name}" has been renamed to "{new_name}".', 'success')
     return redirect(url_for('campus_page', campus_acronym=campus_acronym))
 
 """
