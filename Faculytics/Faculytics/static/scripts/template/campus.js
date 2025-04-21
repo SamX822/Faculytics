@@ -310,3 +310,44 @@ function openCollegeAnalysisModal(event, collegeAcronym) {
 function closeCollegeAnalysisModal() {
     document.getElementById('collegeAnalysisModal').classList.add('hidden');
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Manage Colleges Modal
+    const manageCollegesBtn = document.getElementById('manage-colleges-btn');
+    const manageCollegesModal = document.getElementById('manageCollegesModal');
+    const closeManageCollegesBtn = document.getElementById('closeManageColleges');
+
+    manageCollegesBtn?.addEventListener('click', () => {
+        manageCollegesModal?.classList.remove('hidden');
+    });
+
+    closeManageCollegesBtn?.addEventListener('click', () => {
+        manageCollegesModal?.classList.add('hidden');
+    });
+
+    manageCollegesModal?.addEventListener('click', (e) => {
+        if (e.target === manageCollegesModal) {
+            manageCollegesModal.classList.add('hidden');
+        }
+    });
+
+    // Tab switching logic
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const target = button.getAttribute('data-tab');
+
+            // Hide all tab contents
+            tabContents.forEach(content => content.classList.add('hidden'));
+
+            // Show selected tab content
+            document.getElementById(`tab-${target}`)?.classList.remove('hidden');
+
+            // Toggle button styles
+            tabButtons.forEach(btn => btn.classList.remove('opacity-100', 'ring', 'ring-white'));
+            button.classList.add('opacity-100', 'ring', 'ring-white');
+        });
+    });
+});

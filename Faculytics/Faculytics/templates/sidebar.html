@@ -14,11 +14,15 @@
                     {{ user.firstName }} {{ user.lastName }}
                 </a>
                 <div class="flex items-center text-sm text-gray-300">
-                    {% if user.userType == 'Vice Chancellor' %}
+                    {% if user.userType == 'Vice Chancellor for Academic Affairs' %}
+                    <i class="fas fa-user-tie text-blue-400 mr-2"></i>
+                    {% elif user.userType == 'Vice Chancellor' %}
                     <i class="fas fa-user-tie text-blue-400 mr-2"></i>
                     {% elif user.userType == 'Campus Director' %}
                     <i class="fas fa-university text-green-400 mr-2"></i>
                     {% elif user.userType == 'Dean' %}
+                    <i class="fas fa-graduation-cap text-yellow-400 mr-2"></i>
+                    {% elif user.userType == 'Chairperson' %}
                     <i class="fas fa-graduation-cap text-yellow-400 mr-2"></i>
                     {% elif user.userType == 'Teacher' %}
                     <i class="fas fa-chalkboard-teacher text-orange-400 mr-2"></i>

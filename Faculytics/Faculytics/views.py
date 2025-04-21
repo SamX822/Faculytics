@@ -107,25 +107,25 @@ def dashboard():
     if user.userType != "admin" and user.campus_acronym:
         assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym).first()
     
-    # Admins and Curriculum Developers see all campuses, excluding the "NONE" campus
-    if user.userType in ["admin", "Curriculum Developer"]:
-        campuses = Campus.query.filter(Campus.campus_acronym != "NONE").all()
+    # Admins and Curriculum Developers see all campuses, excluding the "N/A" campus
+    if user.userType in ["admin", "Curriculum Developer", "Vice Chancellor for Academic Affairs"]:
+        campuses = Campus.query.filter(Campus.campus_acronym != "N/A").all()
     else:
         campuses = [assigned_campus] if assigned_campus else []
     
     # Get pending approval counts for Deans, Campus Directors, and Vice Chancellors
     pending_approvals = 0
-    if user.userType in ["Dean", "Campus Director", "Vice Chancellor"]:
+    if user.userType in ["Dean", "Campus Director", "Vice Chancellor", "Vice Chancellor for Academic Affairs"]:
         # Build query based on user type and assignment
         query = UserApproval.query
         
         if user.userType == "Dean" and user.college_name:
             # Deans only see approvals for their college
             query = query.filter_by(college_name=user.college_name)
-        elif user.userType == "Campus Director" and user.campus_acronym:
-            # Campus Directors only see approvals for their campus
+        elif user.userType in ("Campus Director", "Vice Chancellor") and user.campus_acronym:
+            # Campus Directors and Vice Chancellors only see approvals for their campus
             query = query.filter_by(campus_acronym=user.campus_acronym)
-        # Vice Chancellors see all approvals (no filter)
+        # Vice Chancellor for Academic Affairs can see all approvals
         
         pending_approvals = query.count()
     
@@ -340,7 +340,7 @@ def campus_page(campus_acronym):
     # Determine which colleges should be visible based on userType
     visible_colleges = []
 
-    if user.userType in ['admin', 'Curriculum Developer']:
+    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs']:
         # Admins can see all colleges
         visible_colleges = campus_colleges
     elif user.userType == 'Dean':
@@ -371,14 +371,14 @@ def college_page(college_acronym, campus_acronym):
     user = User.query.get(session['user_id'])
 
     # User type restrictions and filter users by college and campus
-    if user.userType in ['admin', 'Curriculum Developer']:
-        # Admins can see all users for this college and campus
+    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs']:
+        # Can see all users for this college and campus
         users = User.query.filter(
             User.college.has(college_name=college.college_name),
             User.campus_acronym == campus.campus_acronym
         ).all()
-    elif user.userType == 'Dean':
-        # Deans can only see Teachers from their assigned college and campus
+    elif user.userType in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        # Can only see Teachers from their assigned college and campus
         users = User.query.filter(
             User.college.has(college_name=college.college_name),
             User.campus_acronym == campus.campus_acronym,

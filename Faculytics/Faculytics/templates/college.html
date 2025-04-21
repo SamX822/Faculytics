@@ -107,78 +107,75 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
             {% set teachers = users | selectattr("userType", "equalto", "Teacher") | list %}
             {% if teachers %}
-                {% for teacher in teachers %}
-                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl group">
-                    <div class="p-6 flex flex-col items-center">
-                        <!-- Profile Image with better styling -->
-                        <div class="relative mb-4">
-                            {% if teacher.profilePicture != '../static/assets/default-avatar.png'%}
-                            <div class="h-24 w-24 rounded-full overflow-hidden border-4 border-white/20 shadow-lg relative z-10">
-                                <img src="{{ url_for('static', filename=teacher.profilePicture) }}"
-                                     alt="{{ teacher.firstName }} {{ teacher.lastName }}"
-                                     class="h-full w-full object-cover">
-                            </div>
-                            <div class="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-30 animate-pulse"></div>
-                            {% else %}
-                            <div class="h-24 w-24 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center border-4 border-white/20">
-                                <span class="text-3xl font-bold text-gray-300">{{ teacher.firstName[0] }}{{ teacher.lastName[0] }}</span>
-                            </div>
-                            <div class="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-30 animate-pulse"></div>
-                            {% endif %}
+            {% for teacher in teachers %}
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl group">
+                <div class="p-6 flex flex-col items-center">
+                    <!-- Profile Image with better styling -->
+                    <div class="relative mb-4">
+                        {% if teacher.profilePicture != '../static/assets/default-avatar.png'%}
+                        <div class="h-24 w-24 rounded-full overflow-hidden border-4 border-white/20 shadow-lg relative z-10">
+                            <img src="{{ url_for('static', filename=teacher.profilePicture) }}"
+                                 alt="{{ teacher.firstName }} {{ teacher.lastName }}"
+                                 class="h-full w-full object-cover">
                         </div>
+                        <div class="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-30 animate-pulse"></div>
+                        {% else %}
+                        <div class="h-24 w-24 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center border-4 border-white/20">
+                            <span class="text-3xl font-bold text-gray-300">{{ teacher.firstName[0] }}{{ teacher.lastName[0] }}</span>
+                        </div>
+                        <div class="absolute inset-0 bg-blue-500 rounded-full blur-md opacity-30 animate-pulse"></div>
+                        {% endif %}
+                    </div>
 
-                        <!-- Teacher Name -->
-                        <h3 class="text-white text-xl font-bold mb-2">{{ teacher.firstName }} {{ teacher.lastName }}</h3>
-                
-                        <!-- Subtle decoration -->
-                        <div class="w-12 h-1 bg-yellow-400 rounded-full mb-4"></div>
-                
-                        <!-- Actions Button -->
-                        <button 
-                            onclick="toggleTeacherActions('{{ teacher.uName }}')"
+                    <!-- Teacher Name -->
+                    <h3 class="text-white text-xl font-bold mb-2">{{ teacher.firstName }} {{ teacher.lastName }}</h3>
+
+                    <!-- Subtle decoration -->
+                    <div class="w-12 h-1 bg-yellow-400 rounded-full mb-4"></div>
+
+                    <!-- Actions Button -->
+                    <button onclick="toggleTeacherActions('{{ teacher.uName }}')"
                             class="mt-2 px-4 py-2 bg-blue-600 bg-opacity-20 hover:bg-opacity-40 text-blue-300 rounded-lg flex items-center gap-2 transition-all duration-300 w-full justify-center">
-                            <span>Actions</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" id="arrow-{{ teacher.uName }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                
-                        <!-- Action Buttons -->
-                        <div id="actions-{{ teacher.uName }}" class="hidden w-full mt-4 flex flex-col sm:flex-row gap-3 transition-all duration-300 ease-in-out">
-                            {% if user.userType == 'Dean' %}
-                            <button 
-                                onclick="redirectToUploadHistory('{{ teacher.uName }}', '{{ college.college_acronym }}')"
+                        <span>Actions</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" id="arrow-{{ teacher.uName }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Action Buttons -->
+                    <div id="actions-{{ teacher.uName }}" class="hidden w-full mt-4 flex flex-col sm:flex-row gap-3 transition-all duration-300 ease-in-out">
+                        {% if user.userType == 'Dean' %}
+                        <button onclick="redirectToUploadHistory('{{ teacher.uName }}', '{{ college.college_acronym }}')"
                                 class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                                </svg>
-                                <span>Upload</span>
-                            </button>
-                            {% endif %}
-                            <button 
-                                onclick="openAnalysisModal('{{ teacher.uName }}')"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                            </svg>
+                            <span>Upload</span>
+                        </button>
+                        {% endif %}
+                        <button onclick="openAnalysisModal('{{ teacher.uName }}')"
                                 class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                                <span>Analytics</span>
-                            </button>
-                        </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <span>Analytics</span>
+                        </button>
                     </div>
                 </div>
-                {% endfor %}
+            </div>
+            {% endfor %}
             {% else %}
-                <div class="col-span-full flex flex-col items-center justify-center p-12 bg-gray-800/50 rounded-xl border border-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <p class="text-gray-400 text-lg font-medium">No Teachers found for this college</p>
-                    <p class="text-gray-500 mt-2">Teachers will appear here once they are added to the system</p>
-                </div>
+            <div class="col-span-full flex flex-col items-center justify-center p-12 bg-gray-800/50 rounded-xl border border-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <p class="text-gray-400 text-lg font-medium">No Teachers found for this college</p>
+                <p class="text-gray-500 mt-2">Teachers will appear here once they are added to the system</p>
+            </div>
             {% endif %}
         </div>
 
-        {% elif user.userType == 'Curriculum Developer' %}
+        {% elif user.userType in ['Curriculum Developer''Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs'] %}
         <!-- Curriculum Developer View: Show only Teachers in this college -->
         <h3 class="text-2xl font-bold text-white mb-4 mt-6">Teachers</h3>
         <div class="grid grid-cols-2 gap-6">
@@ -203,7 +200,7 @@
         </div>
         {% else %}
         <script>
-			if (!['admin', 'Dean', 'Curriculum Developer'].includes("{{ user.userType }}")) {
+            if (!['admin', 'Dean', 'Curriculum Developer', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs'].includes("{{ user.userType }}")) {
 				window.location.href = "{{ url_for('dashboard') }}";
 			}
         </script>
@@ -267,536 +264,10 @@
   }
 </script>
 
-  {% elif user.userType == 'Dean' or 'Curriculum Developer' %}
+  {% elif user.userType == 'Dean' or 'Curriculum Developer' or "Campus Director" or "Vice Chancellor" or "Vice Chancellor for Academic Affairs" %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../static/scripts/template/college.js"></script>
 
-<script>
-    let analysisChartInstance = null;
-    let topicChartInstance = null;
-    let uname = "";
-    let currentData = null;
-    let currentFileName = "overall";
-    let activeTab = "sentiment";
-
-    // Toggle actions for teacher card
-    function toggleTeacherActions(username) {
-        const actionsDiv = document.getElementById(`actions-${username}`);
-        const arrow = document.getElementById(`arrow-${username}`);
-
-        if (actionsDiv.classList.contains('hidden')) {
-            actionsDiv.classList.remove('hidden');
-            actionsDiv.classList.add('flex');
-            arrow.classList.add('rotate-180');
-        } else {
-            actionsDiv.classList.add('hidden');
-            actionsDiv.classList.remove('flex');
-            arrow.classList.remove('rotate-180');
-        }
-    }
-
-    function redirectToUploadHistory(uName, collegeAcronym) {
-        window.location.href = "{{ url_for('uploadHistory') }}?teacher=" + encodeURIComponent(uName) + "&college=" + encodeURIComponent(collegeAcronym);
-    }
-
-    // Tab switching functionality
-    document.getElementById('sentimentTab').addEventListener('click', function() {
-        document.getElementById('sentimentTab').classList.add('bg-blue-600');
-        document.getElementById('sentimentTab').classList.remove('bg-gray-700');
-        document.getElementById('topicTab').classList.add('bg-gray-700');
-        document.getElementById('topicTab').classList.remove('bg-blue-600');
-
-        document.getElementById('sentimentContent').classList.remove('hidden');
-        document.getElementById('sentimentContent').classList.add('block');
-        document.getElementById('topicContent').classList.add('hidden');
-        document.getElementById('topicContent').classList.remove('block');
-
-        activeTab = "sentiment";
-
-        // Reload the chart for the current selection
-        if (currentData) {
-            loadChart(currentData, currentFileName);
-        }
-    });
-
-    document.getElementById('topicTab').addEventListener('click', function() {
-        document.getElementById('topicTab').classList.add('bg-blue-600');
-        document.getElementById('topicTab').classList.remove('bg-gray-700');
-        document.getElementById('sentimentTab').classList.add('bg-gray-700');
-        document.getElementById('sentimentTab').classList.remove('bg-blue-600');
-
-        document.getElementById('topicContent').classList.remove('hidden');
-        document.getElementById('topicContent').classList.add('block');
-        document.getElementById('sentimentContent').classList.add('hidden');
-        document.getElementById('sentimentContent').classList.remove('block');
-
-        activeTab = "topic";
-
-        // Reload the chart for the current selection
-        if (currentData) {
-            loadChart(currentData, currentFileName);
-        }
-    });
-
-    function openAnalysisModal(uName) {
-        uname = uName;
-        document.getElementById('analysisModal').classList.remove('hidden');
-
-        // Reset active tab to sentiment analysis
-        document.getElementById('sentimentTab').click();
-
-        // Clear previous options in the dropdown
-        let fileSelect = document.getElementById('fileSelect');
-        fileSelect.innerHTML = "<option value='overall'>Overall</option>";
-
-        fetch("{{ url_for('analysis') }}?teacher=" + encodeURIComponent(uname) + "&include_topics=true")
-            .then(response => response.json())
-            .then(data => {
-                console.log("Received data:", data);
-                currentData = data;
-
-                if (!data.files || data.files.length === 0) {
-                    document.getElementById('fileDetails').innerHTML = "<p>No uploads found for this teacher.</p>";
-                    return;
-                }
-
-                // Populate the file dropdown with all available files
-                data.files.forEach(file => {
-                    let option = document.createElement("option");
-                    option.value = file.filename;
-                    option.textContent = file.filename;
-                    fileSelect.appendChild(option);
-                });
-
-                // Default to "overall"
-                fileSelect.value = "overall";
-                currentFileName = "overall";
-
-                // Load the chart
-                loadChart(data, "overall");
-            })
-            .catch(error => console.error("Error fetching files:", error));
-    }
-
-    document.getElementById('viewButton').addEventListener('click', function () {
-        const fileName = document.getElementById('fileSelect').value;
-        currentFileName = fileName;
-
-        fetch(`/analysis?teacher=${encodeURIComponent(uname)}&file_name=${fileName}&include_topics=true`)
-            .then(response => response.json())
-            .then(data => {
-                console.log("Analysis Data:", data);
-                currentData = data;
-
-                // Update the chart with the selected file or overall data
-                loadChart(data, fileName);
-
-                // Update the recommendation message
-                document.getElementById('fileDetails').innerHTML = `<p>Recommendation: ${data.recommendation}</p>`;
-            })
-            .catch(error => console.error("Error fetching analysis data:", error));
-    });
-
-    function loadChart(data, fileName) {
-        if (activeTab === "sentiment") {
-            loadSentimentChart(data, fileName);
-        } else {
-            loadTopicChart(data, fileName);
-        }
-    }
-
-    function loadSentimentChart(data, fileName) {
-        if (analysisChartInstance) {
-            analysisChartInstance.destroy();
-        }
-
-        const ctx = document.getElementById('analysisChart').getContext('2d');
-
-        if (fileName === "overall") {
-            // --- OVERALL VIEW (LINE CHART) ---
-            function parseFilename(filename) {
-                const [startYear, endYear, semester] = filename.split('_').map(Number);
-                return { startYear, endYear, semester };
-            }
-
-            // Sort files chronologically
-            const sortedFiles = [...data.files].sort((a, b) => {
-                const aParts = parseFilename(a.filename);
-                const bParts = parseFilename(b.filename);
-
-                if (aParts.startYear !== bParts.startYear) {
-                    return aParts.startYear - bParts.startYear;
-                } else if (aParts.endYear !== bParts.endYear) {
-                    return aParts.endYear - bParts.endYear;
-                } else {
-                    return aParts.semester - bParts.semester;
-                }
-            });
-
-            // Extract labels and sentiment data from sorted list
-            const labels = sortedFiles.map(file => file.filename);
-            const positiveData = sortedFiles.map(file => {
-                const sentimentData = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
-                return sentimentData.filter(s => s === "Positive").length;
-            });
-            const negativeData = sortedFiles.map(file => {
-                const sentimentData = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
-                return sentimentData.filter(s => s === "Negative").length;
-            });
-
-            // Chart with files on the x-axis
-            analysisChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Positive',
-                            data: positiveData,
-                            borderColor: 'green',
-                            fill: false,
-                            pointStyle: 'circle',
-                            pointRadius: 5
-                        },
-                        {
-                            label: 'Negative',
-                            data: negativeData,
-                            borderColor: 'red',
-                            fill: false,
-                            pointStyle: 'circle',
-                            pointRadius: 5
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Sentiment Count',
-                                color: 'white'
-                            },
-                            ticks: {
-                                stepSize: 1,
-                                color: 'white'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Files',
-                                color: 'white'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: 'white'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (tooltipItem) {
-                                    return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        } else {
-            // --- SPECIFIC FILE VIEW (BAR CHART) ---
-            const selectedFile = data.files.find(file => file.filename === fileName);
-            if (!selectedFile) {
-                console.error("File not found in dataset.");
-                return;
-            }
-
-            const positiveCount = selectedFile.sentiment.filter(s => s === "Positive").length;
-            const negativeCount = selectedFile.sentiment.filter(s => s === "Negative").length;
-
-            analysisChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ["Positive", "Negative"],
-                    datasets: [
-                        {
-                            label: 'Sentiment Count',
-                            data: [positiveCount, negativeCount],
-                            backgroundColor: ['green', 'red'],
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Count', color: 'white' },
-                            ticks: { stepSize: 1, color: 'white' },
-                        },
-                        x: {
-                            title: { display: true, text: 'Sentiment Type', color: 'white' },
-                            ticks: { color: 'white' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'white',
-                                font: {
-                                    weight: 'bold'
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    function loadTopicChart(data, fileName) {
-        if (topicChartInstance) {
-            topicChartInstance.destroy();
-        }
-
-        const ctx = document.getElementById('topicChart').getContext('2d');
-
-        if (fileName === "overall") {
-            // --- OVERALL TOPIC VIEW ---
-            // Aggregate topics across all files
-            const topicCounts = {};
-            const topicSentiments = {};
-
-            data.files.forEach(file => {
-                if (!file.topics) return;
-
-                // Parse topics if they're in string format
-                const topics = Array.isArray(file.topics) ? file.topics : JSON.parse(file.topics || "[]");
-                const sentiments = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
-
-                // Count topics and their sentiments
-                topics.forEach((topic, index) => {
-                    if (!topic || topic.trim() === "") return;  // Ignore empty or null topics
-                    if (!topicCounts[topic]) {
-                        topicCounts[topic] = 0;
-                        topicSentiments[topic] = { positive: 0, negative: 0 };
-                    }
-
-                    topicCounts[topic]++;
-
-                    // Map sentiment to the corresponding topic
-                    if (index < sentiments.length) {
-                        if (sentiments[index] === "Positive") {
-                            topicSentiments[topic].positive++;
-                        } else {
-                            topicSentiments[topic].negative++;
-                        }
-                    }
-                });
-            });
-
-            // Sort topics by count and get top 10
-            const topTopics = Object.keys(topicCounts)
-                .sort((a, b) => topicCounts[b] - topicCounts[a])
-                .slice(0, 10);
-
-            const positiveData = topTopics.map(topic => topicSentiments[topic].positive);
-            const negativeData = topTopics.map(topic => topicSentiments[topic].negative);
-
-            topicChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: topTopics,
-                    datasets: [
-                        {
-                            label: 'Positive',
-                            data: positiveData,
-                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                            borderColor: 'rgba(40, 167, 69, 1)',
-                            borderWidth: 1,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.4
-                        },
-                        {
-                            label: 'Negative',
-                            data: negativeData,
-                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                            borderColor: 'rgba(220, 53, 69, 1)',
-                            borderWidth: 1,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Count',
-                                color: 'white'
-                            },
-                            ticks: {
-                                stepSize: 1,
-                                color: 'white'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Topics',
-                                color: 'white'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: 'white'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (tooltipItem) {
-                                    return `${tooltipItem.dataset.label}: ${tooltipItem.raw} comments`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        } else {
-            // --- SINGLE FILE TOPIC VIEW ---
-            const selectedFile = data.files.find(file => file.filename === fileName);
-            if (!selectedFile) {
-                console.error("File not found in dataset.");
-                return;
-            }
-
-            // Parse topics and sentiments
-            const topics = Array.isArray(selectedFile.topics) ? selectedFile.topics : JSON.parse(selectedFile.topics || "[]");
-            const sentiments = Array.isArray(selectedFile.sentiment) ? selectedFile.sentiment : JSON.parse(selectedFile.sentiment || "[]");
-
-            // Count topics and their sentiments
-            const topicCounts = {};
-            const topicSentiments = {};
-
-            topics.forEach((topic, index) => {
-                if (!topicCounts[topic]) {
-                    topicCounts[topic] = 0;
-                    topicSentiments[topic] = { positive: 0, negative: 0 };
-                }
-
-                topicCounts[topic]++;
-
-                // Map sentiment to the corresponding topic
-                if (index < sentiments.length) {
-                    if (sentiments[index] === "Positive") {
-                        topicSentiments[topic].positive++;
-                    } else {
-                        topicSentiments[topic].negative++;
-                    }
-                }
-            });
-
-            // Sort topics by count and get top 10
-            const topTopics = Object.keys(topicCounts)
-                .sort((a, b) => topicCounts[b] - topicCounts[a])
-                .slice(0, 10);
-
-            const positiveData = topTopics.map(topic => topicSentiments[topic].positive);
-            const negativeData = topTopics.map(topic => topicSentiments[topic].negative);
-
-            topicChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: topTopics,
-                    datasets: [
-                        {
-                            label: 'Positive',
-                            data: positiveData,
-                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                            borderColor: 'rgba(40, 167, 69, 1)',
-                            borderWidth: 1,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.4
-                        },
-                        {
-                            label: 'Negative',
-                            data: negativeData,
-                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                            borderColor: 'rgba(220, 53, 69, 1)',
-                            borderWidth: 1,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Count',
-                                color: 'white'
-                            },
-                            ticks: {
-                                stepSize: 1,
-                                color: 'white'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Topics',
-                                color: 'white'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: 'white'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (tooltipItem) {
-                                    return `${tooltipItem.dataset.label}: ${tooltipItem.raw} comments`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    function closeAnalysisModal() {
-        document.getElementById('analysisModal').classList.add('hidden');
-    }
-</script>
   {% endif %}
 {% endblock %}
