@@ -1,6 +1,6 @@
 #views.py
 from datetime import datetime
-from flask import render_template, redirect, url_for, request, jsonify, session, flash
+from flask import Flask, render_template, redirect, url_for, request, jsonify, session, flash, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
@@ -9,6 +9,8 @@ import pandas as pd
 import json
 import os
 import traceback
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Query
 
 # ML libraries
 from transformers import pipeline
@@ -47,6 +49,29 @@ def inject_user():
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
     return dict(user=user)
+
+# Custom scoped query property that filters by isDeleted=False
+class SoftDeleteQuery(Query):
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def not_deleted(self):
+        return self.filter_by(isDeleted=False)
+
+Program.query_class = SoftDeleteQuery
+College.query_class = SoftDeleteQuery
+Campus.query_class = SoftDeleteQuery
+User.query_class = SoftDeleteQuery
+
+@app.before_request
+def apply_soft_delete_scope():
+    Program.query = db.session.query(Program).filter_by(isDeleted=False)
+    College.query = db.session.query(College).filter_by(isDeleted=False)
+    Campus.query = db.session.query(Campus).filter_by(isDeleted=False)
+    User.query = db.session.query(User).filter_by(isDeleted=False)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -340,55 +365,76 @@ def campus_page(campus_acronym):
     # Determine which colleges should be visible based on userType
     visible_colleges = []
 
-    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs']:
-        # Admins can see all colleges
+    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs', 'Campus Director', 'Vice Chancellor']:
+        # can see all colleges
         visible_colleges = campus_colleges
-    elif user.userType == 'Dean':
-        # Deans can only see their assigned college
+    elif user.userType in ['Dean', 'Chairperson']:
+        # can only see their assigned college
         visible_colleges = [college for college in campus_colleges if college.college_name == user.college_name]
-    elif user.userType in ['Campus Director', 'Vice Chancellor']:
-        # Campus Directors & Vice Chancellors can see all colleges but unclickable
-        visible_colleges = campus_colleges
+    else
+        return redirect(url_for('dashboard'))
 
     return render_template(
         'campus.html', campus=campus, visible_colleges=visible_colleges, user=user, title=campus.campus_name)
 
 @app.route('/college/<string:college_acronym>/<string:campus_acronym>')
-def college_page(college_acronym, campus_acronym):  
+def college_page(college_acronym, campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    # Find the college by its acronym
     college = College.query.filter_by(college_acronym=college_acronym.upper()).first_or_404()
-
-    # Get the associated campus
     campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper()).first_or_404()
-
-    if not campus:
-        return "Associated campus not found", 404
-
-    # Get the logged-in user
     user = User.query.get(session['user_id'])
 
-    # User type restrictions and filter users by college and campus
-    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs']:
-        # Can see all users for this college and campus
-        users = User.query.filter(
-            User.college.has(college_name=college.college_name),
-            User.campus_acronym == campus.campus_acronym
+    # Get Programs associated with this campus and college
+    programs = Program.query.filter_by(
+        college_acronym=college_acronym.upper(),
+        campus_acronym=campus_acronym.upper()
+    ).all()
+
+    return render_template(
+        'college.html', campus=campus, college=college, programs=programs, title=college.college_name, user=user)
+
+@app.route('/program/<string:program_acronym>/<string:college_acronym>/<string:campus_acronym>')
+def program_page(program_acronym, college_acronym, campus_acronym):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+
+    college = College.query.filter_by(college_acronym=college_acronym.upper()).first_or_404()
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper()).first_or_404()
+    program = Program.query.filter_by(
+        program_acronym=program_acronym.upper(),
+        college_acronym=college_acronym.upper(),
+        campus_acronym=campus_acronym.upper()
+    ).first_or_404()
+
+    if user.userType == 'admin':
+        users = User.query.filter_by(
+            campus_acronym=campus.campus_acronym,
+            college_name=college.college_name,
+            program_acronym=program.program_acronym
         ).all()
-    elif user.userType in ['Dean', 'Campus Director', 'Vice Chancellor']:
-        # Can only see Teachers from their assigned college and campus
-        users = User.query.filter(
-            User.college.has(college_name=college.college_name),
-            User.campus_acronym == campus.campus_acronym,
-            User.userType == "Teacher"
+    elif user.userType in ['Dean', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs']:
+        users = User.query.filter_by(
+            campus_acronym=campus.campus_acronym,
+            college_name=college.college_name,
+            program_acronym=program.program_acronym,
+            userType='Teacher'
         ).all()
+    elif user.userType == 'Chairperson':
+        users = User.query.filter_by(
+            campus_acronym=campus.campus_acronym,
+            college_name=college.college_name,
+            program_acronym=program.program_acronym,
+            userType='Teacher'
+        ).all()
+
     else:
         return redirect(url_for('dashboard'))
 
-    return render_template(
-        'college.html', campus=campus, college=college, users=users, title=college.college_name)
+    return render_template('program.html', campus=campus, college=college, program=program, users=users, title=program.program_name)
 
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 def delete_teacher(teacher_id):
@@ -545,6 +591,90 @@ def rename_college(campus_acronym):
 
     flash(f'College "{old_name}" has been renamed to "{new_name}".', 'success')
     return redirect(url_for('campus_page', campus_acronym=campus_acronym))
+
+@app.route('/add_program/<string:campus_acronym>/<string:college_acronym>', methods=['POST'])
+def add_program(campus_acronym, college_acronym):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))
+
+    program_name = request.form.get('program_name')
+    program_acronym = request.form.get('program_acronym')
+
+    new_program = Program(
+        program_name=program_name,
+        program_acronym=program_acronym.upper(),
+        college_acronym=college_acronym.upper(),
+        campus_acronym=campus_acronym.upper(),
+        isDeleted=False
+    )
+
+    db.session.add(new_program)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return "Program already exists or database error", 400
+
+    return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
+
+@app.route('/remove_program/<string:campus_acronym>/<string:college_acronym>', methods=['POST'])
+def remove_program(campus_acronym, college_acronym):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))
+
+    program_acronym = request.form.get('program_to_remove')
+
+    program = Program.query.filter_by(
+        campus_acronym=campus_acronym.upper(),
+        college_acronym=college_acronym.upper(),
+        program_acronym=program_acronym.upper(),
+        isDeleted=False
+    ).first()
+
+    if program:
+        program.isDeleted = True
+        db.session.commit()
+
+    return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
+
+@app.route('/rename_program/<string:campus_acronym>/<string:college_acronym>', methods=['POST'])
+def rename_program(campus_acronym, college_acronym):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if user.userType not in ['Dean', 'Campus Director', 'Vice Chancellor']:
+        return redirect(url_for('dashboard'))
+
+    old_acronym = request.form.get('old_program_acronym')
+    new_name = request.form.get('new_program_name')
+    new_acronym = request.form.get('new_program_acronym')
+
+    program = Program.query.filter_by(
+        campus_acronym=campus_acronym.upper(),
+        college_acronym=college_acronym.upper(),
+        program_acronym=old_acronym.upper(),
+        isDeleted=False
+    ).first()
+
+    if program:
+        program.program_name = new_name
+        program.program_acronym = new_acronym.upper()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return "Rename failed due to duplicate acronym or DB error", 400
+
+    return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
 
 """
 Function for upload

@@ -53,10 +53,12 @@
   <ItemGroup>
     <Content Include="Faculytics\static\scripts\template\campus.js" />
     <Content Include="Faculytics\static\scripts\template\college.js" />
+    <Content Include="Faculytics\static\scripts\template\program.js" />
     <Content Include="Faculytics\templates\approval.html" />
     <Content Include="Faculytics\templates\campus.html" />
     <Content Include="Faculytics\templates\college.html" />
     <Content Include="Faculytics\templates\college_analytics.html" />
+    <Content Include="Faculytics\templates\program.html" />
     <Content Include="Faculytics\templates\uclm.html" />
     <Content Include="Faculytics\templates\ucb.html" />
     <Content Include="Faculytics\templates\ucpt.html" />

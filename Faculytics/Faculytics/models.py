@@ -52,7 +52,7 @@ class User(db.Model):
     )
     program_acronym = db.Column(
         db.String(10),
-        db.ForeignKey('Programs.program_acronym', onupdate="CASCADE", ondelete="SET NULL"),
+        db.ForeignKey('Programs.program_acronym', onupdate="CASCADE", ondelete="NO ACTION"),
         nullable=True
     )
     profilePicture = db.Column(db.String(255), nullable=True, default='../static/assets/default-avatar.png')
@@ -127,17 +127,17 @@ class UserApproval(db.Model):
     lastName = db.Column(db.String(50), nullable=False)
     campus_acronym = db.Column(
         db.String(50),
-        db.ForeignKey('Campuses.campus_acronym', onupdate="CASCADE", ondelete="SET NULL"),
+        db.ForeignKey('Campuses.campus_acronym', onupdate="CASCADE", ondelete="NO ACTION"),
         nullable=True
     )
     college_name = db.Column(
         db.String(50),
-        db.ForeignKey('Colleges.college_name', onupdate="CASCADE", ondelete="SET NULL"),
+        db.ForeignKey('Colleges.college_name', onupdate="CASCADE", ondelete="NO ACTION"),
         nullable=True
     )
     program_acronym = db.Column(
         db.String(10),
-        db.ForeignKey('Programs.program_acronym', onupdate="CASCADE", ondelete="SET NULL"),
+        db.ForeignKey('Programs.program_acronym', onupdate="CASCADE", ondelete="NO ACTION"),
         nullable=True
     )
     date_registered = db.Column(db.DateTime, default=lambda: datetime.now(PH_TZ))
