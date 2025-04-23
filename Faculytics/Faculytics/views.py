@@ -1,6 +1,7 @@
 #views.py
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify, session, flash, abort
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
@@ -11,6 +12,7 @@ import os
 import traceback
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query
+from sqlalchemy import and_
 
 # ML libraries
 from transformers import pipeline
@@ -35,7 +37,7 @@ def login():
     if request.method == 'POST':
         uName = request.form.get('uName')
         pWord = request.form.get('pWord')
-        user = User.query.filter_by(uName=uName).first()
+        user = User.query.filter_by(uName=uName, isDeleted=False).first()
         if user and check_password_hash(user.pWord, pWord):
             session['user_id'] = user.id  # Store user ID in session
             return redirect(url_for('dashboard'))
@@ -47,31 +49,21 @@ def login():
 def inject_user():
     user = None
     if 'user_id' in session:
-        user = User.query.get(session['user_id'])
+        user = User.query.filter_by(id=session['user_id'], isDeleted=False).first()
     return dict(user=user)
 
-# Custom scoped query property that filters by isDeleted=False
-class SoftDeleteQuery(Query):
-    def __new__(cls, *args, **kwargs):
-        return super().__new__(cls)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def not_deleted(self):
-        return self.filter_by(isDeleted=False)
-
-Program.query_class = SoftDeleteQuery
-College.query_class = SoftDeleteQuery
-Campus.query_class = SoftDeleteQuery
-User.query_class = SoftDeleteQuery
-
-@app.before_request
-def apply_soft_delete_scope():
-    Program.query = db.session.query(Program).filter_by(isDeleted=False)
-    College.query = db.session.query(College).filter_by(isDeleted=False)
-    Campus.query = db.session.query(Campus).filter_by(isDeleted=False)
-    User.query = db.session.query(User).filter_by(isDeleted=False)
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))
+        user = User.query.filter_by(id=user_id, isDeleted=False).first()
+        if not user:
+            session.pop('user_id', None)
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -121,6 +113,7 @@ def check_username():
     return jsonify({"exists": user_exists})
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -130,7 +123,7 @@ def dashboard():
     # Fetch assigned campus for non-admin users
     assigned_campus = None
     if user.userType != "admin" and user.campus_acronym:
-        assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym).first()
+        assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym, isDeleted=False).first()
     
     # Admins and Curriculum Developers see all campuses, excluding the "N/A" campus
     if user.userType in ["admin", "Curriculum Developer", "Vice Chancellor for Academic Affairs"]:
@@ -165,6 +158,7 @@ def dashboard():
     )
 
 @app.route('/approval')
+@login_required
 def approval_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -202,6 +196,7 @@ def approval_page():
     return render_template('approval.html', pending_users=pending_users, title="User Approval")
 
 @app.route('/approve_user/<int:user_id>', methods=['POST'])
+@login_required
 def approve_user(user_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -231,7 +226,8 @@ def approve_user(user_id):
         uName=pending_user.uName,
         pWord=pending_user.pWord,
         campus_acronym=pending_user.campus_acronym,
-        college_name=pending_user.college_name
+        college_name=pending_user.college_name,
+        program_acronym=pending_user.program_acronym
     )
     db.session.add(approved_user)
     db.session.delete(pending_user)
@@ -241,6 +237,7 @@ def approve_user(user_id):
     return redirect(url_for('approval_page'))
 
 @app.route('/reject_user/<int:user_id>', methods=['POST'])
+@login_required
 def reject_user(user_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -269,6 +266,7 @@ def reject_user(user_id):
     return redirect(url_for('approval_page'))
 
 @app.route('/uploadHistory')
+@login_required
 def uploadHistory():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -279,7 +277,7 @@ def uploadHistory():
     teacher_full_name = None
 
     if teacher_username:
-        teacher = User.query.filter_by(uName=teacher_username).first()
+        teacher = User.query.filter_by(uName=teacher_username, isDeleted=False).first()
         if teacher:
             teacher_full_name = f"{teacher.firstName} {teacher.lastName}"
 
@@ -291,6 +289,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in IMG_ALLOWED_EXTENSIONS
 
 @app.route('/my_account', methods=['GET', 'POST'])
+@login_required
 def my_account():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -328,6 +327,7 @@ def my_account():
     return render_template('my_account.html', user=user, title="My Account", year=datetime.now().year)
 
 @app.route('/delete_account', methods=['POST'])
+@login_required
 def delete_account():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -349,6 +349,7 @@ def about():
     return render_template('about.html', title="About", year=datetime.now().year, message="Your application description page.")
 
 @app.route('/campus/<string:campus_acronym>')
+@login_required
 def campus_page(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -371,44 +372,54 @@ def campus_page(campus_acronym):
     elif user.userType in ['Dean', 'Chairperson']:
         # can only see their assigned college
         visible_colleges = [college for college in campus_colleges if college.college_name == user.college_name]
-    else
+    else:
         return redirect(url_for('dashboard'))
 
     return render_template(
         'campus.html', campus=campus, visible_colleges=visible_colleges, user=user, title=campus.campus_name)
 
 @app.route('/college/<string:college_acronym>/<string:campus_acronym>')
+@login_required
 def college_page(college_acronym, campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    college = College.query.filter_by(college_acronym=college_acronym.upper()).first_or_404()
-    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper()).first_or_404()
+    college = College.query.filter_by(college_acronym=college_acronym.upper(), isDeleted=False).first_or_404()
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper(), isDeleted=False).first_or_404()
     user = User.query.get(session['user_id'])
 
     # Get Programs associated with this campus and college
-    programs = Program.query.filter_by(
-        college_acronym=college_acronym.upper(),
-        campus_acronym=campus_acronym.upper()
-    ).all()
+    programs = Program.query \
+        .join(Program.colleges) \
+        .join(Program.campuses) \
+        .filter(
+            College.college_acronym == college_acronym.upper(),
+            Campus.campus_acronym == campus_acronym.upper(),
+            Program.isDeleted == False
+        ).all()
 
     return render_template(
         'college.html', campus=campus, college=college, programs=programs, title=college.college_name, user=user)
 
 @app.route('/program/<string:program_acronym>/<string:college_acronym>/<string:campus_acronym>')
+@login_required
 def program_page(program_acronym, college_acronym, campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
 
-    college = College.query.filter_by(college_acronym=college_acronym.upper()).first_or_404()
-    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper()).first_or_404()
-    program = Program.query.filter_by(
-        program_acronym=program_acronym.upper(),
-        college_acronym=college_acronym.upper(),
-        campus_acronym=campus_acronym.upper()
-    ).first_or_404()
+    college = College.query.filter_by(college_acronym=college_acronym.upper(), isDeleted=False).first_or_404()
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper(), isDeleted=False).first_or_404()
+    program = Program.query \
+        .join(Program.colleges) \
+        .join(Program.campuses) \
+        .filter(
+            Program.program_acronym == program_acronym.upper(),
+            College.college_acronym == college_acronym.upper(),
+            Campus.campus_acronym == campus_acronym.upper(),
+            Program.isDeleted == False
+        ).first_or_404()
 
     if user.userType == 'admin':
         users = User.query.filter_by(
@@ -437,6 +448,7 @@ def program_page(program_acronym, college_acronym, campus_acronym):
     return render_template('program.html', campus=campus, college=college, program=program, users=users, title=program.program_name)
 
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
+@login_required
 def delete_teacher(teacher_id):
     # Ensure the user is logged in and is an admin.
     if 'user_id' not in session:
@@ -448,7 +460,7 @@ def delete_teacher(teacher_id):
         return redirect(request.referrer or url_for('dashboard'))
     
     # Find the account and mark it as deleted if found
-    teacher = User.query.get(teacher_id)
+    teacher = User.query.get(teacher_id, isDeleted=False)
     if teacher and teacher.userType != 'admin':
         teacher.isDeleted = True  # Mark the teacher as deleted
         db.session.commit()
@@ -461,7 +473,7 @@ def delete_teacher(teacher_id):
 @app.route('/get_teacher/<string:teacher_id>')
 def get_teacher(teacher_id):
     # Query for teacher using their unique uName
-    teacher = User.query.filter_by(user_id=teacher_id, userType="Teacher").first()
+    teacher = User.query.filter_by(user_id=teacher_id, userType="Teacher", isDeleted=False).first()
     
     if not teacher:
         return jsonify({"error": "Teacher not found"}), 404
@@ -477,6 +489,7 @@ def get_teacher(teacher_id):
     return jsonify(teacher_data)
 
 @app.route('/add_college/<campus_acronym>', methods=['POST'])
+@login_required
 def add_college(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -518,6 +531,7 @@ def add_college(campus_acronym):
     return redirect(url_for('campus_page', campus_acronym=campus_acronym))
 
 @app.route('/remove_college/<campus_acronym>', methods=['POST'])
+@login_required
 def remove_college(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -528,7 +542,7 @@ def remove_college(campus_acronym):
         flash("Unauthorized action.", "danger")
         return redirect(url_for('dashboard'))
 
-    campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym, isDeleted=False).first()
     if not campus:
         flash("Campus not found.", "danger")
         return redirect(url_for('dashboard'))
@@ -552,6 +566,7 @@ def remove_college(campus_acronym):
     return redirect(url_for('campus_page', campus_acronym=campus_acronym))
 
 @app.route('/renameCollege/<campus_acronym>', methods=['POST'])
+@login_required
 def rename_college(campus_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -593,6 +608,7 @@ def rename_college(campus_acronym):
     return redirect(url_for('campus_page', campus_acronym=campus_acronym))
 
 @app.route('/add_program/<string:campus_acronym>/<string:college_acronym>', methods=['POST'])
+@login_required
 def add_program(campus_acronym, college_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -607,8 +623,6 @@ def add_program(campus_acronym, college_acronym):
     new_program = Program(
         program_name=program_name,
         program_acronym=program_acronym.upper(),
-        college_acronym=college_acronym.upper(),
-        campus_acronym=campus_acronym.upper(),
         isDeleted=False
     )
 
@@ -619,9 +633,17 @@ def add_program(campus_acronym, college_acronym):
         db.session.rollback()
         return "Program already exists or database error", 400
 
+    college = College.query.filter_by(college_acronym=college_acronym.upper(), isDeleted=False).first()
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym.upper(), isDeleted=False).first()
+    if college and campus:
+        new_program.colleges.append(college)
+        new_program.campuses.append(campus)
+        db.session.commit()
+
     return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
 
 @app.route('/remove_program/<string:campus_acronym>/<string:college_acronym>', methods=['POST'])
+@login_required
 def remove_program(campus_acronym, college_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -632,12 +654,15 @@ def remove_program(campus_acronym, college_acronym):
 
     program_acronym = request.form.get('program_to_remove')
 
-    program = Program.query.filter_by(
-        campus_acronym=campus_acronym.upper(),
-        college_acronym=college_acronym.upper(),
-        program_acronym=program_acronym.upper(),
-        isDeleted=False
-    ).first()
+    program = Program.query \
+        .join(Program.colleges) \
+        .join(Program.campuses) \
+        .filter(
+            Program.program_acronym == program_acronym.upper(),
+            College.college_acronym == college_acronym.upper(),
+            Campus.campus_acronym == campus_acronym.upper(),
+            Program.isDeleted == False
+        ).first()
 
     if program:
         program.isDeleted = True
@@ -646,6 +671,7 @@ def remove_program(campus_acronym, college_acronym):
     return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
 
 @app.route('/rename_program/<string:campus_acronym>/<string:college_acronym>', methods=['POST'])
+@login_required
 def rename_program(campus_acronym, college_acronym):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -658,12 +684,15 @@ def rename_program(campus_acronym, college_acronym):
     new_name = request.form.get('new_program_name')
     new_acronym = request.form.get('new_program_acronym')
 
-    program = Program.query.filter_by(
-        campus_acronym=campus_acronym.upper(),
-        college_acronym=college_acronym.upper(),
-        program_acronym=old_acronym.upper(),
-        isDeleted=False
-    ).first()
+    program = Program.query \
+        .join(Program.colleges) \
+        .join(Program.campuses) \
+        .filter(
+            Program.program_acronym == old_acronym.upper(),
+            College.college_acronym == college_acronym.upper(),
+            Campus.campus_acronym == campus_acronym.upper(),
+            Program.isDeleted == False
+        ).first()
 
     if program:
         program.program_name = new_name

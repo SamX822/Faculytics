@@ -105,6 +105,13 @@
                                 <span class="text-gray-500 italic">N/A</span>
                                 {% endif %}
                             </td>
+                            <td class="px-4 py-4">
+                                {% if user.program_acronym %}
+                                {{ user.program_acronym }}
+                                {% else %}
+                                <span class="text-gray-500 italic">N/A</span>
+                                {% endif %}
+                            </td>
                             <td class="px-4 py-4 text-center">
                                 <div class="flex space-x-2 justify-center">
                                     <form action="{{ url_for('approve_user', user_id=user.id) }}" method="POST" class="inline">
