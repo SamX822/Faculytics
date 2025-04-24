@@ -49,7 +49,6 @@
             box-shadow: inset 0px 0.1em 0.6em #3c4fe0;
             transform: translateY(0em);
         }
-
 </style>
 
 <div class="flex items-center justify-center min-h-screen bg-[#003153]">
@@ -80,7 +79,7 @@
 
             <button type="submit" class="button">
                 <span class="text">Login</span>
-</button>
+            </button>
         </form>
 
         <p class="mt-4 text-center text-gray-400">
@@ -89,4 +88,74 @@
         </p>
     </div>
 </div>
+<!-- Add this to your register route in Flask after successful registration but before redirecting -->
+{% if success_message %}
+<script>
+    // Set up the notification to show on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create success notification
+        showRegistrationNotification("{{ firstName }}", "{{ lastName }}");
+    });
+
+    function showRegistrationNotification(firstName, lastName) {
+        // Create notification container
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 max-w-md bg-green-50 border-l-4 border-green-500 rounded-lg shadow-lg z-50 transform transition-all duration-500 ease-out';
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+
+        // Build notification content
+        notification.innerHTML = `
+            <div class="p-4 relative">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-green-800">Registration Submitted</h3>
+                        <div class="mt-1 text-sm text-green-700">
+                            <p>The account for <span class="font-semibold">${lastName}, ${firstName}</span> has been submitted for approval.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress bar timer -->
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3 overflow-hidden">
+                    <div class="bg-green-600 h-1.5 rounded-full timer-bar" style="width: 100%"></div>
+                </div>
+            </div>
+        `;
+
+        // Add to DOM
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        // Start the timer bar animation
+        const timerBar = notification.querySelector('.timer-bar');
+        timerBar.style.transition = 'width 3s linear';
+
+        setTimeout(() => {
+            timerBar.style.width = '0%';
+        }, 100);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+
+            // Remove from DOM after fade out
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }, 3000);
+    }
+</script>
+{% endif %}
 {% endblock %}

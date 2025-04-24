@@ -34,6 +34,12 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
+    
+    # Check for registration success parameters
+    success_message = request.args.get('success_message', False)
+    firstName = request.args.get('firstName', '')
+    lastName = request.args.get('lastName', '')
+    
     if request.method == 'POST':
         uName = request.form.get('uName')
         pWord = request.form.get('pWord')
@@ -43,7 +49,14 @@ def login():
             return redirect(url_for('dashboard'))
         else:
             error = "Invalid username or password."
-    return render_template('login.html', error=error, title="Login", year=datetime.now().year)
+            
+    return render_template('login.html', 
+                          error=error, 
+                          title="Login", 
+                          year=datetime.now().year,
+                          success_message=success_message,
+                          firstName=firstName,
+                          lastName=lastName)
 
 @app.context_processor
 def inject_user():
@@ -96,8 +109,11 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash("Registration submitted for approval.", "info")
-        return redirect(url_for('login'))
+        #flash("Registration submitted for approval.", "info")
+        return redirect(url_for('login', 
+                               success_message=True, 
+                               firstName=firstName, 
+                               lastName=lastName))
 
     campuses = Campus.query.all()
     colleges = College.query.all()
