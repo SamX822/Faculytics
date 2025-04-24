@@ -11,7 +11,21 @@
             <div class="flex flex-col items-center">
                 <label class="block text-gray-400 font-medium mb-2">Profile Picture</label>
                 <div class="relative flex flex-col items-center">
-                    <img id="profilePicture" src="{{ url_for('static', filename=user.profilePicture) if user.profilePicture else url_for('static', filename='assets/default-avatar.png') }}" alt="Profile Picture" class="h-24 w-24 rounded-full shadow-md border-2 border-yellow-400">
+                    {% if user.profilePicture and user.profilePicture != '../static/assets/default-avatar.png' %}
+                    <img id="profilePicturePreview"
+                         src="{{ url_for('static', filename=user.profilePicture) }}"
+                         alt="Profile Picture"
+                         class="h-24 w-24 rounded-full object-cover border-2 border-yellow-400 ring-2 ring-blue-500/50 shadow-lg transform hover:scale-105 transition-all duration-300">
+                    {% else %}
+                    <div id="initialsFallback"
+                         class="h-24 w-24 rounded-full border-2 border-yellow-400 ring-2 ring-blue-500/50 flex items-center justify-center text-4xl font-bold text-gray-100">
+                        {{ user.firstName[0] }}{{ user.lastName[0] }}
+                    </div>
+                    <img id="profilePicturePreview"
+                         src=""
+                         alt="Profile Picture"
+                         class="hidden h-24 w-24 rounded-full object-cover border-2 border-yellow-400 ring-2 ring-blue-500/50 shadow-lg transform hover:scale-105 transition-all duration-300">
+                    {% endif %}
                     <label class="absolute right-1 bottom-1 mt-3 cursor-pointer bg-yellow-500 text-black p-2 rounded-full shadow-md hover:text-yellow-500 hover:bg-black transition inline-flex items-center" alt="Upload Image">
                         <i class="fas fa-upload"></i>
                         <input type="file" name="profileImage" accept="image/*" class="hidden">
@@ -34,12 +48,18 @@
 
             <div>
                 <label class="block text-gray-400 font-medium mb-1">Email Address</label>
-                <input type="email" name="emailAddress" value="{{ user.emailAddress or 'No Email Address set' }}" class="w-full p-3 bg-gray-700 border border-gray-500 text-white rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
+                <input type="email" name="emailAddress"
+                       value="{{ user.emailAddress or '' }}"
+                       placeholder="No Email Address set"
+                       class="w-full p-3 bg-gray-700 border border-gray-500 text-white rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
             </div>
 
             <div>
                 <label class="block text-gray-400 font-medium mb-1">Phone Number</label>
-                <input type="text" name="phoneNumber" value="{{ user.phoneNumber or 'No Phone Number set' }}" class="w-full p-3 bg-gray-700 border border-gray-500 text-white rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
+                <input type="text" name="phoneNumber"
+                       value="{{ user.phoneNumber or '' }}"
+                       placeholder="No Phone Number set"
+                       class="w-full p-3 bg-gray-700 border border-gray-500 text-white rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
             </div>
 
             <div>
@@ -81,7 +101,7 @@
 </div>
 
 <script>
-    const fileInput = document.querySelector('input[type="file"]');
+    const fileInput = document.querySelector('input[name="profileImage"]');
     const profileImage = document.querySelector('#profilePicture');
 
     function openDeleteModal() {
@@ -103,15 +123,23 @@
         });
     }
 
-    fileInput.addEventListener('change', function(event) {
-        const file = event.target.files[0]; // Get the selected file
+    fileInput.addEventListener('change', function () {
+        const file = fileInput.files[0];
+        const previewImg = document.getElementById('profilePicturePreview');
+        const fallback = document.getElementById('initialsFallback');
+
         if (file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
-                // Update the profile image source with the file data
-                profilePicture.src = e.target.result;
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('hidden');
+
+                if (fallback) {
+                    fallback.style.display = 'none';
+                    fallback.classList.add('hidden');
+                }
             };
-            reader.readAsDataURL(file); // Read the file as a data URL (base64)
+            reader.readAsDataURL(file);
         }
     });
 
