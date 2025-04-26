@@ -84,9 +84,6 @@
                                focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
                                hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
                     <option value="">Select your college</option>
-                    {% for college in colleges %}
-                    <option value="{{ college.college_name }}">{{ college.college_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
 
@@ -97,9 +94,6 @@
                    focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300 ease-in-out
                    hover:bg-gray-800 hover:border-yellow-500 hover:text-white">
                     <option value="">Select your program</option>
-                    {% for program in programs %}
-                    <option value="{{ program.program_acronym }}">{{ program.program_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
 
@@ -195,6 +189,45 @@
         if (campusGroup.classList.contains('hidden')) campusSelect.value = '';
         if (collegeGroup.classList.contains('hidden')) collegeSelect.value = '';
         if (programGroup.classList.contains('hidden')) programSelect.value = '';
+    });
+
+    campusSelect.addEventListener('change', async () => {
+      resetStyles();
+      // clear college & program selects
+      collegeSelect.innerHTML = '<option value="">Select your college</option>';
+      programSelect.innerHTML = '<option value="">Select your program</option>';
+
+      const campus = campusSelect.value;
+      if (!campus) return;
+
+      // fetch colleges
+      const res = await fetch(`/get_colleges/${campus}`);
+      const colleges = await res.json();
+      colleges.forEach(col => {
+        const opt = document.createElement('option');
+        opt.value = col;
+        opt.textContent = col;
+        collegeSelect.appendChild(opt);
+      });
+    });
+
+    collegeSelect.addEventListener('change', async () => {
+      resetStyles();
+      programSelect.innerHTML = '<option value="">Select your program</option>';
+
+      const campus = campusSelect.value;
+      const college = collegeSelect.value;
+      if (!campus || !college) return;
+
+      // fetch programs
+      const res = await fetch(`/get_programs/${campus}/${encodeURIComponent(college)}`);
+      const programs = await res.json();
+      programs.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.acronym;
+        opt.textContent = p.name;
+        programSelect.appendChild(opt);
+      });
     });
 
     form.addEventListener('submit', function (e) {

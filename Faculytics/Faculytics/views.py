@@ -78,6 +78,29 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.route('/get_colleges/<campus_acronym>')
+def get_colleges(campus_acronym):
+    campus = Campus.query.filter_by(campus_acronym=campus_acronym).first_or_404()
+    # return list of college names
+    return jsonify([c.college_name for c in campus.colleges])
+
+@app.route('/get_programs/<campus_acronym>/<college_name>')
+def get_programs(campus_acronym, college_name):
+    # join Program via both Campus and College
+    programs = Program.query \
+        .join(Program.campuses) \
+        .join(Program.colleges) \
+        .filter(
+            Campus.campus_acronym == campus_acronym,
+            College.college_name == college_name,
+            Program.isDeleted == False
+        ).all()
+    # return list of {acronym, name}
+    return jsonify([
+        { 'acronym': p.program_acronym, 'name': p.program_name }
+        for p in programs
+    ])
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
