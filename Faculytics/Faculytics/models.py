@@ -164,20 +164,22 @@ PH_TZ = pytz.timezone('Asia/Manila')
 class CSVUpload(db.Model):
     __tablename__ = 'Uploads'
     
-    upload_id = db.Column(db.Integer, primary_key=True)
+    upload_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     filename = db.Column(db.String(150), nullable=False)
     comments1 = db.Column(db.JSON, nullable=False)  # Stores original comments
-    comments2 = db.Column(db.JSON, nullable=False)  # Stores original comments
-    comments3 = db.Column(db.JSON, nullable=False)  # Stores original comments
+    comments2 = db.Column(db.JSON, nullable=True)  # Stores original comments
+    comments3 = db.Column(db.JSON, nullable=True)  # Stores original comments
     sentiment1 = db.Column(db.JSON, nullable=False)  # Stores sentiment results
-    sentiment2 = db.Column(db.JSON, nullable=False)  # Stores sentiment results
-    sentiment3 = db.Column(db.JSON, nullable=False)  # Stores sentiment results
+    sentiment2 = db.Column(db.JSON, nullable=True)  # Stores sentiment results
+    sentiment3 = db.Column(db.JSON, nullable=True)  # Stores sentiment results
     topics1 = db.Column(db.JSON, nullable=True)  # Stores topic modeling results
     topics2 = db.Column(db.JSON, nullable=True)  # Stores topic modeling results
     topics3 = db.Column(db.JSON, nullable=True)  # Stores topic modeling results
     recommendation = db.Column(db.String, nullable=False)  # Stores recommendation
     upload_date = db.Column(db.DateTime, default=lambda: datetime.now(PH_TZ))
     teacher_uname = db.Column(db.String(50), db.ForeignKey('Users.uName', ondelete='SET NULL'), nullable=False)
+    grade = db.Column(db.String(35), nullable=True)
+    isDeleted = db.Column(db.Boolean, default=False)
 
     # Relationships
     user = db.relationship('User', back_populates='uploads')

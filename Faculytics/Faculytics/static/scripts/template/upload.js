@@ -98,14 +98,15 @@ document.getElementById('uploadForm').addEventListener('submit', function (event
     const endYearInput = document.getElementById('endYear');
     const semesterDropdown = document.getElementById('semester');
     const fileInput = document.getElementById('csv_file');
+    const finalGrade = document.getElementById('finalGrade').value;
 
     const startYear = startYearDropdown.value;
     const endYear = endYearInput.value;
     const semester = semesterDropdown.value;
     const file = fileInput.files[0];
 
-    if (!startYear || !endYear || !semester || !file) {
-        alert('Please fill out all fields and select a file before uploading.');
+    if (!startYear || !endYear || !semester || !file || !finalGrade) {
+        alert('Please fill out all fields, select a file, and choose a final grade before uploading.');
         return;
     }
 
@@ -117,6 +118,7 @@ document.getElementById('uploadForm').addEventListener('submit', function (event
     formData.append('startYear', startYear);
     formData.append('endYear', endYear);
     formData.append('semester', semester);
+    formData.append("grade", finalGrade);
 
     console.log("New File Name: " + newFileName);
 
@@ -249,7 +251,7 @@ function renderComments_APX() {
     const commentsList = document.getElementById("commentsList");
 
     commentsList.innerHTML = commentsData.map(({ text, sentiment }) => {
-        const cleanComment = text.replace(/<br\s*\/?>/g, "<br>");
+        const cleanComment = String(text).replace(/<br\s*\/?>/g, "<br>");
         const { text: textColor, border, bg, icon } = sentimentStyles[sentiment];
 
         return `

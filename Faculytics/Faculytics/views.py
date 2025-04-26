@@ -313,6 +313,10 @@ def uploadHistory():
     user = User.query.get(session['user_id'])
 
     teacher_username = request.args.get('teacher')
+    college_acronym = request.args.get('college')
+    program_acronym = request.args.get('program')
+    campus_acronym = request.args.get('campus')
+
     teacher_full_name = None
 
     if teacher_username:
@@ -320,7 +324,14 @@ def uploadHistory():
         if teacher:
             teacher_full_name = f"{teacher.firstName} {teacher.lastName}"
 
-    return render_template('uploadHistory.html', user=user, teacher_name=teacher_full_name, title="Upload", year=datetime.now().year)
+    return render_template('uploadHistory.html',
+                           user=user,
+                           teacher_name=teacher_full_name,
+                           title="Upload",
+                           year=datetime.now().year,
+                           college_acronym=college_acronym,
+                           program_acronym=program_acronym,
+                           campus_acronym=campus_acronym)
 
 IMG_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -484,7 +495,7 @@ def program_page(program_acronym, college_acronym, campus_acronym):
     else:
         return redirect(url_for('dashboard'))
 
-    return render_template('program.html', campus=campus, college=college, program=program, users=users, title=program.program_name)
+    return render_template('program.html', campus=campus, college=college, program=program, users=users, user=user, title=program.program_name)
 
 @app.route('/delete_teacher/<int:teacher_id>', methods=['POST'])
 @login_required
@@ -762,6 +773,7 @@ def upload_file():
             starting_year = request.form.get("startYear")
             ending_year = request.form.get("endYear")
             semester = request.form.get("semester")
+            grade = request.form.get('grade')
 
             print("Received startYear:", starting_year)
             print("Received endYear:", ending_year)
@@ -816,7 +828,8 @@ def upload_file():
                 "category_counts": category_counts,
                 "topics": [item["Final_Topic"] for item in processed_comments],
                 "recommendation": recommendation_text,
-                "teacherUName": teacherUName
+                "teacherUName": teacherUName,
+                "grade": grade
             }
             results = {
                 "filename": new_filename,
@@ -827,7 +840,8 @@ def upload_file():
                 "category_counts": category_counts,
                 "topics": [item["Final_Topic"] for item in processed_comments],
                 "recommendation": recommendation_text,
-                "teacherUName": teacherUName
+                "teacherUName": teacherUName,
+                "grade": grade
             }
             return jsonify(results), 200
 
@@ -858,6 +872,7 @@ def saveToDatabase():
         topic_result = stored_results.get("topics")
         recommendation_text = stored_results.get("recommendation")
         teacherUName = stored_results.get("teacherUName")
+        grade = stored_results.get("grade")
         print("# Storing data");
 
         if not comments_list or not sentiment_result or not recommendation_text or not teacherUName:
@@ -883,7 +898,8 @@ def saveToDatabase():
         upload_data = {
             "filename": filename,
             "recommendation": recommendation_text,
-            "teacher_uname": teacherUName
+            "teacher_uname": teacherUName,
+            "grade": grade
         }
 
         # Map chunks to dynamic column names (up to 3)
@@ -903,6 +919,8 @@ def saveToDatabase():
 
     except Exception as e:
         db.session.rollback()
+        print(f"Exception occurred: {str(e)}")
+        traceback.print_exc()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
         # Save to database

@@ -1,6 +1,6 @@
 // program.js
-
 // Open the analysis modal and load chart data
+
 function openAnalysisModal(username) {
     document.getElementById('analysisModal').classList.remove('hidden');
 
@@ -43,6 +43,8 @@ function updateCharts(fileKey, data) {
 
     renderSentimentChart(pos, neg);
     renderTopicChart(sentimentData.topics);
+    renderComments(sentimentData.comments, sentimentData.sentiment, sentimentData.topics);
+
     document.getElementById('fileDetails').textContent = `Recommendation: ${data.recommendation}`;
 }
 
@@ -100,22 +102,90 @@ function renderTopicChart(topics) {
     });
 }
 
+function renderComments(comments, sentiments, topics) {
+    const commentsList = document.getElementById('commentsList');
+    const topicFilter = document.getElementById('topicFilter');
+    const sentimentFilter = document.getElementById('sentimentFilter');
+
+    // Combine comments with sentiment and topic
+    const combined = comments.map((text, i) => ({
+        text,
+        sentiment: sentiments[i],
+        topic: topics[i]
+    }));
+
+    // Populate unique topic options
+    const uniqueTopics = [...new Set(topics)];
+    topicFilter.innerHTML = '<option value="all">All Topics</option>';
+    uniqueTopics.forEach(topic => {
+        const opt = document.createElement('option');
+        opt.value = topic;
+        opt.textContent = topic;
+        topicFilter.appendChild(opt);
+    });
+
+    // Filter + render logic
+    function applyFilters() {
+        const sentimentValue = sentimentFilter.value;
+        const topicValue = topicFilter.value;
+
+        const filtered = combined.filter(entry => {
+            const sentimentMatch = sentimentValue === 'all' || entry.sentiment === sentimentValue;
+            const topicMatch = topicValue === 'all' || entry.topic === topicValue;
+            return sentimentMatch && topicMatch;
+        });
+
+        commentsList.innerHTML = '';
+        filtered.forEach(entry => {
+            const p = document.createElement('p');
+            p.classList.add('p-3', 'rounded', 'bg-gray-700');
+            p.innerHTML = `
+                <span class="${entry.sentiment === 'Positive' ? 'text-green-400' : 'text-red-400'} font-semibold">
+                    ${entry.sentiment}
+                </span> - 
+                <span class="text-blue-300 italic">${entry.topic}</span><br>
+                <span>${entry.text}</span>
+            `;
+            commentsList.appendChild(p);
+        });
+    }
+
+    // Initial render and bind filters
+    applyFilters();
+    sentimentFilter.onchange = applyFilters;
+    topicFilter.onchange = applyFilters;
+}
+
 // Tab switching
-const sentimentTab = document.getElementById('sentimentTab');
-const topicTab = document.getElementById('topicTab');
-const sentimentContent = document.getElementById('sentimentContent');
-const topicContent = document.getElementById('topicContent');
+const tabs = {
+    sentimentTab: {
+        button: document.getElementById('sentimentTab'),
+        content: document.getElementById('sentimentContent')
+    },
+    topicTab: {
+        button: document.getElementById('topicTab'),
+        content: document.getElementById('topicContent')
+    },
+    commentsTab: {
+        button: document.getElementById('commentsTab'),
+        content: document.getElementById('commentsContent')
+    }
+};
 
-sentimentTab.addEventListener('click', () => {
-    sentimentTab.classList.add('bg-blue-600');
-    topicTab.classList.remove('bg-blue-600');
-    sentimentContent.classList.remove('hidden');
-    topicContent.classList.add('hidden');
-});
+Object.values(tabs).forEach(({ button }, _, allTabs) => {
+    button.addEventListener('click', () => {
+        allTabs.forEach(({ button, content }) => {
+            button.classList.remove('bg-blue-600');
+            button.classList.add('bg-gray-700');
+            content.classList.add('hidden');
+        });
 
-topicTab.addEventListener('click', () => {
-    topicTab.classList.add('bg-blue-600');
-    sentimentTab.classList.remove('bg-blue-600');
-    topicContent.classList.remove('hidden');
-    sentimentContent.classList.add('hidden');
+        button.classList.add('bg-blue-600');
+        button.classList.remove('bg-gray-700');
+        tabs[button.id].content.classList.remove('hidden');
+
+        // Show/hide filters only on comments tab
+        const filtersVisible = button.id === 'commentsTab';
+        document.getElementById('sentimentFilter').parentElement.style.display = filtersVisible ? 'flex' : 'none';
+    });
 });
