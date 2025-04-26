@@ -193,41 +193,64 @@
 
     campusSelect.addEventListener('change', async () => {
       resetStyles();
-      // clear college & program selects
-      collegeSelect.innerHTML = '<option value="">Select your college</option>';
+
+      // Reset and disable dependent selects
+      collegeSelect.innerHTML = '<option value="">Loading colleges...</option>';
+      collegeSelect.disabled = true;
       programSelect.innerHTML = '<option value="">Select your program</option>';
+      programSelect.disabled = true;
 
       const campus = campusSelect.value;
       if (!campus) return;
 
-      // fetch colleges
-      const res = await fetch(`/get_colleges/${campus}`);
-      const colleges = await res.json();
-      colleges.forEach(col => {
-        const opt = document.createElement('option');
-        opt.value = col;
-        opt.textContent = col;
-        collegeSelect.appendChild(opt);
-      });
+      try {
+        const res = await fetch(`/get_colleges/${campus}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const colleges = await res.json();
+
+        collegeSelect.innerHTML = '<option value="">Select your college</option>';
+        colleges.forEach(col => {
+          const opt = document.createElement('option');
+          opt.value = col;
+          opt.textContent = col;
+          collegeSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load colleges:', err);
+        collegeSelect.innerHTML = '<option value="">Error loading colleges</option>';
+      } finally {
+        collegeSelect.disabled = false;
+      }
     });
 
     collegeSelect.addEventListener('change', async () => {
       resetStyles();
-      programSelect.innerHTML = '<option value="">Select your program</option>';
+      programSelect.innerHTML = '<option value="">Loading...</option>';
+      programSelect.disabled = true;
 
       const campus = campusSelect.value;
       const college = collegeSelect.value;
       if (!campus || !college) return;
 
-      // fetch programs
-      const res = await fetch(`/get_programs/${campus}/${encodeURIComponent(college)}`);
-      const programs = await res.json();
-      programs.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.acronym;
-        opt.textContent = p.name;
-        programSelect.appendChild(opt);
-      });
+      try {
+        const res = await fetch(`/get_programs/${campus}/${encodeURIComponent(college)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const programs = await res.json();
+
+        // Now repopulate
+        programSelect.innerHTML = '<option value="">Select your program</option>';
+        programs.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.acronym;
+          opt.textContent = p.name;
+          programSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load programs:', err);
+        programSelect.innerHTML = '<option value="">Error loading programs</option>';
+      } finally {
+        programSelect.disabled = false;
+      }
     });
 
     form.addEventListener('submit', function (e) {
