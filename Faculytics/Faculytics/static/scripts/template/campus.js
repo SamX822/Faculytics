@@ -149,9 +149,6 @@ function openCampusAnalyticsModal(event, campusAcronym, collegeAcronym) {
 
     // Show the modal
     document.getElementById("campusAnalysisModal").classList.remove("hidden");
-
-    // Reset tabs to show the Sentiment tab by default
-    switchTab('sentiment');
 }
 
 function closeCampusAnalyticsModal() {

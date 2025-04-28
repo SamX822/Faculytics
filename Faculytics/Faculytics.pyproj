@@ -53,6 +53,7 @@
   <ItemGroup>
     <Content Include="Faculytics\static\scripts\template\campus.js" />
     <Content Include="Faculytics\static\scripts\template\college.js" />
+    <Content Include="Faculytics\static\scripts\template\dashboard.js" />
     <Content Include="Faculytics\static\scripts\template\program.js" />
     <Content Include="Faculytics\templates\approval.html" />
     <Content Include="Faculytics\templates\campus.html" />

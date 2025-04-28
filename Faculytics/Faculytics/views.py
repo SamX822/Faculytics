@@ -167,7 +167,10 @@ def dashboard():
         return redirect(url_for('login'))
     
     user = User.query.get(session['user_id'])
-    
+
+    if user.userType in ['Curriculum Developer', 'Vice Chancellor of Academic Affairs']:
+        campuses = Campus.query.all()
+
     # Fetch assigned campus for non-admin users
     assigned_campus = None
     if user.userType != "admin" and user.campus_acronym:
@@ -1435,3 +1438,159 @@ def campus_analytics():
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": "Internal Server Error"}), 500
+
+@app.route('/dashboard_analytics', methods=['GET'])
+def dashboard_analytics():
+    try:
+        campus_acronym = request.args.get("campus_acronym")
+
+        if not campus_acronym:
+            return jsonify({"error": "Missing campus acronym"}), 400
+
+        campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+
+        if not campus:
+            return jsonify({"error": "Campus not found."}), 404
+
+        # Fetch all teachers in this campus (all colleges and programs under the campus)
+        teachers = User.query.filter_by(campus_acronym=campus_acronym, userType="Teacher").all()
+
+        if not teachers:
+            return jsonify({"error": "No teachers found for this campus."}), 404
+
+        # Fetch their uploads
+        uploads = CSVUpload.query.filter(
+            CSVUpload.teacher_uname.in_([t.uName for t in teachers])
+        ).all()
+
+        if not uploads:
+            return jsonify({"error": "No uploaded sentiment data found for this campus."}), 404
+
+        import re, json
+
+        def extract_json_chunks(prefix, upload):
+            chunks = []
+            for attr in dir(upload):
+                if re.match(f"{prefix}\\d+", attr):
+                    chunk = getattr(upload, attr)
+                    if chunk is None:
+                        continue
+                    if isinstance(chunk, list):
+                        chunks.extend(chunk)
+                    elif isinstance(chunk, str):
+                        try:
+                            parsed = json.loads(chunk)
+                            if isinstance(parsed, (list, dict)):
+                                chunks.extend(parsed if isinstance(parsed, list) else [parsed])
+                        except json.JSONDecodeError:
+                            continue
+                    elif isinstance(chunk, dict):
+                        chunks.append(chunk)
+            return chunks
+
+        file_data = {}
+
+        # Loop through all uploads and aggregate data by file
+        for upload in sorted(uploads, key=lambda x: x.upload_date):
+            comments_chunks = extract_json_chunks('comments', upload)
+            sentiment_chunks = extract_json_chunks('sentiment', upload)
+            topics_chunks = extract_json_chunks('topics', upload)
+
+            if upload.filename not in file_data:
+                file_data[upload.filename] = {
+                    "filename": upload.filename,
+                    "sentiment": [],
+                    "topics": [],
+                    "comments": []
+                }
+
+            file_data[upload.filename]["sentiment"].extend(sentiment_chunks)
+            file_data[upload.filename]["topics"].extend(topics_chunks)
+            file_data[upload.filename]["comments"].extend(comments_chunks)
+
+        # Sort files based on naming convention or date
+        def sort_key(filename):
+            try:
+                start, end, sem = map(int, filename.split('_'))
+                return (start, end, sem)
+            except:
+                return (9999, 9999, 9)
+
+        sorted_file_data = [file_data[f] for f in sorted(file_data.keys(), key=sort_key)]
+
+        all_sentiments = []
+        all_topics = []
+        all_comments = []
+
+        # Aggregate sentiments, topics, and comments for each file
+        for file_entry in sorted_file_data:
+            sentiments = file_entry.get("sentiment", [])
+            topics = file_entry.get("topics", [])
+            comments = file_entry.get("comments", [])
+
+            for sentiment_entry in sentiments:
+                all_sentiments.append({
+                    "filename": file_entry["filename"],
+                    "sentiment_score": sentiment_entry
+                })
+
+            for idx, topic_entry in enumerate(topics):
+                corresponding_sentiment = sentiments[idx] if idx < len(sentiments) else "Unknown"
+
+                if isinstance(topic_entry, dict):
+                    topic = topic_entry.get("topic")
+                    sentiment = topic_entry.get("sentiment", corresponding_sentiment)
+                    if topic is not None and sentiment is not None:
+                        all_topics.append({
+                            "topic": topic,
+                            "sentiment": sentiment
+                        })
+                else:
+                    all_topics.append({
+                        "topic": topic_entry,
+                        "sentiment": corresponding_sentiment
+                    })
+
+            for idx, comment_entry in enumerate(comments):
+                corresponding_sentiment = sentiments[idx] if idx < len(sentiments) else "Unknown"
+                corresponding_topic = None
+
+                if idx < len(topics):
+                    topic_entry = topics[idx]
+                    if isinstance(topic_entry, dict):
+                        corresponding_topic = topic_entry.get("topic", "Unknown")
+                    else:
+                        corresponding_topic = topic_entry
+
+                if isinstance(comment_entry, dict):
+                    text = comment_entry.get("text")
+                    sentiment = comment_entry.get("sentiment", corresponding_sentiment)
+                    topic = comment_entry.get("topic", corresponding_topic)
+                    if text:
+                        all_comments.append({
+                            "text": text,
+                            "sentiment": sentiment if sentiment else "Unknown",
+                            "topic": topic if topic else "Unknown"
+                        })
+                else:
+                    all_comments.append({
+                        "text": comment_entry,
+                        "sentiment": corresponding_sentiment,
+                        "topic": corresponding_topic if corresponding_topic else "Unknown"
+                    })
+
+        # List of all files in the campus (aggregated)
+        files = [f["filename"] for f in sorted_file_data]
+
+        return jsonify({
+            "campus_acronym": campus_acronym,
+            "files": files,
+            "sentiment": all_sentiments,
+            "topics": all_topics,
+            "comments": all_comments
+        }), 200
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": "Internal Server Error"}), 500
+
