@@ -14,6 +14,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query
 from sqlalchemy import and_
 import re
+from dotenv import load_dotenv
+from google import genai
 
 # ML libraries
 from transformers import pipeline
@@ -26,6 +28,12 @@ from Faculytics.src.SentimentAnalysis_functions import SentimentAnalyzer
 from Faculytics.src.TopicModeling_functions import CommentProcessor
 sentiment_analyzer = SentimentAnalyzer()
 topic_modeling = CommentProcessor()
+
+# Load environment variables from .env
+# Activation for gemini
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
+gemini_client = genai.Client(api_key=api_key)
 
 @app.route('/')
 def index():
@@ -759,6 +767,101 @@ def rename_program(campus_acronym, college_acronym):
 """
 Function for upload
 """
+def generateRecommendation(sentiment_result, comments_list, processed_comments):
+    try:
+        print("[generateRecommendation] Generating recommendation...")
+
+        # Prepare sentiment summary
+        positive_count = sentiment_result["predictions"].count("Positive")
+        negative_count = sentiment_result["predictions"].count("Negative")
+
+        # Topics list
+        predefined_topics = [
+            "Preparedness", "Cleanliness", "Tardiness", "Teaching Effectiveness",
+            "Fairness and Leniency", "Student Engagement", "Availability and Approachability",
+            "Wears Faculty Uniform", "On-time Starts and Ending of Class", "Professor's Activity Participation",
+            "Supervision of out-of-classroom activities"
+        ]
+
+        # Map topics to positive/negative counts
+        topic_sentiment_summary = {topic: {"Positive": 0, "Negative": 0} for topic in predefined_topics}
+
+        for idx, comment in enumerate(processed_comments):
+            topic = comment.get("Final_Topic")
+            sentiment = sentiment_result["predictions"][idx]
+
+            if topic in topic_sentiment_summary:
+                topic_sentiment_summary[topic][sentiment] += 1
+
+        # Extract top 5 topics (based on frequency in processed_comments)
+        topic_frequency = {}
+        for comment in processed_comments:
+            topic = comment.get("Final_Topic")
+            if topic:
+                topic_frequency[topic] = topic_frequency.get(topic, 0) + 1
+
+        top_topics = sorted(topic_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_topics_list = [topic for topic, _ in top_topics]
+
+        # Build Positive and Negative Summaries
+        positive_summary = []
+        negative_summary = []
+
+        for topic in top_topics_list:
+            pos = topic_sentiment_summary[topic]["Positive"]
+            neg = topic_sentiment_summary[topic]["Negative"]
+            if pos > 0:
+                positive_summary.append(f"- {topic}: {pos} positive mentions")
+            if neg > 0:
+                negative_summary.append(f"- {topic}: {neg} negative mentions")
+
+        # Compose the final prompt
+        prompt = (
+            f"TEACHER PERFORMANCE FEEDBACK REPORT\n"
+            f"---------------------------------------\n"
+            f"Summary of Collected Feedback:\n"
+            f"Total Positive Comments: {positive_count}\n"
+            f"Total Negative Comments: {negative_count}\n"
+            f"Top Discussed Topics: {', '.join(top_topics_list)}\n\n"
+            f"Positive Highlights:\n{positive_summary}\n\n"
+            f"Areas for Improvement:\n{negative_summary}\n\n"
+            f"Before the recommendation. Put the summarize collected feedback."
+            f"RECOMMENDATION\n"
+            f"1. **Positive Strengths**\n"
+            f"Focus on the most prominently discussed positive topic. Highlight specific strengths demonstrated by the teacher in this area. Include concrete examples where possible. Suggest 1-2 ways to further leverage this strength. (3-8 sentences)\n\n"
+            f"2. **Balanced Feedback and Suggestions for Growth**\n"
+            f"Address the second most significant teaching area (could be positive or negative). Provide balanced feedback that acknowledges both strengths and opportunities. Include 1-2 specific, actionable recommendations for enhancement. (3-8 sentences)\n\n"
+            f"3. **Areas Needing Improvement**\n"
+            f"Address the primary area needing improvement based on negative feedback. Present challenges constructively, focusing on professional development rather than criticism. Provide 2-3 numbered, specific action items for improvement. (3-8 sentences)\n\n"
+            f"IMPORTANT GUIDELINES:\n"
+            f"Maintain formal, professional language throughout.\n"
+            f"Don't forget about the collected feedback output it. \n"
+            f"Each section must be 3-5 sentences in length.\n"
+            f"Number key suggestions within each section.\n"
+            f"Keep tone constructive and improvement-oriented.\n"
+            f"Avoid casual phrases or colloquialisms.\n"
+            f"Do not include meta-commentary about the recommendation structure.\n"
+            f"Base all feedback strictly on the provided data.\n"
+            f"Do not start with phrases like 'Here's a breakdown' or 'Based on the data'.\n\n"
+            f"Please now generate the recommendation following the above instructions."
+        )
+        print(prompt)
+
+        # Generate the recommendation
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
+
+        recommendation_text = response.text.strip()
+        #print("[generateRecommendation] Received recommendation:\n", recommendation_text)
+
+        return recommendation_text
+
+    except Exception as e:
+        print(f"[generateRecommendation] Error: {str(e)}")
+        return "Failed to generate recommendation."
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 
@@ -809,12 +912,8 @@ def upload_file():
             #  Process comments using CommentProcessor
             processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
 
-            # Generate recommendation
-            recommendation_text = (
-                "There are more negative comments. Consider scheduling professional development seminars."
-                if neg_count > pos_count else
-                "Feedback is generally positive, but keep monitoring for potential issues."
-            )
+            # Recommendation text using GEMINI
+            recommendation_text = generateRecommendation(sentiment_result, comments_list, processed_comments);
 
             # set new filename
             new_filename = f"{starting_year}_{ending_year}_{semester}.csv"
