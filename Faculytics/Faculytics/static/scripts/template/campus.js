@@ -1,353 +1,388 @@
-//Campus.js
-let collegeChartInstance = null;
-let collegeTopicChartInstance = null;
-
-// College Modal Tab Logic
-document.getElementById('collegeSentimentTab').addEventListener('click', function () {
-    console.log("Sentiment tab clicked");
-
-    // Show Sentiment content and hide Topic content
-    document.getElementById('collegeSentimentContent').classList.remove('hidden');
-    document.getElementById('collegeTopicContent').classList.add('hidden');
-
-    // Update button styles for active tab
-    this.classList.add('bg-blue-600');
-    this.classList.remove('bg-gray-700');
-
-    document.getElementById('collegeTopicTab').classList.remove('bg-blue-600');
-    document.getElementById('collegeTopicTab').classList.add('bg-gray-700');
-});
-
-document.getElementById('collegeTopicTab').addEventListener('click', function () {
-    console.log("Topic tab clicked");
-
-    // Show Topic content and hide Sentiment content
-    document.getElementById('collegeSentimentContent').classList.add('hidden');
-    document.getElementById('collegeTopicContent').classList.remove('hidden');
-
-    // Update button styles for active tab
-    this.classList.add('bg-blue-600');
-    this.classList.remove('bg-gray-700');
-
-    document.getElementById('collegeSentimentTab').classList.remove('bg-blue-600');
-    document.getElementById('collegeSentimentTab').classList.add('bg-gray-700');
-});
-
-document.getElementById('manage-colleges-btn').addEventListener('click', function () {
-    const addForm = document.getElementById('add-college-form');
-    const removeForm = document.getElementById('remove-college-form');
-
-    if (addForm.style.display === 'none') {
-        addForm.style.display = 'block';
-        removeForm.style.display = 'block';
-    } else {
-        addForm.style.display = 'none';
-        removeForm.style.display = 'none';
-    }
-});
-
-function toggleCollegeActions(collegeAcronym) {
-    document.querySelectorAll('[id^="actions-"]').forEach(el => el.classList.add('hidden'));
-    const actions = document.getElementById('actions-' + collegeAcronym);
-    actions.classList.toggle('hidden');
-}
-
-function openCollegeAnalysisModal(event, collegeAcronym) {
-    event.stopPropagation();
-    document.getElementById('collegeAnalysisModal').classList.remove('hidden');
-
-    // Default to Sentiment tab
-    document.getElementById('collegeSentimentTab').click();
-
-    fetch(`/college_analysis?college_acronym=${encodeURIComponent(collegeAcronym)}&include_topics=true`)
-        .then(response => response.json())
-        .then(data => {
-            console.log("College Analysis Data:", data);
-
-            if (data.error) {
-                document.getElementById('collegeDetails').innerHTML = `<p class="text-red-500">${data.error}</p>`;
-                return;
-            }
-
-            // ---------- SENTIMENT CHART ----------
-            const sentimentCtx = document.getElementById('collegeAnalysisChart').getContext('2d');
-            if (collegeChartInstance) {
-                collegeChartInstance.destroy();
-            }
-
-            const groupedSentiments = {};
-            data.files.forEach(file => {
-                const filename = file.filename;
-                const sentiments = Array.isArray(file.sentiment)
-                    ? file.sentiment
-                    : JSON.parse(file.sentiment || "[]");
-
-                if (!groupedSentiments[filename]) {
-                    groupedSentiments[filename] = { positive: 0, negative: 0 };
-                }
-
-                sentiments.forEach(s => {
-                    if (s === "Positive") groupedSentiments[filename].positive++;
-                    else if (s === "Negative") groupedSentiments[filename].negative++;
-                });
-            });
-
-            function parseFilename(filename) {
-                const [startYear, endYear, semester] = filename.split('_').map(Number);
-                return { startYear, endYear, semester };
-            }
-
-            const sortedFilenames = Object.keys(groupedSentiments).sort((a, b) => {
-                const aParts = parseFilename(a);
-                const bParts = parseFilename(b);
-                if (aParts.startYear !== bParts.startYear) return aParts.startYear - bParts.startYear;
-                if (aParts.endYear !== bParts.endYear) return aParts.endYear - bParts.endYear;
-                return aParts.semester - bParts.semester;
-            });
-
-            const labels = sortedFilenames;
-            positiveData = sortedFilenames.map(filename => groupedSentiments[filename].positive);
-            negativeData = sortedFilenames.map(filename => groupedSentiments[filename].negative);
-
-            collegeChartInstance = new Chart(sentimentCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Positive',
-                            data: positiveData,
-                            borderColor: 'green',
-                            fill: false,
-                            pointStyle: 'circle',
-                            pointRadius: 5
-                        },
-                        {
-                            label: 'Negative',
-                            data: negativeData,
-                            borderColor: 'red',
-                            fill: false,
-                            pointStyle: 'circle',
-                            pointRadius: 5
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'College Sentiment Trends',
-                            color: 'white'
-                        },
-                        legend: {
-                            labels: {
-                                color: 'white'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (tooltipItem) {
-                                    return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Files',
-                                color: 'white'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Sentiment Count',
-                                color: 'white'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    }
-                }
-            });
-
-            // ---------- TOPIC CHART ----------
-            const topicCtx = document.getElementById('collegeTopicChart').getContext('2d');
-            if (collegeTopicChartInstance) {
-                collegeTopicChartInstance.destroy();
-            }
-
-            const topicCounts = {};
-            const topicSentiments = {};
-
-            // Count the topics and their sentiments (positive/negative)
-            data.files.forEach(file => {
-                const topics = Array.isArray(file.topics) ? file.topics : JSON.parse(file.topics || "[]");
-                const sentiments = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
-
-                topics.forEach((topic, index) => {
-                    if (!topic || topic.trim() === "") return;
-
-                    // Initialize topic count and sentiment data
-                    if (!topicCounts[topic]) {
-                        topicCounts[topic] = 0;
-                        topicSentiments[topic] = { positive: 0, negative: 0 };
-                    }
-
-                    topicCounts[topic]++;
-
-                    // Map sentiment to the corresponding topic
-                    if (index < sentiments.length) {
-                        if (sentiments[index] === "Positive") {
-                            topicSentiments[topic].positive++;
-                        } else {
-                            topicSentiments[topic].negative++;
-                        }
-                    } else {
-                        console.warn(`Mismatched sentiment for topic: "${topic}" at index ${index}`);
-                    }
-                });
-            });
-
-            console.log("All Topic Counts:", topicCounts);
-            console.log("All Topic Sentiments:", topicSentiments);
-
-            // Sort topics by frequency and get top 10
-            const topTopics = Object.keys(topicCounts)
-                .sort((a, b) => topicCounts[b] - topicCounts[a])
-                .slice(0, 10);
-
-            // Build positive and negative data arrays aligned with topTopics
-            positiveData = topTopics.map(topic => topicSentiments[topic]?.positive || 0);
-            negativeData = topTopics.map(topic => topicSentiments[topic]?.negative || 0);
-
-            collegeTopicChartInstance = new Chart(topicCtx, {
-                type: 'bar',
-                data: {
-                    labels: topTopics,
-                    datasets: [
-                        {
-                            label: 'Positive',
-                            data: positiveData,
-                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                            borderColor: 'rgba(40, 167, 69, 1)',
-                            borderWidth: 1,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.4
-                        },
-                        {
-                            label: 'Negative',
-                            data: negativeData,
-                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                            borderColor: 'rgba(220, 53, 69, 1)',
-                            borderWidth: 1,
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Count',
-                                color: 'white'
-                            },
-                            ticks: {
-                                stepSize: 1,
-                                color: 'white'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Topics',
-                                color: 'white'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            labels: {
-                                color: 'white'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (tooltipItem) {
-                                    return `${tooltipItem.dataset.label}: ${tooltipItem.raw} comments`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            // ---------- DETAILS ----------
-            document.getElementById('collegeDetails').innerHTML = `<p>Recommendation: ${data.recommendation}</p>`;
-        })
-        .catch(error => {
-            console.error("Error fetching college analysis data:", error);
-            document.getElementById('collegeDetails').innerHTML = `<p class="text-red-500">Failed to load analysis data.</p>`;
-        });
-}
-
-function closeCollegeAnalysisModal() {
-    document.getElementById('collegeAnalysisModal').classList.add('hidden');
-}
+// campus.js
+let analysisChartInstance = null;
+let topicChartInstance = null;
+let currentData = null;
+let activeTab = "sentiment";
+let globalCombinedComments = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Manage Colleges Modal
-    const manageCollegesBtn = document.getElementById('manage-colleges-btn');
-    const manageCollegesModal = document.getElementById('manageCollegesModal');
-    const closeManageCollegesBtn = document.getElementById('closeManageColleges');
+    document.getElementById('topicFilter').addEventListener('change', renderFilteredComments);
+    document.getElementById('sentimentFilter').addEventListener('change', renderFilteredComments);
 
-    manageCollegesBtn?.addEventListener('click', () => {
-        manageCollegesModal?.classList.remove('hidden');
+    const tabs = {
+        sentimentTab: {
+            button: document.getElementById('sentimentTab'),
+            content: document.getElementById('sentimentContent')
+        },
+        topicTab: {
+            button: document.getElementById('topicTab'),
+            content: document.getElementById('topicContent')
+        },
+        commentsTab: {
+            button: document.getElementById('commentsTab'),
+            content: document.getElementById('commentsContent'),
+            filters: document.getElementById('commentFilters')
+        }
+    };
+
+    // Initialize tabs
+    Object.values(tabs).forEach(({ button, content, filters }) => {
+        button.addEventListener('click', () => {
+            Object.values(tabs).forEach(tab => {
+                tab.button.classList.remove('bg-blue-600', 'text-white');
+                tab.button.classList.add('bg-gray-700', 'text-gray-300');
+                tab.content.classList.add('hidden');
+                if (tab.filters) tab.filters.classList.add('hidden');
+            });
+
+            button.classList.add('bg-blue-600', 'text-white');
+            button.classList.remove('bg-gray-700', 'text-gray-300');
+            content.classList.remove('hidden');
+            if (filters) filters.classList.remove('hidden');
+
+            activeTab = button.id.replace('Tab', '').toLowerCase();
+
+            fetchAndUpdateChart();
+        });
     });
 
-    closeManageCollegesBtn?.addEventListener('click', () => {
-        manageCollegesModal?.classList.add('hidden');
+    tabs.sentimentTab.button.click();
+});
+
+function renderFilteredComments() {
+    const commentsList = document.getElementById('commentsList');
+    const topicFilterValue = document.getElementById('topicFilter').value.toLowerCase();
+    const sentimentFilterValue = document.getElementById('sentimentFilter').value.toLowerCase();
+
+    commentsList.innerHTML = "";
+
+    let filtered = globalCombinedComments.filter(item => {
+        const matchTopic = (topicFilterValue === "all" || (item.topic && item.topic.toLowerCase() === topicFilterValue));
+        const matchSentiment = (sentimentFilterValue === "all" || (item.sentiment && item.sentiment.toLowerCase() === sentimentFilterValue));
+        return matchTopic && matchSentiment;
     });
 
-    manageCollegesModal?.addEventListener('click', (e) => {
-        if (e.target === manageCollegesModal) {
-            manageCollegesModal.classList.add('hidden');
+    if (filtered.length === 0) {
+        commentsList.innerHTML = "<p class='text-white'>No comments found.</p>";
+        return;
+    }
+
+    filtered.forEach(item => {
+        const commentDiv = document.createElement('div');
+
+        let bgColor = 'bg-white';
+        if (item.sentiment && item.sentiment.toLowerCase() === 'positive') {
+            bgColor = 'bg-green-200';
+        } else if (item.sentiment && item.sentiment.toLowerCase() === 'negative') {
+            bgColor = 'bg-red-200';
+        }
+
+        commentDiv.classList.add('mb-2', 'p-2', 'rounded', 'shadow-sm', 'text-black', bgColor);
+
+        commentDiv.innerHTML = `
+            <p><strong>Comment:</strong> ${item.text}</p>
+            <p><strong>Topic:</strong> ${item.topic}</p>
+            <p><strong>Sentiment:</strong> ${item.sentiment}</p>
+        `;
+
+        commentsList.appendChild(commentDiv);
+    });
+}
+
+function fetchAndUpdateChart() {
+    const campusAcronym = document.getElementById('campusAcronymInput').value;
+    const collegeAcronym = document.getElementById('collegeAcronymInput').value;
+
+    if (!campusAcronym || !collegeAcronym) {
+        console.error("Missing campus or college acronym");
+        return;
+    }
+
+    fetch(`/campus_analytics?campus_acronym=${campusAcronym}&college_acronym=${collegeAcronym}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+            console.log("Received Data:", data);
+            currentData = data;
+            loadChart(data);
+        })
+        .catch(err => console.error("Error fetching data:", err));
+}
+
+document.getElementById('sentimentTab').addEventListener('click', () => switchTab('sentiment'));
+document.getElementById('topicTab').addEventListener('click', () => switchTab('topic'));
+document.getElementById('commentsTab').addEventListener('click', () => switchTab('comments'));
+
+function switchTab(tab) {
+    // Hide all content sections
+    document.getElementById('sentimentContent').classList.add('hidden');
+    document.getElementById('topicContent').classList.add('hidden');
+    document.getElementById('commentsContent').classList.add('hidden');
+
+    // Reset tab button styles
+    document.getElementById('sentimentTab').classList.remove('bg-blue-600');
+    document.getElementById('topicTab').classList.remove('bg-blue-600');
+    document.getElementById('commentsTab').classList.remove('bg-blue-600');
+
+    // Show selected tab content and highlight the selected tab
+    if (tab === 'sentiment') {
+        document.getElementById('sentimentContent').classList.remove('hidden');
+        document.getElementById('sentimentTab').classList.add('bg-blue-600');
+    } else if (tab === 'topic') {
+        document.getElementById('topicContent').classList.remove('hidden');
+        document.getElementById('topicTab').classList.add('bg-blue-600');
+    } else if (tab === 'comments') {
+        document.getElementById('commentsContent').classList.remove('hidden');
+        document.getElementById('commentsTab').classList.add('bg-blue-600');
+    }
+}
+
+function openCampusAnalyticsModal(event, campusAcronym, collegeAcronym) {
+    // Prevent any default behavior from the button click
+    event.preventDefault();
+
+    // Set the campus acronym and college acronym
+    document.getElementById('campusAcronymInput').value = campusAcronym;
+    document.getElementById('collegeAcronymInput').value = collegeAcronym;
+
+    // Fetch and update the chart with the campus and college data
+    fetchAndUpdateChart();
+
+    // Show the modal
+    document.getElementById("campusAnalysisModal").classList.remove("hidden");
+
+    // Reset tabs to show the Sentiment tab by default
+    switchTab('sentiment');
+}
+
+function closeCampusAnalyticsModal() {
+    document.getElementById('campusAnalysisModal').classList.add('hidden');
+}
+
+function loadChart(data) {
+    if (activeTab === "sentiment") {
+        loadSentimentChart(data);
+    } else if (activeTab === "topic") {
+        loadTopicChart(data);
+    } else if (activeTab === "comments") {
+        loadComments(data);
+    }
+}
+
+function loadSentimentChart(data) {
+    if (analysisChartInstance) analysisChartInstance.destroy();
+    const ctx = document.getElementById('analysisChart').getContext('2d');
+
+    // group by filename
+    const buckets = {};
+    data.sentiment.forEach(({ filename, sentiment_score }) => {
+        // Initialize the bucket for the filename if it doesn't exist
+        if (!buckets[filename]) {
+            buckets[filename] = { positive: 0, negative: 0 };
+        }
+
+        // Safely increment positive or negative count
+        if (sentiment_score == "Positive") {
+            buckets[filename].positive++;
+        } else if (sentiment_score == "Negative") {
+            buckets[filename].negative++;
         }
     });
 
-    // Tab switching logic
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // sort filenames chronologically
+    const labels = Object.keys(buckets).sort(); // or your parseFilename+sort_key
+    const positiveData = labels.map(f => buckets[f].positive);
+    const negativeData = labels.map(f => buckets[f].negative);
 
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const target = button.getAttribute('data-tab');
+    console.log("Buckets:", buckets);
+    console.log("Positive Data:", positiveData);
+    console.log("Negative Data:", negativeData);
 
-            // Hide all tab contents
-            tabContents.forEach(content => content.classList.add('hidden'));
-
-            // Show selected tab content
-            document.getElementById(`tab-${target}`)?.classList.remove('hidden');
-
-            // Toggle button styles
-            tabButtons.forEach(btn => btn.classList.remove('opacity-100', 'ring', 'ring-white'));
-            button.classList.add('opacity-100', 'ring', 'ring-white');
-        });
+    analysisChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Positive',
+                    data: positiveData,
+                    borderColor: 'green',
+                    fill: false,
+                    pointStyle: 'circle',
+                    pointRadius: 5
+                },
+                {
+                    label: 'Negative',
+                    data: negativeData,
+                    borderColor: 'red',
+                    fill: false,
+                    pointStyle: 'circle',
+                    pointRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Sentiment Count',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Filenames',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: 'white'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`;
+                        }
+                    }
+                }
+            }
+        }
     });
-});
+}
+
+function loadTopicChart(data) {
+    if (topicChartInstance) topicChartInstance.destroy();
+    const ctx = document.getElementById('topicChart').getContext('2d');
+
+    console.log('Topics data:', data.topics);
+
+    // count & split sentiments
+    const tCounts = {}, tSents = {};
+    data.topics.forEach(({ topic, sentiment }) => {
+        if (!topic || !sentiment) return;
+        if (!tCounts[topic]) {
+            tCounts[topic] = 0;
+            tSents[topic] = { positive: 0, negative: 0 };
+        }
+        tCounts[topic]++;
+        tSents[topic][sentiment.toLowerCase()]++;
+    });
+
+    console.log('Topic Counts:', tCounts);
+    console.log('Topic Sentiments:', tSents);
+
+    const topTopics = Object.keys(tCounts)
+        .sort((a, b) => tCounts[b] - tCounts[a])
+        .slice(0, 10);
+    const pos = topTopics.map(t => tSents[t].positive);
+    const neg = topTopics.map(t => tSents[t].negative);
+
+    topicChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topTopics,
+            datasets: [{
+                label: 'Positive',
+                data: pos,
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.4
+            }, {
+                label: 'Negative',
+                data: neg,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Topics',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: 'white'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.raw} instances`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadComments(data) {
+    const commentsList = document.getElementById('commentsList');
+    const topicFilter = document.getElementById('topicFilter');
+    const sentimentFilter = document.getElementById('sentimentFilter');
+
+    commentsList.innerHTML = '';
+    topicFilter.innerHTML = '<option value="all">All Topics</option>';
+    sentimentFilter.innerHTML = '<option value="all">All Sentiments</option>';
+
+    globalCombinedComments = data.comments;  // directly use top-level array
+
+    // populate filters
+    [...new Set(data.comments.map(c => c.topic))]
+        .forEach(topic => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = topic;
+            topicFilter.appendChild(opt);
+        });
+    [...new Set(data.comments.map(c => c.sentiment))]
+        .forEach(sent => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = sent;
+            sentimentFilter.appendChild(opt);
+        });
+
+    renderFilteredComments();
+}

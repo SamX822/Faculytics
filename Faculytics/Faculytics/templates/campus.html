@@ -113,7 +113,7 @@
                            class="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-blue-500/30">
                             Enter College
                         </a>
-                        <button onclick="openCollegeAnalysisModal(event, '{{ college.college_acronym }}')"
+                        <button onclick="openCampusAnalysisModal(event, '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
                                 class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
                             View Analytics
                         </button>
@@ -147,7 +147,7 @@
                         </a>
 
                         <!-- Analytics Button - Purple theme -->
-                        <button onclick="openCollegeAnalysisModal(event, '{{ college.college_acronym }}')"
+                        <button onclick="openCampusAnalyticsModal(event, '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
                                 class="w-full py-3 bg-gradient-to-r from-purple-500 to-purple-700 text-white text-center rounded-lg shadow-md transition-all duration-300 hover:from-purple-600 hover:to-purple-800 hover:shadow-lg hover:shadow-purple-500/40 hover:-translate-y-1 font-medium">
                             <span class="flex items-center justify-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,31 +168,55 @@
             {% endif %}
         </div>
 
+        <input type="hidden" id="campusAcronymInput" value="{{ campus_acronym }}">
+        <input type="hidden" id="collegeAcronymInput" value=""> <!-- empty initially -->
+
         <!-- College Analysis Modal with Tabs -->
-        <div id="collegeAnalysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+        <div id="campusAnalysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
             <div class="bg-gray-800 p-6 rounded-lg w-full max-w-3xl mt-4 overflow-y-auto max-h-[90vh] border border-gray-700 shadow-2xl">
                 <h3 class="text-xl font-bold text-white mb-4">College-Wide Analytics</h3>
 
                 <!-- Tabs Navigation -->
                 <div class="flex border-b border-gray-700 mb-4">
-                    <button id="collegeSentimentTab" class="py-2 px-4 text-white bg-blue-600 rounded-t-lg mr-2 transition-all duration-300">Sentiment Analysis</button>
-                    <button id="collegeTopicTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg transition-all duration-300">Topic Modeling</button>
+                    <button id="sentimentTab" class="py-2 px-4 text-white bg-blue-600 rounded-t-lg mr-2">Sentiment Analysis</button>
+                    <button id="topicTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg mr-2">Topic Modeling</button>
+                    <button id="commentsTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg">Comments</button>
                 </div>
 
-                <!-- Tab Content -->
-                <div id="collegeSentimentContent" class="block bg-gray-900 p-4 rounded-lg">
-                    <canvas id="collegeAnalysisChart"></canvas>
+                <!-- Sentiment Content -->
+                <div id="sentimentContent" class="block">
+                    <canvas id="analysisChart"></canvas>
                 </div>
-                <div id="collegeTopicContent" class="hidden bg-gray-900 p-4 rounded-lg">
-                    <canvas id="collegeTopicChart" width="400" height="200"></canvas>
+
+                <!-- Topic Content -->
+                <div id="topicContent" class="hidden">
+                    <canvas id="topicChart"></canvas>
+                </div>
+
+                <!-- Comments Content -->
+                <div id="commentsContent" class="hidden text-white">
+                    <div class="flex gap-4 mb-4">
+                        <select id="sentimentFilter" class="bg-gray-700 text-white p-2 rounded-lg">
+                            <option value="all">All Sentiments</option>
+                            <option value="Positive">Positive</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                        <select id="topicFilter" class="bg-gray-700 text-white p-2 rounded-lg">
+                            <option value="all">All Topics</option>
+                            <!-- populate topics here -->
+                        </select>
+                    </div>
+                    <div id="commentsList" class="space-y-4 max-h-[40vh] overflow-y-auto">
+                        <!-- comments will be injected here -->
+                    </div>
                 </div>
 
                 <!-- Details -->
-                <div id="collegeDetails" class="mt-4 text-white p-4 bg-gray-900 rounded-lg"></div>
+                <div id="fileDetails" class="mt-4 text-white p-4 bg-gray-900 rounded-lg"></div>
 
                 <!-- Actions -->
                 <div class="mt-4 flex justify-end">
-                    <button onclick="closeCollegeAnalysisModal()" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">Close</button>
+                    <button onclick="closeCampusAnalyticsModal()" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">Close</button>
                 </div>
             </div>
         </div>
