@@ -152,16 +152,6 @@
                     </div>
                     <!--Save Information To Database-->
                     <!--Add new information if you want!!!!!!!!!!!-->
-                    <!-- Save Button (Centered) -->
-                    <div class="flex justify-center mt-4">
-                        <button type="button" onclick="saveResultsToDatabase()"
-                                class="flex flex-row items-center w-1/2 p-3 bg-gray-700 rounded-lg text-white text-center hover:bg-gray-600 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 9V5.25A2.25 2.25 0 017.5 3h9a2.25 2.25 0 012.25 2.25V9m-13.5 0v9.75A2.25 2.25 0 007.5 21h9a2.25 2.25 0 002.25-2.25V9m-13.5 0h13.5" />
-                            </svg>
-                            <span>Save Data</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -205,6 +195,17 @@
             <!-- 🟢 Recommendations Tab -->
             <div class="tab-pane hidden" id="recommendation">
                 <p id="recommendationText" class="text-gray-700 bg-gray-100 p-4 rounded-lg shadow-sm"></p>
+            </div>
+
+            <!-- Save Button (Centered) -->
+            <div class="flex justify-center mt-4">
+                <button type="button" onclick="saveResultsToDatabase()"
+                        class="flex flex-row items-center w-1/2 p-3 bg-gray-700 rounded-lg text-white text-center hover:bg-gray-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 9V5.25A2.25 2.25 0 017.5 3h9a2.25 2.25 0 012.25 2.25V9m-13.5 0v9.75A2.25 2.25 0 007.5 21h9a2.25 2.25 0 002.25-2.25V9m-13.5 0h13.5" />
+                    </svg>
+                    <span>Save Data</span>
+                </button>
             </div>
         </div>
     </div>
