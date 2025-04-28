@@ -163,7 +163,8 @@ document.getElementById('uploadForm').addEventListener('submit', function (event
             renderProcessedComments(data.processed_comments);
             renderTopWords(data.top_words);
             renderCategoryCounts(data.category_counts);
-            document.getElementById('recommendationText').innerHTML = data.recommendation;
+            updateRecommendation(data);
+            console.log("Date Recommendation: ", data.recommendation);
 
             console.log('File uploaded successfully:', data);
         })
@@ -173,7 +174,39 @@ document.getElementById('uploadForm').addEventListener('submit', function (event
             alert('Error processing file: ' + error.message);
         });
 });
+/*
+Copy this or use this for analysis
+*/
+function updateRecommendation(data) {
+    const recommendationContainer = document.getElementById('recommendationText');
 
+    if (!recommendationContainer) {
+        console.error("Recommendation container not found.");
+        return;
+    }
+
+    if (data.recommendation && data.recommendation.trim() !== "") {
+        let safeText = data.recommendation
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/\n/g, "<br>"); // Handle line breaks with <br>
+
+        // Convert Markdown bold (**) into HTML <strong> tags
+        safeText = safeText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // For ordered lists (numbered)
+        safeText = safeText.replace(/^\d+\.\s+/gm, "<ol class='list-decimal pl-5'><li>"); // Starts ordered list
+        safeText = safeText.replace(/^\d+\.\s+$/, "</li></ol>"); // Ends ordered list
+
+        // Insert the formatted content into the container
+        recommendationContainer.innerHTML = `<div class="leading-relaxed">${safeText}</div>`;
+    } else {
+        recommendationContainer.innerHTML = `<p class="text-gray-400 italic">No recommendation available at the moment.</p>`;
+    }
+}
 let sentimentChart = null;
 function renderSentimentChart(sentiment) {
     const ctx = document.getElementById('sentimentChart').getContext('2d');
