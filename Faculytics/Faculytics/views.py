@@ -13,6 +13,7 @@ import traceback
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query
 from sqlalchemy import and_
+import re
 
 # ML libraries
 from transformers import pipeline
@@ -905,9 +906,9 @@ def saveToDatabase():
         # Map chunks to dynamic column names (up to 3)
         for i in range(len(comments_chunks)):
             idx = i + 1
-            upload_data[f"comments{idx}"] = json.dumps(comments_chunks[i])
-            upload_data[f"sentiment{idx}"] = json.dumps(sentiment_chunks[i])
-            upload_data[f"topics{idx}"] = json.dumps(topics_chunks[i])
+            upload_data[f"comments{idx}"] = comments_chunks[i]
+            upload_data[f"sentiment{idx}"] = sentiment_chunks[i]
+            upload_data[f"topics{idx}"] = topics_chunks[i]
         print("# Map Chunking");
         # Create CSVUpload instance dynamically with only the fields present
         upload_record = CSVUpload(**upload_data)
@@ -963,7 +964,6 @@ def analysis():
     total_negative = 0
 
     for upload in uploads:
-        import re
 
         def extract_json_chunks(prefix, upload):
             chunks = []
@@ -977,11 +977,13 @@ def analysis():
 
         sentiments = extract_json_chunks('sentiment', upload)
         topics = extract_json_chunks('topics', upload)
+        comments = extract_json_chunks('comments', upload)
 
         file_data.append({
             "filename": upload.filename,
             "sentiment": sentiments,
-            "topics": topics
+            "topics": topics,
+            "comments": comments
         })
 
         total_positive += sentiments.count("Positive")
@@ -1013,92 +1015,169 @@ def analysis():
 
 @app.route('/college_analysis', methods=['GET'])
 def college_analysis():
-    college_acronym = request.args.get("college_acronym")
+    try:
+        campus_acronym = request.args.get("campus_acronym")
+        college_acronym = request.args.get("college_acronym")
+        program_acronym = request.args.get("program_acronym")
 
-    if not college_acronym:
-        return jsonify({"error": "Missing college acronym"}), 400
+        if not campus_acronym or not college_acronym or not program_acronym:
+            return jsonify({"error": "Missing campus, college, or program acronym"}), 400
 
-    # Fetch the college using its acronym
-    college = College.query.filter_by(college_acronym=college_acronym).first()
+        campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+        college = College.query.filter_by(college_acronym=college_acronym).first()
+        program = Program.query.filter_by(program_acronym=program_acronym).first()
 
-    if not college:
-        return jsonify({"error": "College not found."}), 404
+        if not campus or not college or not program:
+            return jsonify({"error": "Campus, College, or Program not found."}), 404
 
-    # Retrieve all teachers from this college
-    teachers = User.query.filter(
-        User.college_name == college.college_name,  # Match by college name
-        User.userType == "Teacher"
-    ).all()
+        # Fetch teachers in this specific campus, college, and program
+        teachers = User.query.filter_by(
+            campus_acronym=campus_acronym,
+            college_name=college.college_name,
+            program_acronym=program_acronym,
+            userType="Teacher"
+        ).all()
 
-    if not teachers:
-        return jsonify({"error": "No teachers found for this college."}), 404
+        if not teachers:
+            return jsonify({"error": "No teachers found for this program."}), 404
 
-    # Retrieve all uploads related to these teachers
-    uploads = CSVUpload.query.filter(CSVUpload.teacher_uname.in_([t.uName for t in teachers])).all()
+        # Fetch their uploads
+        uploads = CSVUpload.query.filter(
+            CSVUpload.teacher_uname.in_([t.uName for t in teachers])
+        ).all()
 
-    if not uploads:
-        return jsonify({"error": "No uploaded sentiment data found for this college."}), 404
+        if not uploads:
+            return jsonify({"error": "No uploaded sentiment data found for this program."}), 404
 
-    # Dynamic extraction function
-    import re
+        import re, json
+        def extract_json_chunks(prefix, upload):
+            chunks = []
+            for attr in dir(upload):
+                if re.match(f"{prefix}\\d+", attr):
+                    chunk = getattr(upload, attr)
+                    if chunk is None:
+                        continue
+                    if isinstance(chunk, list):
+                        chunks.extend(chunk)
+                    elif isinstance(chunk, str):
+                        try:
+                            parsed = json.loads(chunk)
+                            if isinstance(parsed, (list, dict)):
+                                chunks.extend(parsed if isinstance(parsed, list) else [parsed])
+                        except json.JSONDecodeError:
+                            continue
+                    elif isinstance(chunk, dict):
+                        chunks.append(chunk)
+            print(f"Extracted {prefix} chunks: {chunks}")  # Debugging line
+            return chunks
 
-    def extract_json_chunks(prefix, upload):
-        chunks = []
-        for attr in dir(upload):
-            if re.match(f"{prefix}\\d+", attr):
-                chunk = getattr(upload, attr)
-                if chunk:
-                    parsed = json.loads(chunk) if isinstance(chunk, str) else chunk
-                    chunks.extend(parsed)
-        return chunks
+        file_data = {}
 
-    # Prepare the aggregated data
-    positive_count = []
-    negative_count = []
-    file_data = {}
+        for upload in sorted(uploads, key=lambda x: x.upload_date):
+            comments_chunks = extract_json_chunks('comments', upload)
+            sentiment_chunks = extract_json_chunks('sentiment', upload)
+            topics_chunks = extract_json_chunks('topics', upload)
 
-    # Iterate through the uploads and combine data
-    for upload in sorted(uploads, key=lambda x: x.upload_date):
-        sentiments = extract_json_chunks('sentiment', upload)
-        topics = extract_json_chunks('topics', upload)
+            if upload.filename not in file_data:
+                file_data[upload.filename] = {
+                    "filename": upload.filename,
+                    "sentiment": [],
+                    "topics": [],
+                    "comments": []
+                }
 
-        if upload.filename not in file_data:
-            file_data[upload.filename] = {
-                "filename": upload.filename,
-                "positive": 0,
-                "negative": 0,
-                "sentiment": [],
-                "topics": []
-            }
+            file_data[upload.filename]["sentiment"].extend(sentiment_chunks)
+            file_data[upload.filename]["topics"].extend(topics_chunks)
+            file_data[upload.filename]["comments"].extend(comments_chunks)
 
-        file_data[upload.filename]["sentiment"].extend(sentiments)
-        file_data[upload.filename]["topics"].extend(topics)
-        file_data[upload.filename]["positive"] += sentiments.count("Positive")
-        file_data[upload.filename]["negative"] += sentiments.count("Negative")
+        def sort_key(filename):
+            try:
+                start, end, sem = map(int, filename.split('_'))
+                return (start, end, sem)
+            except:
+                return (9999, 9999, 9)
 
-    # Sort files by semester/year (assumes filename format: start_end_semester)
-    def sort_key(filename):
-        try:
-            start, end, sem = map(int, filename.split('_'))
-            return (start, end, sem)
-        except:
-            return (9999, 9999, 9)  # fallback if filename format is unexpected
+        sorted_file_data = [file_data[f] for f in sorted(file_data.keys(), key=sort_key)]
 
-    sorted_file_data = [file_data[f] for f in sorted(file_data.keys(), key=sort_key)]
+        all_sentiments = []
+        all_topics = []
+        all_comments = []
 
-    total_positive = sum(f["positive"] for f in sorted_file_data)
-    total_negative = sum(f["negative"] for f in sorted_file_data)
+        # Processing each file entry to extract sentiments, topics, and comments
+        for file_entry in sorted_file_data:
+            sentiments = file_entry.get("sentiment", [])
+            topics = file_entry.get("topics", [])
+            comments = file_entry.get("comments", [])
 
-    # Generate recommendation
-    recommendation_text = (
-        "There are more negative comments. Consider addressing faculty concerns."
-        if total_negative > total_positive else
-        "Feedback is generally positive, but continuous improvement is recommended."
-    )
+            # Debugging the raw extracted data for sentiments, topics, and comments
+            print(f"Processing file: {file_entry['filename']}")
+            print(f"Sentiments: {sentiments}")
+            print(f"Topics: {topics}")
+            print(f"Comments: {comments}")
 
-    return jsonify({
-        "files": sorted_file_data,
-        "positive": total_positive,
-        "negative": total_negative,
-        "recommendation": recommendation_text
-    }), 200
+            # Handling sentiment entries
+            for sentiment_entry in sentiments:
+                all_sentiments.append({
+                    "filename": file_entry["filename"],
+                    "sentiment_score": sentiment_entry
+                })
+
+            # Handling topic entries correctly
+            for idx, topic_entry in enumerate(topics):
+                corresponding_sentiment = sentiments[idx] if idx < len(sentiments) else "Unknown"
+
+                if isinstance(topic_entry, dict):
+                    topic = topic_entry.get("topic")
+                    sentiment = topic_entry.get("sentiment", corresponding_sentiment)
+                    if topic is not None and sentiment is not None:
+                        all_topics.append({
+                            "topic": topic,
+                            "sentiment": sentiment
+                        })
+                else:  # If it's a string, handle accordingly
+                    all_topics.append({
+                        "topic": topic_entry,
+                        "sentiment": corresponding_sentiment
+                    })
+
+            # Handling comment entries
+            for idx, comment_entry in enumerate(comments):
+                corresponding_sentiment = sentiments[idx] if idx < len(sentiments) else "Unknown"
+                corresponding_topic = None
+
+                if idx < len(topics):
+                    topic_entry = topics[idx]
+                    if isinstance(topic_entry, dict):
+                        corresponding_topic = topic_entry.get("topic", "Unknown")
+                    else:
+                        corresponding_topic = topic_entry  # if it's just a string
+
+                if isinstance(comment_entry, dict):
+                    text = comment_entry.get("text")
+                    sentiment = comment_entry.get("sentiment", corresponding_sentiment)
+                    topic = comment_entry.get("topic", corresponding_topic)
+                    if text:
+                        all_comments.append({
+                            "text": text,
+                            "sentiment": sentiment if sentiment else "Unknown",
+                            "topic": topic if topic else "Unknown"
+                        })
+                else:  # If it's a string, handle accordingly
+                    all_comments.append({
+                        "text": comment_entry,
+                        "sentiment": corresponding_sentiment,
+                        "topic": corresponding_topic if corresponding_topic else "Unknown"
+                    })
+
+        files = [f["filename"] for f in sorted_file_data]
+
+        return jsonify({
+            "files": files,
+            "sentiment": all_sentiments,
+            "topics": all_topics,
+            "comments": all_comments
+        }), 200
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": "Internal Server Error"}), 500

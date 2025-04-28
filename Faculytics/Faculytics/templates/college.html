@@ -86,7 +86,6 @@
         </div>
         {% endif %}
 
-        <h3 class="text-2xl font-bold text-white mb-4">Programs under {{ college.college_name }}</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {% if programs %}
             {% for program in programs %}
@@ -104,7 +103,7 @@
                         Enter
                     </a>
                     <!-- Analytics -->
-                    <button onclick="openAnalysisModal('{{ program.program_acronym }}')"
+                    <button onclick="openAnalysisModal('{{ program.program_acronym }}', '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
                             class="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white">
                         Analytics
                     </button>
@@ -118,6 +117,9 @@
     </main>
 </div>
 
+<input type="hidden" id="campusAcronymInput" value="{{ campus_acronym }}">
+<input type="hidden" id="collegeAcronymInput" value="{{ college_acronym }}">
+<input type="hidden" id="programAcronymInput" value=""> <!-- empty initially -->
 <!-- Analytics Modal with Tabs -->
 <div id="analysisModal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center p-4">
     <div class="bg-gray-800 p-6 rounded-lg w-full max-w-3xl mt-4 overflow-y-auto max-h-[90vh]">
@@ -158,18 +160,10 @@
             </div>
         </div>
 
-        <!-- File Selector & Details -->
-        <select id="fileSelect" class="mt-4 p-2 w-full bg-gray-700 text-white rounded-lg">
-            <option value="overall">Overall</option>
-            <!-- additional file options -->
-        </select>
-        <div id="fileDetails" class="mt-4 text-white">
-            <!-- file-specific metrics/info -->
-        </div>
+        <div id="fileDetails" class="mt-4 text-white"></div>
 
         <!-- Actions -->
         <div class="mt-4 flex justify-between">
-            <button id="viewButton" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">View</button>
             <button onclick="closeAnalysisModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Close</button>
         </div>
     </div>
@@ -177,7 +171,7 @@
 {% endblock %}
 
 {% block scripts %}
-  {% if user.userType == 'Dean' or 'Curriculum Developer' or "Campus Director" or "Vice Chancellor" or "Vice Chancellor for Academic Affairs" %}
+  {% if user.userType in ['Dean', 'Curriculum Developer', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs'] %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/scripts/template/college.js"></script>
