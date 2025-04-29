@@ -16,6 +16,7 @@ from sqlalchemy import and_
 import re
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 # ML libraries
 from transformers import pipeline
@@ -774,17 +775,11 @@ def rename_program(campus_acronym, college_acronym):
 
     return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
 
-"""
-Function for upload
-"""
 def generateRecommendation(sentiment_result, comments_list, processed_comments):
     try:
-        print("[generateRecommendation] Generating recommendation...")
-
-        # Prepare sentiment summary
+        # Extract sentiment counts
         positive_count = sentiment_result["predictions"].count("Positive")
         negative_count = sentiment_result["predictions"].count("Negative")
-
         # Topics list
         predefined_topics = [
             "Preparedness", "Cleanliness", "Tardiness", "Teaching Effectiveness",
@@ -792,31 +787,24 @@ def generateRecommendation(sentiment_result, comments_list, processed_comments):
             "Wears Faculty Uniform", "On-time Starts and Ending of Class", "Professor's Activity Participation",
             "Supervision of out-of-classroom activities"
         ]
-
         # Map topics to positive/negative counts
         topic_sentiment_summary = {topic: {"Positive": 0, "Negative": 0} for topic in predefined_topics}
-
         for idx, comment in enumerate(processed_comments):
             topic = comment.get("Final_Topic")
             sentiment = sentiment_result["predictions"][idx]
-
             if topic in topic_sentiment_summary:
                 topic_sentiment_summary[topic][sentiment] += 1
-
-        # Extract top 5 topics (based on frequency in processed_comments)
+        # Extract top 5 topics by frequency
         topic_frequency = {}
         for comment in processed_comments:
             topic = comment.get("Final_Topic")
             if topic:
                 topic_frequency[topic] = topic_frequency.get(topic, 0) + 1
-
         top_topics = sorted(topic_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
-        top_topics_list = [topic for topic, _ in top_topics]
-
+        top_topics_list = [topic for topic, _ in top_topics]  # Fixed this line
         # Build Positive and Negative Summaries
         positive_summary = []
         negative_summary = []
-
         for topic in top_topics_list:
             pos = topic_sentiment_summary[topic]["Positive"]
             neg = topic_sentiment_summary[topic]["Negative"]
@@ -825,49 +813,47 @@ def generateRecommendation(sentiment_result, comments_list, processed_comments):
             if neg > 0:
                 negative_summary.append(f"- {topic}: {neg} negative mentions")
 
-        # Compose the final prompt
-        prompt = (
-            f"TEACHER PERFORMANCE FEEDBACK REPORT\n"
-            f"---------------------------------------\n"
-            f"Summary of Collected Feedback:\n"
-            f"Total Positive Comments: {positive_count}\n"
-            f"Total Negative Comments: {negative_count}\n"
-            f"Top Discussed Topics: {', '.join(top_topics_list)}\n\n"
-            f"Positive Highlights:\n{positive_summary}\n\n"
-            f"Areas for Improvement:\n{negative_summary}\n\n"
-            f"Before the recommendation. Put the summarize collected feedback."
-            f"RECOMMENDATION\n"
-            f"1. **Positive Strengths**\n"
-            f"Focus on the most prominently discussed positive topic. Highlight specific strengths demonstrated by the teacher in this area. Include concrete examples where possible. Suggest 1-2 ways to further leverage this strength. (3-8 sentences)\n\n"
-            f"2. **Balanced Feedback and Suggestions for Growth**\n"
-            f"Address the second most significant teaching area (could be positive or negative). Provide balanced feedback that acknowledges both strengths and opportunities. Include 1-2 specific, actionable recommendations for enhancement. (3-8 sentences)\n\n"
-            f"3. **Areas Needing Improvement**\n"
-            f"Address the primary area needing improvement based on negative feedback. Present challenges constructively, focusing on professional development rather than criticism. Provide 2-3 numbered, specific action items for improvement. (3-8 sentences)\n\n"
-            f"IMPORTANT GUIDELINES:\n"
-            f"Maintain formal, professional language throughout.\n"
-            f"Don't forget about the collected feedback output it. \n"
-            f"Each section must be 3-5 sentences in length.\n"
-            f"Number key suggestions within each section.\n"
-            f"Keep tone constructive and improvement-oriented.\n"
-            f"Avoid casual phrases or colloquialisms.\n"
-            f"Do not include meta-commentary about the recommendation structure.\n"
-            f"Base all feedback strictly on the provided data.\n"
-            f"Do not start with phrases like 'Here's a breakdown' or 'Based on the data'.\n\n"
-            f"Please now generate the recommendation following the above instructions."
+        feedback_summary = (
+            f"FEEDBACK SUMMARY:\n"
+            f"Positive comments: {positive_count} | Negative comments: {negative_count}\n"
+            f"Top topics: {', '.join(top_topics_list)}\n"
+            f"Positive highlights:\n{chr(10).join(positive_summary)}\n"
+            f"Areas for improvement:\n{chr(10).join(negative_summary)}"
         )
-        print(prompt)
 
+        prompt = f"""Using the data provided below, generate a formal and concise teacher performance report.
+
+        {feedback_summary}
+
+        Structure your response as follows:
+
+        1. STRENGTHS  
+           - Recommend action for each positive highlights in one sentence each.
+
+        2. AREAS REQUIRING ATTENTION  
+           - Recommend action for each negative highlight in one sentence each.
+
+        Guidelines:
+        - Use a professional and objective tone.
+        - Avoid assumptions or commentary outside the data.
+        - Keep language concise and action-oriented.
+        - Number all recommended actions clearly.
+        """
+
+        print(prompt)
         # Generate the recommendation
         response = gemini_client.models.generate_content(
             model="gemini-2.0-flash",
-            contents=prompt
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="You are an LLM-driven recommendation system. You are tasked to give accurate and specific recommendation especially on improving weaknesses",
+                temperature=0.4
+            ),
+
         )
-
         recommendation_text = response.text.strip()
-        #print("[generateRecommendation] Received recommendation:\n", recommendation_text)
-
+        print(recommendation_text)
         return recommendation_text
-
     except Exception as e:
         print(f"[generateRecommendation] Error: {str(e)}")
         return "Failed to generate recommendation."
@@ -973,7 +959,6 @@ def saveToDatabase():
         # Retrieve stored session data
         stored_results = session.get("upload_results", {})
         print("# Retrieve stored session data");
-        print(stored_results)
 
         if not stored_results:
             return jsonify({"error": "No data received!"}), 400
@@ -983,7 +968,6 @@ def saveToDatabase():
         sentiment_result = stored_results.get("sentiment")
         topic_result = stored_results.get("topics")
         recommendation_text = stored_results.get("recommendation")
-        print(recommendation_text)
         teacherUName = stored_results.get("teacherUName")
         grade = stored_results.get("grade")
         print("# Storing data");

@@ -25,6 +25,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileNamePreview = document.getElementById('fileNamePreview');
     const form = document.getElementById('uploadForm');
 
+    if (!window.notifier) {
+        window.notifier = new NotificationSystem({
+            position: 'top-right',
+            defaultDuration: 3000
+        });
+    }
+
     // Populate the year dropdowns (starting year from 1990 to current year)
     const currentYear = new Date().getFullYear();
     for (let year = 1990; year <= currentYear; year++) {
@@ -408,12 +415,14 @@ function saveResultsToDatabase() {
         })
         .then(data => {
             console.log('Save results:', data);
-            alert('Data saved successfully!'); // Show success alert
-            location.reload(); // Refresh the page
+            window.notifier.success("Save results", `Data saved successfully!`);
+            setTimeout(() => {
+                location.reload();
+            }, 1500); // Delay to allow the user to see the message
         })
         .catch(error => {
             console.error('Fetch error:', error);
-            alert('An error occurred while saving data. Please try again.'); // Show error alert
+            window.notifier.error("Fetch error", "Error saving")
         });
 }
 /*
