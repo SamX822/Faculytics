@@ -934,6 +934,7 @@ def upload_file():
                 "teacherUName": teacherUName,
                 "grade": grade
             }
+            print(session.get('upload_results', {}));
             results = {
                 "filename": new_filename,
                 "sentiment": sentiment_result["predictions"],
@@ -965,6 +966,7 @@ def saveToDatabase():
         # Retrieve stored session data
         stored_results = session.get("upload_results", {})
         print("# Retrieve stored session data");
+        print(stored_results)
 
         if not stored_results:
             return jsonify({"error": "No data received!"}), 400
@@ -974,6 +976,7 @@ def saveToDatabase():
         sentiment_result = stored_results.get("sentiment")
         topic_result = stored_results.get("topics")
         recommendation_text = stored_results.get("recommendation")
+        print(recommendation_text)
         teacherUName = stored_results.get("teacherUName")
         grade = stored_results.get("grade")
         print("# Storing data");

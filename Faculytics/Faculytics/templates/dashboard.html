@@ -3,18 +3,22 @@
 
 {% block content %}
 <div class="flex flex-col lg:flex-row">
-    <!-- Sidebar -->
+    <!-- Sidebar - included for all user types -->
     {% include "sidebar.html" %}
 
-    <!-- Main Content -->
-    {% if user.userType in ["admin", "Curriculum Developer", "Vice Chancellor for Academic Affairs"] %}
-    <main class="ml-[14rem] p-6 text-gray-300 w-[100%] bg-[#003153] min-h-screen">
+    <!-- Check for authorized access first -->
+    {% if user.userType not in ["admin", "Dean", "Campus Director", "Vice Chancellor", "Chairperson", "Curriculum Developer", "Vice Chancellor for Academic Affairs", "Teacher"] %}
+    <script>
+            window.location.href = "{{ url_for('login') }}";
+    </script>
+    {% else %}
+    <!-- Main Content Area -->
+    <main class="ml-[14rem] p-6 text-gray-300 w-full bg-[#003153] min-h-screen">
+        <!-- Dashboard Header - common for all authorized users -->
         <div class="relative mb-8">
-            <!-- Animated underline for header -->
             <h2 class="text-3xl font-bold text-white mb-2 inline-block relative">
                 Dashboard
                 <span class="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-[#3b5999] via-[#00f6fa] to-[#3b5999] rounded-full"></span>
-
             </h2>
             <div class="flex items-center text-gray-400 mb-4">
                 <a href="/dashboard" class="text-sm hover:text-[#00f6fa] transition-colors duration-300">/dashboard</a>
@@ -26,15 +30,15 @@
                 <div class="absolute top-7 right-20 w-2 h-2 bg-[#00f6fa] rounded-full animate-ping" style="animation-delay: 1s"></div>
             </div>
         </div>
-        <!-- Enhanced Manage Approvals Button with Notification Badge -->
+
+        <!-- VC Academic Affairs Specific Controls -->
         {% if user.userType in ["Vice Chancellor for Academic Affairs"] %}
         <a href="{{ url_for('approval_page') }}"
            class="group relative overflow-hidden bg-gradient-to-r from-[#3b5999] to-[#2e467d] text-white py-2.5 px-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#00f6fa]/20 flex items-center gap-2 border border-[#3b5999]/80">
-
             <!-- Button text -->
             <span class="relative z-10 font-medium">Manage Approvals</span>
 
-            <!-- Notification Badge - Add this logic to fetch pending approvals -->
+            <!-- Notification Badge -->
             {% set pending_count = pending_approvals|default(0) %}
             {% if pending_count > 0 %}
             <div class="relative z-10 flex items-center justify-center ml-2">
@@ -54,8 +58,10 @@
             <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         </a>
         {% endif %}
+
+        <!-- Admin View: All Campuses Grid -->
         {% if user.userType == "admin" %}
-        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {% for campus in campuses %}
             {% if campus.campus_acronym != "N/A" %}
             <a href="{{ url_for('campus_page', campus_acronym=campus.campus_acronym|upper) }}"
@@ -85,55 +91,39 @@
         </div>
         {% endif %}
 
-    </main>
-    {% endif %}
-
-    {% if user.userType in ["Curriculum Developer", "Vice Chancellor for Academic Affairs"] %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-3">
-        {% for campus in campuses %}
-        <div class="college-card group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
-            <div class="p-6">
-                <div class="flex justify-center mb-4">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                        {{ campus.campus_acronym }}
+        <!-- Curriculum Developer/VC Academic Affairs: Campus Cards with Analytics -->
+        {% if user.userType in ["Curriculum Developer", "Vice Chancellor for Academic Affairs"] %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {% for campus in campuses %}
+            <div class="college-card group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
+                <div class="p-6">
+                    <div class="flex justify-center mb-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                            {{ campus.campus_acronym }}
+                        </div>
+                    </div>
+                    <h3 class="text-white text-xl font-bold text-center mb-4">{{ campus.campus_name }}</h3>
+                    <div class="flex flex-col gap-2 mt-4">
+                        <a href="{{ url_for('campus_page', campus_acronym=campus.campus_acronym) }}"
+                           class="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-blue-500/30">
+                            Enter Campus
+                        </a>
+                        <button onclick="openDashboardAnalysisModal(event, '{{ campus.campus_acronym }}')"
+                                class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
+                            View Analytics
+                        </button>
                     </div>
                 </div>
-                <h3 class="text-white text-xl font-bold text-center mb-4">{{ campus.campus_name }}</h3>
-                <div class="flex flex-col gap-2 mt-4">
-                    <a href="{{ url_for('campus_page', campus_acronym=campus.campus_acronym) }}"
-                       class="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-blue-500/30">
-                        Enter Campus
-                    </a>
-                    <button onclick="openDashboardAnalysisModal(event, '{{ campus.campus_acronym }}')"
-                            class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
-                        View Analytics
-                    </button>
-                </div>
+                <div class="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500"></div>
             </div>
-            <div class="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500"></div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        {% endif %}
 
-
-    {% if user.userType in ["Dean", "Campus Director", "Vice Chancellor", "Chairperson"] %}
-    <main class="w-full ml-[14rem] p-10 text-gray-300 bg-[#003153]">
-        <div class="relative mb-8">
-            <!-- Animated underline for header -->
-            <h2 class="text-3xl font-bold text-white mb-2 inline-block relative">
-                Dashboard
-                <span class="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-[#3b5999] via-[#00f6fa] to-[#3b5999] rounded-full"></span>
-            </h2>
-            <div class="flex items-center text-gray-400 mb-4">
-                <a href="/dashboard" class="text-sm hover:text-[#00f6fa] transition-colors duration-300">/dashboard</a>
-            </div>
-        </div>
-
+        <!-- Campus Leadership: Specific Assigned Campus -->
+        {% if user.userType in ["Dean", "Campus Director", "Vice Chancellor", "Chairperson"] %}
         {% if assigned_campus %}
-        <!-- Campus Section -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-3">
-            <!-- Campus Card Design -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             <div class="college-card group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
                 <div class="p-6">
                     <div class="flex justify-center mb-4">
@@ -157,18 +147,26 @@
             </div>
         </div>
         {% else %}
-        <p class="text-gray-400 text-center mt-6">No assigned campus found.</p>
+        <div class="text-center mt-8 p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p class="text-gray-400">No assigned campus found. Please contact an administrator.</p>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Teacher View -->
+        {% if user.userType in ["Teacher"] %}
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg border border-gray-700">
+            <h3 class="text-2xl font-bold text-white mb-4">Welcome to Your Dashboard</h3>
+            <p class="text-gray-300">
+                Use the navigation sidebar to access your courses and curriculum materials.
+            </p>
+            <!-- Teacher-specific content can be added here -->
+        </div>
         {% endif %}
     </main>
     {% endif %}
 
-    {% if user.userType in ["Teacher"] %}
-    <main class="w-[100%] ml-[14rem] p-6 text-gray-300">
-        <h2 class="text-3xl font-bold text-white shadow-md">Welcome to Your Dashboard</h2>
-    </main>
-    {% endif %}
-
-    <!-- Dashboard Analytics Modal -->
+    <!-- Dashboard Analytics Modal - common for all roles that use it -->
     <div id="dashboardAnalysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
         <div class="bg-gray-800 p-6 rounded-lg w-full max-w-5xl mt-4 overflow-y-auto max-h-[90vh] border border-gray-700 shadow-2xl">
             <h3 class="text-2xl font-bold text-white mb-6 text-center">Campus-Wide Analytics</h3>
@@ -219,13 +217,6 @@
             </div>
         </div>
     </div>
-
-    {% if user.userType not in ["admin", "Dean", "Campus Director", "Vice Chancellor", "Chairperson", "Curriculum Developer", "Vice Chancellor for Academic Affairs"] %}
-    <script>
-    window.location.href = "{{ url_for('login') }}";
-    </script>
-    {% endif %}
-
 </div>
 {% endblock %}
 
