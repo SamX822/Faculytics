@@ -40,6 +40,13 @@ def index():
     # Redirect to the login page by default
     return redirect(url_for('login'))
 
+@app.route('/logout')
+def logout():
+    # Clear the session
+    session.clear()
+    flash('You have been successfully logged out.', 'success')
+    return redirect(url_for('login'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
