@@ -2,9 +2,226 @@
 
 {% block content %}
 
-<h2>{{ title }}.</h2>
-<h3>{{ message }}</h3>
+<div class="flex flex-col lg:flex-row">
 
-<p>Use this area to provide additional information.</p>
+    <main class="ml-[14rem] p-6 text-gray-300 w-full min-h-screen">
+
+        <!-- Sidebar -->
+        {% include "sidebar.html" %}
+
+        <div class="relative mb-8">
+
+            <h2 class="text-3xl font-bold text-white mb-2 inline-block relative">
+                About Faculytics
+                <span class="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-[#3b5999] via-[#00f6fa] to-[#3b5999] rounded-full"></span>
+            </h2>
+            <p class="mt-4 text-gray-400">
+                Faculytics is a web-based application designed to streamline the process of uploading and managing faculty data. It provides a user-friendly interface for deans, campus directors, and other authorized personnel to upload faculty information efficiently.
+            </p>
+
+        </div>
+
+        <h2 class="text-3xl font-bold text-white mb-2 inline-block relative bottom-5">
+            Developers
+            <span class="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-[#3b5999] via-[#00f6fa] to-[#3b5999] rounded-full"></span>
+        </h2>
+
+        <div class="cards">
+            <div class="card-container">
+                <div class="card">
+                    <div class="content">
+                        <img src="static/pics/abella.jpg">
+                    </div>
+                </div>
+                <div class="desc">
+                    <p class="txt"> Abella, Kenth Amjay </p>
+                    <p class="txt"> Bachelor of Science in Computer Science </p>
+                    <p class="txt"> University of Cebu - Main Campus </p>
+                </div>
+            </div>
+
+            <div class="card-container">
+                <div class="card">
+                    <div class="content">
+                        <img src="static/pics/monte.jpg">
+                    </div>
+                </div>
+                <div class="desc">
+                    <p class="txt"> Montecillo, Christopher Lloyd </p>
+                    <p class="txt"> Bachelor of Science in Computer Science </p>
+                    <p class="txt"> University of Cebu - Main Campus </p>
+                </div>
+            </div>
+
+            <div class="card-container">
+                <div class="card">
+                    <div class="content">
+                        <img src="static/pics/profile.png">
+                    </div>
+                </div>
+                <div class="desc">
+                    <p class="txt"> Salabasab, Mark </p>
+                    <p class="txt"> Bachelor of Science in Computer Science </p>
+                    <p class="txt"> University of Cebu - Main Campus </p>
+                </div>
+            </div>
+
+            <div class="card-container">
+                <div class="card">
+                    <div class="content">
+                        <img src="static/pics/profile.png">
+                    </div>
+                </div>
+                <div class="desc">
+                    <p class="txt"> Maga, Francis </p>
+                    <p class="txt"> Bachelor of Science in Computer Science </p>
+                    <p class="txt"> University of Cebu - Main Campus </p>
+                </div>
+            </div>
+
+            <div class="card-container">
+                <div class="card">
+                    <div class="content">
+                        <img src="static/pics/evangelista.jpg">
+                    </div>
+                </div>
+                <div class="desc">
+                    <p class="txt"> Evangelista, Dustin  </p>
+                    <p class="txt"> Bachelor of Science in Computer Science </p>
+                    <p class="txt"> University of Cebu - Main Campus </p>
+                </div>
+            </div>
+        </div>
+
+
+    </main>
+
+</div>
+
+<style>
+
+    .cards {
+        display: grid;
+        grid-template-columns: 400px 400px 400px;
+        grid-column-gap: 50px;
+        grid-row-gap: 60px;
+        justify-content: center;
+    }
+
+    .card-container {
+        position: relative; /* key: this lets .desc position absolutely relative to this */
+        width: 285px; /* match card width */
+    }
+
+    .card {
+        width: 285px;
+        height: 381px;
+        background: #111827;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden; /* keep clipping effects inside card */
+        position: relative;
+        box-shadow: 0px 0px 3px 1px #00000088;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+        .card .content {
+            border-radius: 5px;
+            background: #111827;
+            width: 279px;
+            height: 375px;
+            z-index: 1;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+    .content::before {
+        opacity: 0;
+        transition: opacity 300ms;
+        content: " ";
+        display: block;
+        background: white;
+        width: 5px;
+        height: 50px;
+        position: absolute;
+        filter: blur(50px);
+        overflow: hidden;
+    }
+
+    .card:hover .content::before {
+        opacity: 1;
+    }
+
+    .card::before {
+        opacity: 0;
+        content: " ";
+        position: absolute;
+        display: block;
+        width: 120px;
+        height: 540px;
+        background: linear-gradient(#facc15, #facc15);
+        transition: opacity 300ms;
+        animation: rotation_9018 8000ms infinite linear;
+        animation-play-state: paused;
+    }
+
+    .card:hover::before {
+        opacity: 1;
+        animation-play-state: running;
+    }
+
+    .card::after {
+        position: absolute;
+        content: " ";
+        display: block;
+        width: 250px;
+        height: 360px;
+        background: #17171733;
+        backdrop-filter: blur(50px);
+    }
+
+    .desc {
+        position: absolute;
+        bottom: 5px;
+        left: 0;
+        width: 100%;
+        margin: 0 auto;
+        background: #111827;
+        padding: 10px;
+        transition: transform 0.5s ease-out, box-shadow 0.5s ease-out;
+        z-index: 5;
+        pointer-events: none; /* prevents blocking card hover */
+    }
+
+        .desc .txt {
+            font-size: 15px;
+            color: white;
+            text-align: center;
+        }
+
+    .card-container:hover .desc {
+        transform: scale(1.6) translateY(-15px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        z-index: 10;
+        pointer-events: auto; /* re-enable if you want hover on .desc itself */
+    }
+
+    @keyframes rotation_9018 {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+
+
+</style>
 
 {% endblock %}
