@@ -805,10 +805,10 @@ def generateRecommendation2(sentiment_result, comments_list, processed_comments,
 
         # Predefined topics
         predefined_topics = [
-            "Preparedness", "Cleanliness", "Tardiness", "Teaching Effectiveness",
-            "Fairness and Leniency", "Student Engagement", "Availability and Approachability",
-            "Wears Faculty Uniform", "On-time Starts and Ending of Class", "Professor's Activity Participation",
-            "Supervision of out-of-classroom activities"
+            "Teaching Effectiveness", "Preparedness and Punctuality", "Fairness and Supportiveness", "Student Engagement",
+            "Professional Appearance", "Cleanliness and Classroom Management", "Teaching Quality",
+            "Availability and Communication", "Tardiness", "Assessment Fairness and Difficulty",
+            "Instructional Materials and Aids"
         ]
 
         # Track sentiment counts per topic
