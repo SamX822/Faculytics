@@ -17,6 +17,7 @@ import re
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from collections import defaultdict
 
 # ML libraries
 from transformers import pipeline
@@ -775,7 +776,124 @@ def rename_program(campus_acronym, college_acronym):
 
     return redirect(url_for('college_page', college_acronym=college_acronym, campus_acronym=campus_acronym))
 
-def generateRecommendation(sentiment_result, comments_list, processed_comments):
+def build_topic_comments_summary(processed_comments, sentiment_result, comments_list):
+    topic_examples = defaultdict(lambda: {"Positive": [], "Negative": []})
+    for idx, comment in enumerate(processed_comments):
+        topic = comment.get("Final_Topic")
+        sentiment = sentiment_result["predictions"][idx]
+        raw_comment = comments_list[idx]
+        if topic:
+            topic_examples[topic][sentiment].append(raw_comment)
+
+    # Build formatted summary block
+    summary_lines = []
+    for topic in topic_examples:
+        summary_lines.append(f"\nTopic: {topic}")
+        for sentiment_type in ["Positive", "Negative"]:
+            examples = topic_examples[topic][sentiment_type]
+            if examples:
+                summary_lines.append(f"{sentiment_type} Comments:")
+                for i, example in enumerate(examples[:5], 1):
+                    summary_lines.append(f"{i}. {example}")
+    return "\n".join(summary_lines)
+
+def generateRecommendation2(sentiment_result, comments_list, processed_comments, top_words, category_counts):
+    try:
+        # Sentiment counts
+        positive_count = sentiment_result["predictions"].count("Positive")
+        negative_count = sentiment_result["predictions"].count("Negative")
+
+        # Predefined topics
+        predefined_topics = [
+            "Preparedness", "Cleanliness", "Tardiness", "Teaching Effectiveness",
+            "Fairness and Leniency", "Student Engagement", "Availability and Approachability",
+            "Wears Faculty Uniform", "On-time Starts and Ending of Class", "Professor's Activity Participation",
+            "Supervision of out-of-classroom activities"
+        ]
+
+        # Track sentiment counts per topic
+        topic_sentiment_summary = {topic: {"Positive": 0, "Negative": 0} for topic in predefined_topics}
+        for idx, comment in enumerate(processed_comments):
+            topic = comment.get("Final_Topic")
+            sentiment = sentiment_result["predictions"][idx]
+            if topic in topic_sentiment_summary:
+                topic_sentiment_summary[topic][sentiment] += 1
+
+        # Top 5 topics by frequency
+        topic_frequency = {}
+        for comment in processed_comments:
+            topic = comment.get("Final_Topic")
+            if topic:
+                topic_frequency[topic] = topic_frequency.get(topic, 0) + 1
+        top_topics = sorted(topic_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_topics_list = [topic for topic, _ in top_topics]
+
+        # Summary sections
+        positive_summary = []
+        negative_summary = []
+        for topic in top_topics_list:
+            pos = topic_sentiment_summary[topic]["Positive"]
+            neg = topic_sentiment_summary[topic]["Negative"]
+            if pos > 0:
+                positive_summary.append(f"- {topic}: {pos} positive mentions")
+            if neg > 0:
+                negative_summary.append(f"- {topic}: {neg} negative mentions")
+
+        # Topic-specific comment samples
+        topic_comments_summary = build_topic_comments_summary(processed_comments, sentiment_result, comments_list)
+
+        # Final prompt
+        prompt = f"""Using the data provided below, generate a formal and concise teacher performance report.
+
+FEEDBACK SUMMARY:
+Positive comments: {positive_count} | Negative comments: {negative_count}
+Top topics: {', '.join(top_topics_list)}
+
+POSITIVE HIGHLIGHTS:
+{chr(10).join(positive_summary)}
+
+AREAS FOR IMPROVEMENT:
+{chr(10).join(negative_summary)}
+
+TOPIC-SPECIFIC COMMENT EXAMPLES:
+{topic_comments_summary}
+
+Structure your response as follows:
+
+1. STRENGTHS  
+   - Recommend action for each positive highlight in one sentence each, supported by student examples where relevant.
+
+2. AREAS REQUIRING ATTENTION  
+   - Recommend action for each negative highlight in one sentence each, informed by the negative examples provided.
+
+Guidelines:
+- Use a professional and objective tone.
+- Avoid assumptions or commentary outside the data.
+- Keep language concise and action-oriented.
+- Number all recommended actions clearly.
+"""
+
+        print(prompt)
+
+        # Generate recommendation using Gemini
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="You are an LLM-driven recommendation system. You are tasked to give accurate and specific recommendations especially on improving weaknesses.",
+                temperature=0.4
+            ),
+        )
+
+        recommendation_text = response.text.strip()
+        print(recommendation_text)
+        return recommendation_text
+
+    except Exception as e:
+        print(f"[generateRecommendation] Error: {str(e)}")
+        return "Failed to generate recommendation."
+
+def generateRecommendation(sentiment_result, comments_list, processed_comments, top_words, category_counts):
     try:
         # Extract sentiment counts
         positive_count = sentiment_result["predictions"].count("Positive")
@@ -818,8 +936,11 @@ def generateRecommendation(sentiment_result, comments_list, processed_comments):
             f"Positive comments: {positive_count} | Negative comments: {negative_count}\n"
             f"Top topics: {', '.join(top_topics_list)}\n"
             f"Positive highlights:\n{chr(10).join(positive_summary)}\n"
-            f"Areas for improvement:\n{chr(10).join(negative_summary)}"
+            f"Areas for improvement:\n{chr(10).join(negative_summary)}\n"
+            f"Top words: {top_words}\n"
+            f"Category Counts: {category_counts}\n"
         )
+
 
         prompt = f"""Using the data provided below, generate a formal and concise teacher performance report.
 
@@ -909,7 +1030,7 @@ def upload_file():
             processed_comments, top_words, category_counts = topic_modeling.process_comments(df)
 
             # Recommendation text using GEMINI
-            recommendation_text = generateRecommendation(sentiment_result, comments_list, processed_comments);
+            recommendation_text = generateRecommendation2(sentiment_result, comments_list, processed_comments, top_words, category_counts);
 
             # set new filename
             new_filename = f"{starting_year}_{ending_year}_{semester}.csv"
