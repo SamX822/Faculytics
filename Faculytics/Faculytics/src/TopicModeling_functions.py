@@ -13,10 +13,10 @@ class CommentProcessor:
         self.classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
         self.candidate_labels = [
-            "Preparedness", "Cleanliness", "Tardiness", "Teaching Effectiveness",
-            "Fairness and Leniency", "Student Engagement", "Availability and Approachability",
-            "Wears Faculty Uniform", "On-time Starts and Ending of Class", "Professor's Activity Participation",
-            "Supervision of out-of-classroom activities"
+            "Teaching Effectiveness", "Preparedness and Punctuality", "Fairness and Supportiveness", "Student Engagement",
+            "Professional Appearance", "Cleanliness and Classroom Management", "Teaching Quality",
+            "Availability and Communication", "Tardiness", "Assessment Fairness and Difficulty",
+            "Instructional Materials and Aids"
         ]
 
         # Initialize BERTopic once, adding n-gram support using CountVectorizer
