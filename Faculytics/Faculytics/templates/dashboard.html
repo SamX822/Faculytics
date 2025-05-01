@@ -156,11 +156,52 @@
         {% endif %}
 
         <!-- Teacher View -->
-        {% if user.userType in ["Teacher"] %}
-        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg border border-gray-700">
-            <h3 class="text-2xl font-bold text-white mb-4">Welcome to Your Dashboard</h3>
-            <!-- Teacher-specific content can be added here -->
+        {% if user.userType == 'Teacher' %}
+        <div class="bg-gray-800 p-6 rounded-lg shadow-md transition hover:bg-gray-700 cursor-pointer" onclick="openTeacherAnalytics('{{ user.uName }}')">
+            <h2 class="text-xl font-semibold text-white mb-4">Your Analytics</h2>
+            <div class="flex justify-center items-center h-24">
+                <span class="text-lg text-green-400 font-bold">View Analytics</span>
+            </div>
         </div>
+
+        <div id="teacherAnalyticsModal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center p-4">
+            <div class="bg-gray-800 p-6 rounded-lg w-full max-w-3xl mt-4 overflow-y-auto max-h-[90vh]">
+                <h3 class="text-xl font-bold text-white mb-4">Analytics</h3>
+                <div class="flex border-b border-gray-700 mb-4">
+                    <button id="teacherSentimentTab" class="py-2 px-4 text-white bg-blue-600 rounded-t-lg mr-2">Sentiment Analytics</button>
+                    <button id="teacherTopicTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg">Topic Modeling</button>
+                    <button id="teacherCommentsTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg">Comments</button>
+                </div>
+                <div id="teacherSentimentContent" class="block">
+                    <canvas id="teacherAnalysisChart"></canvas>
+                </div>
+                <div id="teacherTopicContent" class="hidden">
+                    <canvas id="teacherTopicChart"></canvas>
+                </div>
+                <div id="teacherCommentsContent" class="hidden text-white">
+                    <div class="flex gap-4 mb-4">
+                        <select id="teacherSentimentFilter" class="bg-gray-700 text-white p-2 rounded-lg">
+                            <option value="all">All Sentiments</option>
+                            <option value="Positive">Positive</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                        <select id="teacherTopicFilter" class="bg-gray-700 text-white p-2 rounded-lg">
+                            <option value="all">All Topics</option>
+                        </select>
+                    </div>
+                    <div id="teacherCommentsList" class="space-y-4 max-h-[40vh] overflow-y-auto"></div>
+                </div>
+                <select id="teacherFileSelect" class="mt-4 p-2 w-full bg-gray-700 text-white rounded-lg">
+                    <option value="overall">Overall</option>
+                </select>
+                <div class="mt-2 flex justify-end">
+                    <button id="teacherViewFileAnalytics" class="px-4 py-2 bg-blue-600 text-white rounded-lg mr-2">View</button>
+                    <button onclick="closeTeacherAnalysisModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Close</button>
+                </div>
+                <div id="teacherFileDetails" class="mt-4 text-white"></div>
+            </div>
+        </div>
+        {% else %}
         {% endif %}
     </main>
     {% endif %}
@@ -223,5 +264,6 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/scripts/template/teacher.js"></script>
 <script src="/static/scripts/template/dashboard.js"></script>
 {% endblock %}
