@@ -438,7 +438,7 @@ function loadTopicChart(data, fileName) {
                     x: {
                         title: {
                             display: true,
-                            text: 'Topics',
+                            text: 'Category',
                             color: 'white'
                         },
                         ticks: {

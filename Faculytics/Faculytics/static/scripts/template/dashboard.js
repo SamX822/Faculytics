@@ -1,142 +1,54 @@
-// campus.js
+let globalDashboardData = {};
+// dashboard.js
 let analysisChartInstance = null;
 let topicChartInstance = null;
 let currentData = null;
 let activeTab = "sentiment";
 let globalCombinedComments = [];
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Tab switching logic
-    const sentimentTab = document.getElementById('dashboardSentimentTab');
-    const topicTab = document.getElementById('dashboardTopicTab');
-    const commentsTab = document.getElementById('dashboardCommentsTab');
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('topicFilter').addEventListener('change', renderFilteredComments);
+    document.getElementById('sentimentFilter').addEventListener('change', renderFilteredComments);
 
-    const sentimentContent = document.getElementById('dashboardSentimentContent');
-    const topicContent = document.getElementById('dashboardTopicContent');
-    const commentsContent = document.getElementById('dashboardCommentsContent');
-
-    sentimentTab.addEventListener('click', function () {
-        showTab('sentiment');
-    });
-
-    topicTab.addEventListener('click', function () {
-        showTab('topic');
-    });
-
-    commentsTab.addEventListener('click', function () {
-        showTab('comments');
-    });
-
-    function showTab(tab) {
-        if (tab === 'sentiment') {
-            sentimentContent.classList.remove('hidden');
-            topicContent.classList.add('hidden');
-            commentsContent.classList.add('hidden');
-        } else if (tab === 'topic') {
-            sentimentContent.classList.add('hidden');
-            topicContent.classList.remove('hidden');
-            commentsContent.classList.add('hidden');
-        } else if (tab === 'comments') {
-            sentimentContent.classList.addhtml('hidden');
-            topicContent.classList.add('hidden');
-            commentsContent.classList.remove('hidden');
+    const tabs = {
+        sentimentTab: {
+            button: document.getElementById('sentimentTab'),
+            content: document.getElementById('sentimentContent')
+        },
+        topicTab: {
+            button: document.getElementById('topicTab'),
+            content: document.getElementById('topicContent')
+        },
+        commentsTab: {
+            button: document.getElementById('commentsTab'),
+            content: document.getElementById('commentsContent'),
+            filters: document.getElementById('commentFilters')
         }
-    }
+    };
 
-    // Initialize by showing sentiment tab by default
-    showTab('sentiment');
+    // Initialize tabs
+    Object.values(tabs).forEach(({ button, content, filters }) => {
+        button.addEventListener('click', () => {
+            Object.values(tabs).forEach(tab => {
+                tab.button.classList.remove('bg-blue-600', 'text-white');
+                tab.button.classList.add('bg-gray-700', 'text-gray-300');
+                tab.content.classList.add('hidden');
+                if (tab.filters) tab.filters.classList.add('hidden');
+            });
+
+            button.classList.add('bg-blue-600', 'text-white');
+            button.classList.remove('bg-gray-700', 'text-gray-300');
+            content.classList.remove('hidden');
+            if (filters) filters.classList.remove('hidden');
+
+            activeTab = button.id.replace('Tab', '').toLowerCase();
+
+            fetchAndUpdateChart();
+        });
+    });
+
+    tabs.sentimentTab.button.click();
 });
-
-
-// Function to open the Dashboard Modal and load content
-document.addEventListener('DOMContentLoaded', function () {
-    // Now it's safe to call `document.getElementById`
-    const modal = document.getElementById('dashboardAnalysisModal');
-    if (modal) {
-
-    // Show the modal (make it visible)
-    const modal = document.getElementById('dashboardAnalysisModal');
-    modal.classList.remove('hidden');
-
-    // Fetch and update campus-specific data (sentiment, topics, comments)
-        fetchCampusAnalytics(campusAcronym);
-    }
-});
-
-
-// Function to fetch and update campus-specific analytics
-function fetchCampusAnalytics(campusAcronym) {
-    // Assuming you have a backend route for fetching campus analytics
-    fetch(`/dashboard_analytics/${campusAcronym}`)
-        .then(response => response.json())
-        .then(data => {
-            // Assuming 'data' contains sentiment, topics, comments, etc.
-
-            // Example: Update Sentiment Chart
-            updateSentimentChart(data.sentiment);
-
-            // Example: Update Topic Modeling Chart
-            updateTopicChart(data.topics);
-
-            // Example: Update Comments List
-            updateCommentsList(data.comments);
-        })
-        .catch(error => console.error('Error fetching analytics:', error));
-}
-// Function to update the Sentiment Chart (Chart.js)
-function updateSentimentChart(sentimentData) {
-    const ctx = document.getElementById('dashboardAnalysisChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line', // Example: Line chart for sentiment analysis
-        data: {
-            labels: sentimentData.labels,
-            datasets: [{
-                label: 'Sentiment Over Time',
-                data: sentimentData.values,
-                borderColor: '#00f6fa',
-                fill: false
-            }]
-        }
-    });
-}
-
-// Function to update the Topic Modeling Chart (Chart.js)
-function updateTopicChart(topicData) {
-    const ctx = document.getElementById('dashboardTopicChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar', // Example: Bar chart for topic distribution
-        data: {
-            labels: topicData.labels,
-            datasets: [{
-                label: 'Topic Distribution',
-                data: topicData.values,
-                backgroundColor: '#3b5999'
-            }]
-        }
-    });
-}
-
-// Function to update the Comments List
-function updateCommentsList(comments) {
-    const commentsContainer = document.getElementById('dashboardCommentsList');
-    commentsContainer.innerHTML = ''; // Clear existing comments
-
-    comments.forEach(comment => {
-        const commentElement = document.createElement('div');
-        commentElement.classList.add('bg-gray-700', 'p-4', 'rounded-lg', 'mb-4');
-        commentElement.innerHTML = `
-            <p>${comment.text}</p>
-            <p class="text-sm text-gray-400">Sentiment: ${comment.sentiment}</p>
-        `;
-        commentsContainer.appendChild(commentElement);
-    });
-}
-
-// Function to close the modal
-function closeDashboardAnalyticsModal() {
-    const modal = document.getElementById('dashboardAnalysisModal');
-    modal.classList.add('hidden');
-}
 
 function renderFilteredComments() {
     const commentsList = document.getElementById('commentsList');
@@ -178,21 +90,40 @@ function renderFilteredComments() {
     });
 }
 
-function setupTabSwitching() {
-    document.getElementById('sentimentTab').addEventListener('click', () => switchTab('sentiment'));
-    document.getElementById('topicTab').addEventListener('click', () => switchTab('topic'));
-    document.getElementById('commentsTab').addEventListener('click', () => switchTab('comments'));
+function fetchAndUpdateChart() {
+    const dashboardAcronym = document.getElementById('dashboardAcronymInput').value;
+
+    if (!dashboardAcronym) {
+        console.error("Missing campus acronym");
+        return;
+    }
+
+    fetch(`/dashboard_analytics?campus_acronym=${dashboardAcronym}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+            console.log("Received Data:", data);
+            currentData = data;
+            loadChart(data);
+        })
+        .catch(err => console.error("Error fetching data:", err));
 }
 
+document.getElementById('sentimentTab').addEventListener('click', () => switchTab('sentiment'));
+document.getElementById('topicTab').addEventListener('click', () => switchTab('topic'));
+document.getElementById('commentsTab').addEventListener('click', () => switchTab('comments'));
+
 function switchTab(tab) {
+    // Hide all content sections
     document.getElementById('sentimentContent').classList.add('hidden');
     document.getElementById('topicContent').classList.add('hidden');
     document.getElementById('commentsContent').classList.add('hidden');
 
+    // Reset tab button styles
     document.getElementById('sentimentTab').classList.remove('bg-blue-600');
     document.getElementById('topicTab').classList.remove('bg-blue-600');
     document.getElementById('commentsTab').classList.remove('bg-blue-600');
 
+    // Show selected tab content and highlight the selected tab
     if (tab === 'sentiment') {
         document.getElementById('sentimentContent').classList.remove('hidden');
         document.getElementById('sentimentTab').classList.add('bg-blue-600');
@@ -203,18 +134,251 @@ function switchTab(tab) {
         document.getElementById('commentsContent').classList.remove('hidden');
         document.getElementById('commentsTab').classList.add('bg-blue-600');
     }
+}
 
-    activeTab = tab;
-    loadChart(currentData);
+function openCampusAnalyticsModal(event, dashboardAcronym) {
+    // Prevent any default behavior from the button click
+    event.preventDefault();
+
+    // Set the campus acronym  acronym
+    document.getElementById('dashboardAcronymInput').value = dashboardAcronym;
+
+    // Fetch and update the chart with the dashboard and college data
+    fetchAndUpdateChart();
+
+    // Show the modal
+    document.getElementById("dashboardAnalysisModal").classList.remove("hidden");
+}
+
+function closeCampusAnalyticsModal() {
+    document.getElementById('dashboardAnalysisModal').classList.add('hidden');
 }
 
 function loadChart(data) {
-    if (!data) return;
     if (activeTab === "sentiment") {
-        setupSentimentChart(data.sentimentData);
+        loadSentimentChart(data);
     } else if (activeTab === "topic") {
-        setupTopicChart(data.topicData);
+        loadTopicChart(data);
     } else if (activeTab === "comments") {
-        setupComments(data.commentsData);
+        loadComments(data);
     }
+}
+
+function loadSentimentChart(data) {
+    if (analysisChartInstance) analysisChartInstance.destroy();
+    const ctx = document.getElementById('analysisChart').getContext('2d');
+
+    // group by filename
+    const buckets = {};
+    data.sentiment.forEach(({ filename, sentiment_score }) => {
+        // Initialize the bucket for the filename if it doesn't exist
+        if (!buckets[filename]) {
+            buckets[filename] = { positive: 0, negative: 0 };
+        }
+
+        // Safely increment positive or negative count
+        if (sentiment_score == "Positive") {
+            buckets[filename].positive++;
+        } else if (sentiment_score == "Negative") {
+            buckets[filename].negative++;
+        }
+    });
+
+    // sort filenames chronologically
+    const labels = Object.keys(buckets).sort(); // or your parseFilename+sort_key
+    const positiveData = labels.map(f => buckets[f].positive);
+    const negativeData = labels.map(f => buckets[f].negative);
+
+    console.log("Buckets:", buckets);
+    console.log("Positive Data:", positiveData);
+    console.log("Negative Data:", negativeData);
+
+    analysisChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Positive',
+                    data: positiveData,
+                    borderColor: 'green',
+                    fill: false,
+                    pointStyle: 'circle',
+                    pointRadius: 5
+                },
+                {
+                    label: 'Negative',
+                    data: negativeData,
+                    borderColor: 'red',
+                    fill: false,
+                    pointStyle: 'circle',
+                    pointRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Sentiment Count',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Filenames',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: 'white'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadTopicChart(data) {
+    if (topicChartInstance) topicChartInstance.destroy();
+    const ctx = document.getElementById('topicChart').getContext('2d');
+
+    console.log('Topics data:', data.topics);
+
+    // count & split sentiments
+    const tCounts = {}, tSents = {};
+    data.topics.forEach(({ topic, sentiment }) => {
+        if (!topic || !sentiment) return;
+        if (!tCounts[topic]) {
+            tCounts[topic] = 0;
+            tSents[topic] = { positive: 0, negative: 0 };
+        }
+        tCounts[topic]++;
+        tSents[topic][sentiment.toLowerCase()]++;
+    });
+
+    console.log('Topic Counts:', tCounts);
+    console.log('Topic Sentiments:', tSents);
+
+    const topTopics = Object.keys(tCounts)
+        .sort((a, b) => tCounts[b] - tCounts[a])
+        .slice(0, 10);
+    const pos = topTopics.map(t => tSents[t].positive);
+    const neg = topTopics.map(t => tSents[t].negative);
+
+    topicChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topTopics,
+            datasets: [{
+                label: 'Positive',
+                data: pos,
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.4
+            }, {
+                label: 'Negative',
+                data: neg,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Category',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: 'white'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.raw} instances`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadComments(data) {
+    const commentsList = document.getElementById('commentsList');
+    const topicFilter = document.getElementById('topicFilter');
+    const sentimentFilter = document.getElementById('sentimentFilter');
+
+    commentsList.innerHTML = '';
+    topicFilter.innerHTML = '<option value="all">All Topics</option>';
+    sentimentFilter.innerHTML = '<option value="all">All Sentiments</option>';
+
+    globalCombinedComments = data.comments;  // directly use top-level array
+
+    // populate filters
+    [...new Set(data.comments.map(c => c.topic))]
+        .forEach(topic => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = topic;
+            topicFilter.appendChild(opt);
+        });
+    [...new Set(data.comments.map(c => c.sentiment))]
+        .forEach(sent => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = sent;
+            sentimentFilter.appendChild(opt);
+        });
+
+    renderFilteredComments();
 }

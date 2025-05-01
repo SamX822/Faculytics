@@ -321,7 +321,7 @@ function loadTopicChart(data) {
                 x: {
                     title: {
                         display: true,
-                        text: 'Topics',
+                        text: 'Category',
                         color: 'white'
                     },
                     ticks: {
