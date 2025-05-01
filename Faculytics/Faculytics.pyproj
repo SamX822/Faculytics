@@ -42,6 +42,7 @@
     <Folder Include="Faculytics\" />
     <Folder Include="Faculytics\static\" />
     <Folder Include="Faculytics\static\content\" />
+    <Folder Include="Faculytics\static\pics\" />
     <Folder Include="Faculytics\static\uploads\" />
     <Folder Include="Faculytics\static\fonts\" />
     <Folder Include="Faculytics\static\scripts\" />
@@ -51,6 +52,10 @@
     <Folder Include="Faculytics\src\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Faculytics\static\pics\evangelista.jpg" />
+    <Content Include="Faculytics\static\pics\abella.jpg" />
+    <Content Include="Faculytics\static\pics\monte.jpg" />
+    <Content Include="Faculytics\static\pics\profile.png" />
     <Content Include="Faculytics\static\scripts\template\campus.js" />
     <Content Include="Faculytics\static\scripts\template\college.js" />
     <Content Include="Faculytics\static\scripts\template\dashboard.js" />
