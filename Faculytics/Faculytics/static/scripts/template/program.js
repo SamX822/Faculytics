@@ -24,6 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
             button: document.getElementById('commentsTab'),
             content: document.getElementById('commentsContent'),
             filters: document.getElementById('commentFilters')
+        },
+        recommendationsTab: {
+            button: document.getElementById('recommendationsTab'),
+            content: document.getElementById('recommendationsContent')
         }
     };
 
@@ -114,13 +118,12 @@ function fetchAndUpdateChart() {
 
     // Otherwise, fetch fresh data
     console.log("Fetching fresh data for", currentFileName);
-    fetch(`/analysis?teacher=${encodeURIComponent(uname)}&file_name=${currentFileName}&include_topics=true`)
+    fetch(`/analysis?teacher=${encodeURIComponent(uname)}&file_name=${currentFileName}&include_topics=true&include_recommendations=true`)
         .then(response => response.json())
         .then(data => {
             console.log("Fetched analysis data:", data);
             currentData = data;
             loadChart(data, currentFileName);
-            document.getElementById('fileDetails').innerHTML = `<p>Recommendation: ${data.recommendation}</p>`;
         })
         .catch(error => console.error("Error fetching analysis data:", error));
 }
@@ -135,7 +138,7 @@ function openAnalysisModal(username) {
     let fileSelect = document.getElementById('fileSelect');
     fileSelect.innerHTML = "<option value='overall'>Overall</option>";
 
-    fetch(`/analysis?teacher=${encodeURIComponent(username)}&include_topics=true`)
+    fetch(`/analysis?teacher=${encodeURIComponent(username)}&include_topics=true&include_recommendations=true`)
         .then(response => response.json())
         .then(data => {
             console.log("Received data:", data);
@@ -182,6 +185,8 @@ function loadChart(data, fileName) {
         loadTopicChart(data, fileName);
     } else if (activeTab === "comments") {
         loadComments(data, fileName);
+    } else if (activeTab === 'recommendations') {
+        loadRecommendations(data, currentFileName);
     }
 }
 
@@ -631,6 +636,55 @@ function loadComments(data, fileName) {
         sentimentFilter.appendChild(option);
     });
 
-    // 🌟 Display comments (initial load = all comments)
+    // Display comments (initial load = all comments)
     renderFilteredComments();
+}
+function loadRecommendations(data, fileName) {
+    const recommendationsUl = document.getElementById('recommendationsUl');
+
+    recommendationsUl.innerHTML = ''; // Clear previous recommendations
+
+    let recommendations = [];
+    if (fileName === 'overall') {
+        if (data.recommendation) {
+            recommendations = data.recommendation.split('\n').map(line => line.trim()).filter(line => line !== '');
+        }
+    } else {
+        const selectedFile = data.files.find(file => file.filename === fileName);
+        if (selectedFile && selectedFile.recommendation) {
+            recommendations = selectedFile.recommendation.split('\n').map(rec => rec.trim()).filter(rec => rec !== '');
+        }
+    }
+
+    if (recommendations && recommendations.length > 0) {
+        recommendations.forEach(recommendation => {
+            const li = document.createElement('li');
+            // Check if the line might be a title (e.g., starts with "###" in Markdown)
+            if (recommendation.startsWith('###')) {
+                const h6 = document.createElement('h6');
+                h6.classList.add('font-semibold', 'mb-1', 'text-blue-300'); // Example Tailwind classes
+                h6.textContent = recommendation.substring(3).trim();
+                recommendationsUl.appendChild(h6);
+            } else if (recommendation.startsWith('##')) {
+                const h5 = document.createElement('h5');
+                h5.classList.add('font-semibold', 'mb-2', 'text-blue-200'); // Example Tailwind classes
+                h5.textContent = recommendation.substring(2).trim();
+                recommendationsUl.appendChild(h5);
+            } else if (recommendation.startsWith('#')) {
+                const h4 = document.createElement('h4');
+                h4.classList.add('font-semibold', 'mb-3', 'text-blue-100'); // Example Tailwind classes
+                h4.textContent = recommendation.substring(1).trim();
+                recommendationsUl.appendChild(h4);
+            } else {
+                li.classList.add('mb-2', 'text-gray-200'); // Add some spacing between list items
+                li.textContent = recommendation;
+                recommendationsUl.appendChild(li);
+            }
+        });
+    } else {
+        const li = document.createElement('li');
+        li.classList.add('text-gray-400');
+        li.textContent = 'No specific recommendations found for this view.';
+        recommendationsUl.appendChild(li);
+    }
 }

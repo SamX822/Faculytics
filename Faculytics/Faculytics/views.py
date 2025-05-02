@@ -989,6 +989,120 @@ def generateRecommendation(sentiment_result, comments_list, processed_comments, 
         print(f"[generateRecommendation] Error: {str(e)}")
         return "Failed to generate recommendation."
 
+def generateRecommendationAnalytics(file_data):
+    try:
+        all_sentiments = []
+        all_topics = []
+        all_comments_with_topic = []
+
+        for file in file_data:
+            sentiments = file.get("sentiment", [])
+            topics = file.get("topics", [])
+            comments = file.get("comments", [])
+            filename = file.get("filename")
+
+            all_sentiments.extend(sentiments)
+            all_topics.extend(topics)
+
+            # Associate each comment with its topic (assuming 1-to-1 correspondence)
+            for i, comment in enumerate(comments):
+                topic = topics[i] if i < len(topics) else None
+                all_comments_with_topic.append({"text": comment, "topic": topic})
+
+        positive_count = all_sentiments.count("Positive")
+        negative_count = all_sentiments.count("Negative")
+
+        predefined_topics = [
+            "Teaching Effectiveness", "Preparedness and Punctuality", "Fairness and Supportiveness", "Student Engagement",
+            "Professional Appearance", "Cleanliness and Classroom Management", "Teaching Quality",
+            "Availability and Communication", "Tardiness", "Assessment Fairness and Difficulty",
+            "Instructional Materials and Aids"
+        ]
+
+        topic_sentiment_summary = {topic: {"Positive": 0, "Negative": 0} for topic in predefined_topics}
+        for idx, comment_data in enumerate(all_comments_with_topic):
+            topic = comment_data.get("topic")
+            sentiment = all_sentiments[idx] if idx < len(all_sentiments) else None
+            if topic in topic_sentiment_summary and sentiment:
+                topic_sentiment_summary[topic][sentiment] += 1
+
+        topic_frequency = {}
+        for comment_data in all_comments_with_topic:
+            topic = comment_data.get("topic")
+            if topic:
+                topic_frequency[topic] = topic_frequency.get(topic, 0) + 1
+        top_topics = sorted(topic_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_topics_list = [topic for topic, _ in top_topics]
+
+        positive_summary = []
+        negative_summary = []
+        for topic in top_topics_list:
+            pos = topic_sentiment_summary[topic]["Positive"]
+            neg = topic_sentiment_summary[topic]["Negative"]
+            if pos > 0:
+                positive_summary.append(f"- {topic}: {pos} positive mentions")
+            if neg > 0:
+                negative_summary.append(f"- {topic}: {neg} negative mentions")
+
+        topic_comments_summary = ""
+        for topic in top_topics_list:
+            example_positive = next((c['text'] for i, c in enumerate(all_comments_with_topic) if c['topic'] == topic and (all_sentiments[i] if i < len(all_sentiments) else None) == 'Positive'), None)
+            example_negative = next((c['text'] for i, c in enumerate(all_comments_with_topic) if c['topic'] == topic and (all_sentiments[i] if i < len(all_sentiments) else None) == 'Negative'), None)
+            if example_positive:
+                topic_comments_summary += f"\n{topic} (Positive Example): {example_positive}"
+            if example_negative:
+                topic_comments_summary += f"\n{topic} (Negative Example): {example_negative}"
+
+        prompt = f"""Using the data provided below, generate a formal and concise teacher performance report.
+
+FEEDBACK SUMMARY:
+Positive comments: {positive_count} | Negative comments: {negative_count}
+Top topics: {', '.join(top_topics_list)}
+
+POSITIVE HIGHLIGHTS:
+{chr(10).join(positive_summary)}
+
+AREAS FOR IMPROVEMENT:
+{chr(10).join(negative_summary)}
+
+TOPIC-SPECIFIC COMMENT EXAMPLES:
+{topic_comments_summary}
+
+Structure your response as follows:
+
+1. STRENGTHS
+   - Recommend action for each positive highlight in one sentence each, supported by student examples where relevant.
+
+2. AREAS REQUIRING ATTENTION
+   - Recommend action for each negative highlight in one sentence each, informed by the negative examples provided.
+
+Guidelines:
+- Use a professional and objective tone.
+- Avoid assumptions or commentary outside the data.
+- Keep language concise and action-oriented.
+- Number all recommended actions clearly.
+"""
+
+        print(prompt)
+
+        # Generate recommendation using Gemini
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="You are an LLM-driven recommendation system. You are tasked to give accurate and specific recommendations especially on improving weaknesses.",
+                temperature=0.4
+            ),
+        )
+
+        recommendation_text = response.text.strip()
+        print(recommendation_text)
+        return recommendation_text
+
+    except Exception as e:
+        print(f"[generateRecommendationAnalytics] Error: {str(e)}")
+        return "Failed to generate analytics-based recommendation."
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 
@@ -1170,11 +1284,37 @@ def saveToDatabase():
     #    db.session.rollback()
     #    return jsonify({"error": f"Database error: {str(e)}"}), 500
 
+def calculate_grade_value(grade_range_str):
+    """Calculates the numerical grade value from a grade range string."""
+    try:
+        low, high = map(float, grade_range_str.split('-'))
+        return (low + high) / 2
+    except ValueError:
+        return None
+
+def get_grade_equivalent(grade_value):
+    """Returns the word equivalent of a numerical grade value."""
+    if grade_value is None:
+        return "N/A"
+    elif 4.20 <= grade_value <= 5.00:
+        return "Excellent"
+    elif 3.40 <= grade_value <= 4.19:
+        return "Very Satisfactory"
+    elif 2.60 <= grade_value <= 3.39:
+        return "Satisfactory"
+    elif 1.80 <= grade_value <= 2.59:
+        return "Less Satisfactory"
+    elif 1.00 <= grade_value <= 1.79:
+        return "Unsatisfactory"
+    else:
+        return "N/A"
+
 @app.route('/analysis', methods=['GET'])
 def analysis():
 
     teacherUName = request.args.get("teacher")
     file_name = request.args.get("file_name", "overall")  # Default to "overall"
+    include_recommendations = request.args.get("include_recommendations", 'false').lower() == 'true'
 
     if not teacherUName:
         return jsonify({"error": "Missing teacher username"}), 400
@@ -1189,9 +1329,10 @@ def analysis():
     file_data = []
     total_positive = 0
     total_negative = 0
+    overall_grade_value_sum = 0
+    valid_grade_count = 0
 
     for upload in uploads:
-
         def extract_json_chunks(prefix, upload):
             chunks = []
             for attr in dir(upload):
@@ -1205,33 +1346,47 @@ def analysis():
         sentiments = extract_json_chunks('sentiment', upload)
         topics = extract_json_chunks('topics', upload)
         comments = extract_json_chunks('comments', upload)
+        grade_range = upload.grade
+        recommendation_text_db = upload.recommendation
+
+        file_grade_value = calculate_grade_value(grade_range)
+        if file_grade_value is not None:
+            overall_grade_value_sum += file_grade_value
+            valid_grade_count += 1
 
         file_data.append({
             "filename": upload.filename,
             "sentiment": sentiments,
             "topics": topics,
-            "comments": comments
+            "comments": comments,
+            "recommendation": recommendation_text_db
         })
 
         total_positive += sentiments.count("Positive")
         total_negative += sentiments.count("Negative")
 
+    overall_recommendations = ""
+    overall_grade_word = "N/A"
+
+    if include_recommendations and file_name == "overall":
+        overall_recommendations = generateRecommendationAnalytics(file_data)
+
     # Find specific file if needed
     if file_name != "overall":
-        target = next((f for f in file_data if f["filename"] == file_name), None)
-        if not target:
+        target_upload = next((u for u in uploads if u.filename == file_name), None)
+        if not target_upload:
             return jsonify({"error": "File not found"}), 404
-        positive_count = target["sentiment"].count("Positive")
-        negative_count = target["sentiment"].count("Negative")
-        recommendation_text = next((u.recommendation for u in uploads if u.filename == file_name), "")
+        positive_count = target_upload.sentiment_part1.count("Positive") + (json.loads(target_upload.sentiment_part2).count("Positive") if target_upload.sentiment_part2 else 0) + (json.loads(target_upload.sentiment_part3).count("Positive") if target_upload.sentiment_part3 else 0)
+        negative_count = target_upload.sentiment_part1.count("Negative") + (json.loads(target_upload.sentiment_part2).count("Negative") if target_upload.sentiment_part2 else 0) + (json.loads(target_upload.sentiment_part3).count("Negative") if target_upload.sentiment_part3 else 0)
+        recommendation_text = target_upload.recommendation
+        grade_value = calculate_grade_value(target_upload.grade)
+        overall_grade_display = get_grade_equivalent(grade_value)
     else:
         positive_count = total_positive
         negative_count = total_negative
-        recommendation_text = (
-            "There are more negative comments. Consider scheduling professional development seminars."
-            if total_negative > total_positive else
-            "Feedback is generally positive, but keep monitoring for potential issues."
-        )
+        overall_grade_value = overall_grade_value_sum / valid_grade_count if valid_grade_count > 0 else None
+        overall_grade_display = get_grade_equivalent(overall_grade_value)
+        recommendation_text = overall_recommendations
 
     return jsonify({
         "files": file_data,
