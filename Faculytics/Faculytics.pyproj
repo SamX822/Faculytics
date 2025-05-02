@@ -66,6 +66,7 @@
     <Content Include="Faculytics\templates\college.html" />
     <Content Include="Faculytics\templates\college_analytics.html" />
     <Content Include="Faculytics\templates\program.html" />
+    <Content Include="Faculytics\templates\reports.html" />
     <Content Include="Faculytics\templates\uclm.html" />
     <Content Include="Faculytics\templates\ucb.html" />
     <Content Include="Faculytics\templates\ucpt.html" />

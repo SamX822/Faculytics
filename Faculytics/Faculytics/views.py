@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from Faculytics import app, db
 from Faculytics.models import User, CSVUpload, College, Campus, UserApproval, Program
+from Faculytics.models import campus_colleges, campus_programs, college_programs
 import pandas as pd
 import json
 import os
@@ -1709,3 +1710,180 @@ def dashboard_analytics():
         print(traceback.format_exc())
         return jsonify({"error": "Internal Server Error"}), 500
 
+def calculate_sentiment(uploads):
+    total_positive = 0
+    total_sentiment_entries = 0
+    print(uploads)
+    
+    for upload in uploads:
+        # Process sentiment1 (required field)
+        print(f"Raw sentiment1: {upload.sentiment1}")
+        print(f"Raw sentiment2: {upload.sentiment2}")
+        print(f"Raw sentiment3: {upload.sentiment3}")
+
+        if upload.sentiment1:
+            try:
+                sentiment_list = upload.sentiment1
+                if isinstance(sentiment_list, str):
+                    sentiment_list = json.loads(sentiment_list)  # Convert from JSON string to list
+                
+                if isinstance(sentiment_list, list):
+                    print(f"Processing sentiment1: {sentiment_list}")
+                    positive_count = sum(1 for sentiment in sentiment_list if sentiment.lower() == "positive")
+                    total_count = len(sentiment_list)
+                    
+                    total_positive += positive_count
+                    total_sentiment_entries += total_count
+            except Exception as e:
+                print(f"Error processing sentiment1: {e}")
+                
+        # Process sentiment2 (optional field)
+        if upload.sentiment2:
+            try:
+                sentiment_list = upload.sentiment2
+                if isinstance(sentiment_list, str):
+                    sentiment_list = json.loads(sentiment_list)  # Convert from JSON string to list
+                
+                if isinstance(sentiment_list, list):
+                    print(f"Processing sentiment2: {sentiment_list}")
+                    positive_count = sum(1 for sentiment in sentiment_list if sentiment.lower() == "positive")
+                    total_count = len(sentiment_list)
+                    
+                    total_positive += positive_count
+                    total_sentiment_entries += total_count
+            except Exception as e:
+                print(f"Error processing sentiment2: {e}")
+        
+        # Process sentiment3 (optional field)
+        if upload.sentiment3:
+            try:
+                sentiment_list = upload.sentiment3
+                if isinstance(sentiment_list, str):
+                    sentiment_list = json.loads(sentiment_list)  # Convert from JSON string to list
+                
+                if isinstance(sentiment_list, list):
+                    print(f"Processing sentiment3: {sentiment_list}")
+                    positive_count = sum(1 for sentiment in sentiment_list if sentiment.lower() == "positive")
+                    total_count = len(sentiment_list)
+                    
+                    total_positive += positive_count
+                    total_sentiment_entries += total_count
+            except Exception as e:
+                print(f"Error processing sentiment3: {e}")
+    
+    print(f"Total positive: {total_positive}, Total entries: {total_sentiment_entries}")
+    return total_positive, total_sentiment_entries
+
+
+@app.route('/reports', methods=['GET'])
+@login_required
+def reports():
+    try:
+        user = User.query.get(session['user_id'])
+        # Default values
+        campuses = []
+        assigned_campus = None
+        total_college_programs = 0
+        college_user_count = 0
+        college = None
+        sentiment_score = 0
+        
+        # Admins and higher roles see all campuses
+        if user.userType in ["admin", "Curriculum Developer", "Vice Chancellor for Academic Affairs"]:
+            campuses = Campus.query.filter(Campus.campus_acronym != "N/A", Campus.isDeleted == False).all()
+        # For other roles: limit to assigned campus
+        elif user.campus_acronym:
+            assigned_campus = Campus.query.filter_by(
+                campus_acronym=user.campus_acronym,
+                isDeleted=False
+            ).first()
+            if assigned_campus:
+                campuses = [assigned_campus]
+        
+        # Fetch total programs and users if college is assigned
+        if user.college_name:
+            college = College.query.filter_by(
+                college_name=user.college_name,
+                isDeleted=False
+            ).first()
+            if college:
+                # Access the programs through the relationship defined in the College model
+                associated_programs = college.programs
+                # Filter out deleted programs
+                active_programs = [prog for prog in associated_programs if not prog.isDeleted]
+                total_college_programs = len(active_programs)
+                
+                # Get COUNT of users in the same college (not deleted) - not the list
+                college_user_count = User.query.filter_by(
+                    college_name=user.college_name,
+                    isDeleted=False
+                ).count()
+        
+        # Calculate sentiment score from all uploads
+        uploads = []
+        if user.userType == "admin":
+            # Admins see all uploads
+            uploads = CSVUpload.query.filter_by(isDeleted=False).all()
+        elif user.userType == "Curriculum Developer" or user.userType == "Vice Chancellor for Academic Affairs":
+            # Curriculum developers and VCs see college/campus uploads
+            if user.college_name:
+                # Get all users from this college
+                college_users = User.query.filter_by(college_name=user.college_name, isDeleted=False).all()
+                college_usernames = [u.uName for u in college_users]
+                # Get uploads from these users
+                uploads = CSVUpload.query.filter(
+                    CSVUpload.teacher_uname.in_(college_usernames),
+                    CSVUpload.isDeleted == False
+                ).all()
+            elif user.campus_acronym:
+                # Get all users from this campus
+                campus_users = User.query.filter_by(campus_acronym=user.campus_acronym, isDeleted=False).all()
+                campus_usernames = [u.uName for u in campus_users]
+                # Get uploads from these users
+                uploads = CSVUpload.query.filter(
+                    CSVUpload.teacher_uname.in_(campus_usernames),
+                    CSVUpload.isDeleted == False
+                ).all()
+        elif user.userType == "Dean":
+            # Deans see uploads from their college
+            if user.college_name:
+                college_users = User.query.filter_by(college_name=user.college_name, isDeleted=False).all()
+                college_usernames = [u.uName for u in college_users]
+
+                uploads = CSVUpload.query.filter(
+                    CSVUpload.teacher_uname.in_(college_usernames),
+                    CSVUpload.isDeleted == False
+                ).all()
+        else:
+            # Regular users only see their own uploads
+            uploads = CSVUpload.query.filter_by(teacher_uname=user.uName, isDeleted=False).all()
+        
+        # Calculate sentiment count
+        total_positive, total_sentiment_entries = calculate_sentiment(uploads)
+
+        # Print the sentiment score calculation process
+        print(f"Total positive sentiments: {total_positive}")
+        print(f"Total sentiment entries: {total_sentiment_entries}")
+
+        # Calculate percentage if there are sentiments
+        if total_sentiment_entries > 0:
+            sentiment_score = round((total_positive / total_sentiment_entries) * 100, 2)
+
+        print(f"Sentiment score: {sentiment_score}")
+
+        return render_template(
+            'reports.html',
+            user=user,
+            assigned_campus=assigned_campus,
+            campuses=campuses,
+            college=college,
+            total_college_programs=total_college_programs,
+            college_user_count=college_user_count,
+            sentiment_score=sentiment_score,
+            title="Reports and Analytics",
+            year=datetime.now().year
+        )
+    except Exception as e:
+        import traceback
+        print(f"Error in reports route: {traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500

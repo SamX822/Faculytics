@@ -1,0 +1,1166 @@
+{% extends "layout.html" %}
+{% set title = "Analytics & Reports" %}
+
+{% block content %}
+{% include "sidebar.html" %}
+<!--Reports HTML-->
+<main class="ml-[14rem] p-6 text-gray-300 w-full bg-[#003153] min-h-screen max-w-[85%]">
+    <!-- Header Section -->
+    <h2 class="text-3xl font-bold text-white mb-2 inline-block relative">
+        Reports and Analytics
+        <span class="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-[#3b5999] via-[#00f6fa] to-[#3b5999] rounded-full"></span>
+    </h2>
+
+    <!-- Report Content Container (this will be captured for PDF) -->
+    <div id="reportContent" class="space-y-6 mt-2">
+        <!-- Different views based on user type -->
+        {% if user.userType == "Campus Director" or user.userType == "Vice Chancellor" or user.userType == "Vice Chancellor for Academic Affairs" %}
+        <!-- Campus-wide view -->
+        <div class="campus-view">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-blue-900 to-blue-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Colleges</p>
+                            <h3 class="text-2xl font-bold text-white">6</h3>
+                        </div>
+                        <span class="bg-blue-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Programs</p>
+                            <h3 class="text-2xl font-bold text-white">24</h3>
+                        </div>
+                        <span class="bg-indigo-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-900 to-purple-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Teachers</p>
+                            <h3 class="text-2xl font-bold text-white">142</h3>
+                        </div>
+                        <span class="bg-purple-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-cyan-900 to-cyan-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Reports</p>
+                            <h3 class="text-2xl font-bold text-white">3,249</h3>
+                            <p class="text-green-400 text-sm flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <span>12% from last period</span>
+                            </p>
+                        </div>
+                        <span class="bg-cyan-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Sentiment Analysis by Program -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Program Sentiment Analysis</h3>
+                    <div class="h-64">
+                        <canvas id="programSentimentChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sentiment Trend Over Time -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Sentiment Trend</h3>
+                    <div class="h-64">
+                        <canvas id="collegeTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Analysis & Top Comments -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Top Topics -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Emerging Topics</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                                <div class="bg-blue-600 h-4 rounded-full" style="width: 80%"></div>
+                            </div>
+                            <span class="text-sm font-medium w-32">Curriculum Quality</span>
+                            <span class="ml-auto text-sm font-medium">80%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                                <div class="bg-green-600 h-4 rounded-full" style="width: 75%"></div>
+                            </div>
+                            <span class="text-sm font-medium w-32">Faculty Expertise</span>
+                            <span class="ml-auto text-sm font-medium">75%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                                <div class="bg-yellow-500 h-4 rounded-full" style="width: 60%"></div>
+                            </div>
+                            <span class="text-sm font-medium w-32">Lab Equipment</span>
+                            <span class="ml-auto text-sm font-medium">60%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                                <div class="bg-red-500 h-4 rounded-full" style="width: 45%"></div>
+                            </div>
+                            <span class="text-sm font-medium w-32">Research Support</span>
+                            <span class="ml-auto text-sm font-medium">45%</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                                <div class="bg-purple-500 h-4 rounded-full" style="width: 40%"></div>
+                            </div>
+                            <span class="text-sm font-medium w-32">Industry Links</span>
+                            <span class="ml-auto text-sm font-medium">40%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Representative Comments -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Representative Comments</h3>
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                        <div class="border-l-4 border-green-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"The new curriculum updates addressing industry standards have significantly improved my learning experience and career readiness."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-green-400">Positive</span>
+                                <span class="text-xs text-gray-400">Computer Science</span>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-yellow-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"The faculty is knowledgeable but we need more industry experts as guest speakers to provide real-world context."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-yellow-400">Neutral</span>
+                                <span class="text-xs text-gray-400">Information Technology</span>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-red-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"Some of the lab equipment is outdated and doesn't reflect what's being used in the industry today."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-red-400">Negative</span>
+                                <span class="text-xs text-gray-400">Software Engineering</span>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-green-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"I appreciate the college's push for more collaborative projects. It has helped develop my teamwork skills."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-green-400">Positive</span>
+                                <span class="text-xs text-gray-400">Data Science</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Performance Table -->
+            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg mb-6">
+                <div class="flex flex-wrap items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">Teacher Performance</h3>
+                    <select id="programSelector" class="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="all">All Programs</option>
+                        <option value="cs">Computer Science</option>
+                        <option value="it">Information Technology</option>
+                        <option value="se">Software Engineering</option>
+                        <option value="ds">Data Science</option>
+                    </select>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Teacher</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Sentiment Score</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Change</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Top Topic</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-gray-800 bg-opacity-50 divide-y divide-gray-700">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Dr. Sarah Johnson</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                    <div class="flex items-center">
+                                        <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 90%"></div>
+                                        </div>
+                                        <span>90%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+4.2%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Teaching Methods</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                    <button class="view-details-btn hover:underline">View Details</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Prof. Michael Chen</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                    <div class="flex items-center">
+                                        <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                        </div>
+                                        <span>85%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+2.5%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Course Content</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                    <button class="view-details-btn hover:underline">View Details</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Dr. Robert Garcia</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                    <div class="flex items-center">
+                                        <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 72%"></div>
+                                        </div>
+                                        <span>72%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400">-1.8%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Feedback Quality</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                    <button class="view-details-btn hover:underline">View Details</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Prof. Emily Santos</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                    <div class="flex items-center">
+                                        <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 88%"></div>
+                                        </div>
+                                        <span>88%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+6.3%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Classroom Engagement</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                    <button class="view-details-btn hover:underline">View Details</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.userType == "Chairperson" %}
+        <!-- Program-wide view -->
+        <div class="program-view">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-blue-900 to-blue-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Teachers</p>
+                            <h3 class="text-2xl font-bold text-white">8</h3>
+                        </div>
+                        <span class="bg-blue-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Program Sentiment</p>
+                            <h3 class="text-2xl font-bold text-white">82%</h3>
+                            <p class="text-green-400 text-sm flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <span>3.8% from last period</span>
+                            </p>
+                        </div>
+                        <span class="bg-indigo-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-900 to-purple-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">Total Reports</p>
+                            <h3 class="text-2xl font-bold text-white">162</h3>
+                            <p class="text-green-400 text-sm flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <span>12% from last period</span>
+                            </p>
+                        </div>
+                        <span class="bg-purple-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-cyan-900 to-cyan-800 p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-300 text-sm">College Ranking</p>
+                            <h3 class="text-2xl font-bold text-white">#2</h3>
+                            <p class="text-green-400 text-sm flex items-center mt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                </svg>
+                                <span>Up 1 from last period</span>
+                            </p>
+                        </div>
+                        <span class="bg-cyan-700 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Sentiment Trend -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Sentiment Trend</h3>
+                    <div class="h-64">
+                        <canvas id="programSentimentTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Topic Distribution -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Topic Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="topicDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Trends & Top Comments -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Topic Trends -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Topic Trends</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">Teaching Quality</span>
+                                <span class="text-sm font-medium text-green-400">+8%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="bg-blue-600 h-4 rounded-full" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">Course Materials</span>
+                                <span class="text-sm font-medium text-green-400">+5%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="bg-green-600 h-4 rounded-full" style="width: 78%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">Practical Applications</span>
+                                <span class="text-sm font-medium text-red-400">-2%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="bg-yellow-500 h-4 rounded-full" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">Assessment Methods</span>
+                                <span class="text-sm font-medium text-green-400">+3%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="bg-purple-500 h-4 rounded-full" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">Lab Facilities</span>
+                                <span class="text-sm font-medium text-red-400">-4%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-4">
+                                <div class="bg-red-500 h-4 rounded-full" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Representative Comments -->
+                <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-white mb-4">Representative Comments</h3>
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                        <div class="border-l-4 border-green-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"The programming labs are well-structured and the instructors provide excellent guidance when needed."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-green-400">Positive</span>
+                                <span class="text-xs text-gray-400">Teaching Quality</span>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-yellow-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"The theory is covered well but we need more real-world applications to understand the concepts better."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-yellow-400">Neutral</span>
+                                <span class="text-xs text-gray-400">Practical Applications</span>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-red-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"The lab equipment often fails during critical experiments which disrupts the learning process."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-red-400">Negative</span>
+                                <span class="text-xs text-gray-400">Lab Facilities</span>
+                            </div>
+                        </div>
+                        <div class="border-l-4 border-green-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                            <p class="text-sm text-gray-300">"The course materials are up-to-date and align well with current industry standards."</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-green-400">Positive</span>
+                                <span class="text-xs text-gray-400">Course Materials</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Performance Table -->
+            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg mb-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Teacher Performance</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Teacher</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Sentiment Score</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Change</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Top Topic</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-gray-800 bg-opacity-50 divide-y divide-gray-700">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Dr. James Wilson</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                    <div class="flex items-center">
+                                        <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                            <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                                        </div>
+                                        <span>92%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+3.5%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                    .707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Sentiment Analysis Trend -->
+            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-white mb-4">Sentiment Analysis Trend</h3>
+                <div class="h-64">
+                    <canvas id="sentimentTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- College Performance Comparison -->
+            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-white mb-4">College Performance</h3>
+                <div class="h-64">
+                    <canvas id="collegeComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Topic Analysis & Top Comments -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Top Topics -->
+            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-white mb-4">Emerging Topics</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                            <div class="bg-blue-600 h-4 rounded-full" style="width: 75%"></div>
+                        </div>
+                        <span class="text-sm font-medium w-32">Course Content</span>
+                        <span class="ml-auto text-sm font-medium">75%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                            <div class="bg-green-600 h-4 rounded-full" style="width: 68%"></div>
+                        </div>
+                        <span class="text-sm font-medium w-32">Teaching Methods</span>
+                        <span class="ml-auto text-sm font-medium">68%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                            <div class="bg-yellow-500 h-4 rounded-full" style="width: 52%"></div>
+                        </div>
+                        <span class="text-sm font-medium w-32">Faculty Support</span>
+                        <span class="ml-auto text-sm font-medium">52%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                            <div class="bg-red-500 h-4 rounded-full" style="width: 45%"></div>
+                        </div>
+                        <span class="text-sm font-medium w-32">Facilities</span>
+                        <span class="ml-auto text-sm font-medium">45%</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-gray-700 rounded-full h-4 mr-2">
+                            <div class="bg-purple-500 h-4 rounded-full" style="width: 38%"></div>
+                        </div>
+                        <span class="text-sm font-medium w-32">Online Learning</span>
+                        <span class="ml-auto text-sm font-medium">38%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Representative Comments -->
+            <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold text-white mb-4">Representative Comments</h3>
+                <div class="space-y-3 max-h-64 overflow-y-auto pr-2">
+                    <div class="border-l-4 border-green-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                        <p class="text-sm text-gray-300">"The instructors were very knowledgeable and approachable. The course materials were well-organized and relevant."</p>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs text-green-400">Positive</span>
+                            <span class="text-xs text-gray-400">College of Science</span>
+                        </div>
+                    </div>
+                    <div class="border-l-4 border-yellow-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                        <p class="text-sm text-gray-300">"The curriculum is good but needs more practical applications and real-world examples to better prepare students."</p>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs text-yellow-400">Neutral</span>
+                            <span class="text-xs text-gray-400">College of Engineering</span>
+                        </div>
+                    </div>
+                    <div class="border-l-4 border-red-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                        <p class="text-sm text-gray-300">"The computer laboratories need updating. Most computers are slow and some software is outdated."</p>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs text-red-400">Negative</span>
+                            <span class="text-xs text-gray-400">College of Computer Studies</span>
+                        </div>
+                    </div>
+                    <div class="border-l-4 border-green-500 pl-3 py-2 bg-gray-700 bg-opacity-50 rounded-r-lg">
+                        <p class="text-sm text-gray-300">"The new hybrid learning approach has been very effective. I appreciate the flexibility it offers."</p>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs text-green-400">Positive</span>
+                            <span class="text-xs text-gray-400">College of Education</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- College Selector and Program Performance -->
+        <div class="bg-gray-800 bg-opacity-50 p-4 rounded-lg shadow-lg mb-6">
+            <div class="flex flex-wrap items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-white">College Breakdown</h3>
+                <select id="collegeSelector" class="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="all">All Colleges</option>
+                    <option value="cs">College of Science</option>
+                    <option value="ce">College of Engineering</option>
+                    <option value="ccs">College of Computer Studies</option>
+                    <option value="coe">College of Education</option>
+                    <option value="ca">College of Arts</option>
+                    <option value="cba">College of Business Admin</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Program</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Sentiment Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Change</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Top Topic</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-800 bg-opacity-50 divide-y divide-gray-700">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Computer Science</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 82%"></div>
+                                    </div>
+                                    <span>82%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+5.2%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Curriculum Design</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                <button class="view-details-btn hover:underline">View Details</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Information Technology</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 78%"></div>
+                                    </div>
+                                    <span>78%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+3.1%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Lab Facilities</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                <button class="view-details-btn hover:underline">View Details</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Software Engineering</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                    <span>65%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400">-2.3%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Project Guidance</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                <button class="view-details-btn hover:underline">View Details</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">Data Science</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-700 rounded-full h-2 mr-2 w-32">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 80%"></div>
+                                    </div>
+                                    <span>80%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400">+7.5%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">Course Content</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-400">
+                                <button class="view-details-btn hover:underline">View Details</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.userType == "Dean" %}
+    <!-- College-wide view -->
+    <div id="college-view" class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
+        <header class="bg-[#003153] text-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center">
+                <h3 class="text-xl font-bold">{{ user.college_name }}</h3>
+
+                <div class="flex mt-3 sm:mt-0">
+                    <a href="#programs" class="px-4 py-2 hover:bg-white hover:bg-opacity-10 rounded transition-all flex items-center mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        Programs
+                    </a>
+
+                    <a href="#teachers" class="px-4 py-2 hover:bg-white hover:bg-opacity-10 rounded transition-all flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Teachers
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sub-navigation / Tab Bar -->
+        <div class="container mx-auto px-4 mt-6">
+            <nav class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div class="flex flex-wrap">
+                    <a href="#topic-status" class="flex items-center px-5 py-3 font-medium text-[#003153] hover:bg-gray-50 border-b-2 border-transparent hover:border-[#003153] transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Topic Status
+                    </a>
+
+                    <a href="#general-line-graph" class="flex items-center px-5 py-3 font-medium text-[#003153] hover:bg-gray-50 border-b-2 border-transparent hover:border-[#003153] transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16" />
+                        </svg>
+                        General Line Graph
+                    </a>
+
+                    <a href="#past-campus-data" class="flex items-center px-5 py-3 font-medium text-[#003153] hover:bg-gray-50 border-b-2 border-transparent hover:border-[#003153] transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Past Data
+                    </a>
+                </div>
+            </nav>
+        </div>
+        <!-- College Statistics Dashboard -->
+        <div class="college-status bg-white rounded-lg shadow-md p-6 mt-6">
+            <h2 class="text-xl font-semibold text-[#003153] mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                College Performance Dashboard
+            </h2>
+
+            <!-- Two-column layout on larger screens -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Line Graph Section (2/3 width on large screens) -->
+                <div class="lg:col-span-2 bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow duration-300">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-medium text-gray-700">Performance Metrics</h3>
+                    </div>
+                    <div class="h-64 flex items-center justify-center border-b border-gray-200 text-gray-500">
+                        Line Graph here
+                        <!-- This is where the actual chart would be rendered -->
+                    </div>
+                    <div class="flex justify-end mt-3">
+                        <button class="text-sm text-[#003153] hover:text-opacity-80 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards (1/3 width on large screens) -->
+                <div class="lg:col-span-1 space-y-4">
+                    <!-- College Name Card -->
+                    <div class="bg-[#003153] text-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-semibold">{{ user.college_name }}</h3>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <p class="text-sm text-gray-200 mt-1">College Statistics</p>
+                    </div>
+
+                    <!-- Programs Card -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Total Programs</p>
+                                <p class="text-2xl font-bold text-gray-800"> {{total_college_programs}} </p>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teachers Card -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">{{college.college_acronym}} Faculty</p>
+                                <p class="text-2xl font-bold text-gray-800">{{college_user_count}}</p>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sentiment Card -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer transform hover:-translate-y-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Sentiment Score</p>
+                                <p class="text-2xl font-bold text-gray-800">{{sentiment_score}}/100.0</p>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex items-center text-xs text-green-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            <span>0.3 increase</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Topic Status Section with Criteria Analysis -->
+        <div id="topic-status" class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-[#003153] flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                    Criteria Status
+                </h3>
+                <div class="flex space-x-2">
+                    <button class="bg-[#003153] text-white px-3 py-1 rounded text-sm hover:bg-opacity-90 transition-colors">This Semester</button>
+                    <button class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 transition-colors">Previous</button>
+                    <button class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 transition-colors">Year View</button>
+                </div>
+            </div>
+
+            <!-- Overall Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-green-50 border border-green-100 rounded-lg p-4 flex items-center">
+                    <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Positive Ratings</p>
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-bold text-gray-800">87%</span>
+                            <span class="ml-2 text-xs text-green-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                4.2%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-red-50 border border-red-100 rounded-lg p-4 flex items-center">
+                    <div class="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Negative Ratings</p>
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-bold text-gray-800">13%</span>
+                            <span class="ml-2 text-xs text-red-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                1.8%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center">
+                    <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Total Responses</p>
+                        <div class="flex items-baseline">
+                            <span class="text-2xl font-bold text-gray-800">1,438</span>
+                            <span class="ml-2 text-xs text-blue-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                21%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two-column layout for criteria and chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-7 gap-6">
+                <!-- Criteria List (4/7 width) -->
+                <div class="lg:col-span-4">
+                    <h4 class="text-lg font-medium text-gray-700 mb-4">Evaluation Criteria</h4>
+                    <div class="space-y-3">
+                        <!-- Criteria Item -->
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                                    <span class="font-semibold text-sm">92%</span>
+                                </div>
+                                <span class="font-medium text-gray-700">Preparedness</span>
+                            </div>
+                            <span class="text-xs text-green-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                3.5%
+                            </span>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                                    <span class="font-semibold text-sm">89%</span>
+                                </div>
+                                <span class="font-medium text-gray-700">Cleanliness</span>
+                            </div>
+                            <span class="text-xs text-green-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                2.1%
+                            </span>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 mr-3">
+                                    <span class="font-semibold text-sm">78%</span>
+                                </div>
+                                <span class="font-medium text-gray-700">Tardiness</span>
+                            </div>
+                            <span class="text-xs text-red-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                </svg>
+                                1.2%
+                            </span>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                                    <span class="font-semibold text-sm">94%</span>
+                                </div>
+                                <span class="font-medium text-gray-700">Teaching Effectiveness</span>
+                            </div>
+                            <span class="text-xs text-green-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                5.2%
+                            </span>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                                    <span class="font-semibold text-sm">88%</span>
+                                </div>
+                                <span class="font-medium text-gray-700">Fairness and Leniency</span>
+                            </div>
+                            <span class="text-xs text-green-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                0.8%
+                            </span>
+                        </div>
+
+                        <!-- More criteria items -->
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                                    <span class="font-semibold text-sm">91%</span>
+                                </div>
+                                <span class="font-medium text-gray-700">Student Engagement</span>
+                            </div>
+                            <span class="text-xs text-green-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                4.7%
+                            </span>
+                        </div>
+
+                        <!-- Show more button -->
+                        <button class="w-full py-2 text-sm text-[#003153] font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                            Show 5 more criteria
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chart Area (3/7 width) -->
+                <div class="lg:col-span-3 bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-medium text-gray-700">Criteria Comparison</h4>
+                        <div class="flex space-x-1">
+                            <button class="bg-white p-1 rounded border border-gray-200 hover:bg-gray-50 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16" />
+                                </svg>
+                            </button>
+                            <button class="bg-white p-1 rounded border border-gray-200 hover:bg-gray-50 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chart placeholder -->
+                    <div class="h-64 flex items-center justify-center border border-dashed border-gray-300 rounded-lg mb-3">
+                        <div class="text-center text-gray-500">
+                            <div class="text-[#003153] mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            General Line Graph
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <div class="flex items-center">
+                            <div class="h-3 w-3 rounded-full bg-[#003153] mr-1"></div>
+                            <span class="text-xs text-gray-600">Current</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="h-3 w-3 rounded-full bg-blue-300 mr-1"></div>
+                            <span class="text-xs text-gray-600">Previous</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="h-3 w-3 rounded-full bg-gray-300 mr-1"></div>
+                            <span class="text-xs text-gray-600">Average</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full-width Line Graph for all criteria comparison -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-medium text-gray-700 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#003153]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16" />
+                        </svg>
+                        Comprehensive Criteria Comparison
+                    </h4>
+                    <div class="flex">
+                        <button class="ml-2 px-3 py-1 bg-[#003153] text-white text-sm rounded hover:bg-opacity-90 transition-colors flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Full-width graph placeholder -->
+                <div id="general-line-graph" class="bg-white border border-gray-200 rounded-lg p-4 h-64 flex items-center justify-center text-gray-500">
+                    Comprehensive Line Graph for All Criteria Comparison
+                </div>
+            </div>
+            <!--Past Campus Wide Data-->
+            <div class="mt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-medium text-gray-700 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#003153]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Past Campus Wide Data
+                    </h4>
+                </div>
+                <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+                    <div class="bg-[#003153] text-white p-4 flex">
+                        <p class="w-1/4 font-semibold">Academic Year</p>
+                        <p class="w-1/4 font-semibold">Semester</p>
+                        <p class="w-1/4 font-semibold">Sentiment Ratio</p>
+                        <p class="w-1/4 font-semibold">Actions</p>
+                    </div>
+                    <div class="bg-gray-50 hover:bg-gray-100 transition duration-150 p-4 flex items-center border-b border-gray-200">
+                        <p class="w-1/4 text-gray-800">2007</p>
+                        <p class="w-1/4 text-gray-800">Second</p>
+                        <p class="w-1/4 text-emerald-600 font-medium">88%</p>
+                        <p class="w-1/4">
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium mr-3">View</a>
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium">Download</a>
+                        </p>
+                    </div>
+                    <div class="bg-white hover:bg-gray-100 transition duration-150 p-4 flex items-center border-b border-gray-200">
+                        <p class="w-1/4 text-gray-800">2007</p>
+                        <p class="w-1/4 text-gray-800">First</p>
+                        <p class="w-1/4 text-emerald-500 font-medium">82%</p>
+                        <p class="w-1/4">
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium mr-3">View</a>
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium">Download</a>
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 hover:bg-gray-100 transition duration-150 p-4 flex items-center border-b border-gray-200">
+                        <p class="w-1/4 text-gray-800">2006</p>
+                        <p class="w-1/4 text-gray-800">Second</p>
+                        <p class="w-1/4 text-emerald-500 font-medium">80%</p>
+                        <p class="w-1/4">
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium mr-3">View</a>
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium">Download</a>
+                        </p>
+                    </div>
+                    <div class="bg-white hover:bg-gray-100 transition duration-150 p-4 flex items-center">
+                        <p class="w-1/4 text-gray-800">2006</p>
+                        <p class="w-1/4 text-gray-800">First</p>
+                        <p class="w-1/4 text-amber-500 font-medium">76%</p>
+                        <p class="w-1/4">
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium mr-3">View</a>
+                            <a href="#" class="text-[#003153] hover:text-[#004c80] font-medium">Download</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+    </div>
+    {% endif %}
+</main>
+
+{% endblock %}
