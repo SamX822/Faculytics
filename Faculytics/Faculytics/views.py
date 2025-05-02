@@ -559,6 +559,16 @@ def get_teacher(teacher_id):
     
     return jsonify(teacher_data)
 
+@app.route('/restore_teacher/<int:teacher_id>', methods=['POST'])
+def restore_teacher(teacher_id):
+    teacher = User.query.filter_by(id=teacher_id, isDeleted=True).first()
+    if teacher:
+        teacher.isDeleted = False
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Teacher with ID {teacher_id} restored."}), 200
+    else:
+        return jsonify({"success": False, "error": "Soft-deleted teacher not found."}), 404
+
 @app.route('/add_college/<campus_acronym>', methods=['POST'])
 @login_required
 def add_college(campus_acronym):
@@ -1252,7 +1262,8 @@ def college_analysis():
             campus_acronym=campus_acronym,
             college_name=college.college_name,
             program_acronym=program_acronym,
-            userType="Teacher"
+            userType="Teacher",
+            isDeleted=False
         ).all()
 
         if not teachers:
@@ -1418,7 +1429,8 @@ def campus_analytics():
         teachers = User.query.filter_by(
             campus_acronym=campus_acronym,
             college_name=college.college_name,
-            userType="Teacher"
+            userType="Teacher",
+            isDeleted=False
         ).all()
 
         if not teachers:
@@ -1568,7 +1580,11 @@ def dashboard_analytics():
             return jsonify({"error": "Campus not found."}), 404
 
         # Fetch all teachers in this campus (all colleges and programs under the campus)
-        teachers = User.query.filter_by(campus_acronym=campus_acronym, userType="Teacher").all()
+        teachers = User.query.filter_by(
+            campus_acronym=campus_acronym,
+            userType="Teacher",
+            isDeleted=False
+        ).all()
 
         if not teachers:
             return jsonify({"error": "No teachers found for this campus."}), 404

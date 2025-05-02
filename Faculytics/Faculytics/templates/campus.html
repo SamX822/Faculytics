@@ -113,7 +113,7 @@
                            class="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-blue-500/30">
                             Enter College
                         </a>
-                        <button onclick="openCampusAnalysisModal(event, '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
+                        <button onclick="openCampusAnalyticsModal(event, '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
                                 class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
                             View Analytics
                         </button>
@@ -146,6 +146,7 @@
                             </span>
                         </a>
 
+                        {% if user.userType not in ["Chairperson", "Teacher", "admin"] %}
                         <!-- Analytics Button - Purple theme -->
                         <button onclick="openCampusAnalyticsModal(event, '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
                                 class="w-full py-3 bg-gradient-to-r from-purple-500 to-purple-700 text-white text-center rounded-lg shadow-md transition-all duration-300 hover:from-purple-600 hover:to-purple-800 hover:shadow-lg hover:shadow-purple-500/40 hover:-translate-y-1 font-medium">
@@ -156,7 +157,7 @@
                                 View Analytics
                             </span>
                         </button>
-
+                        {% endif %}
                     </div>
                 </div>
                 <div class="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500"></div>
@@ -227,4 +228,103 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/scripts/template/campus.js"></script>
+<script>
+    // Modal toggle script for Manage Colleges
+    const manageCollegesBtn = document.getElementById("manage-colleges-btn");
+    const manageCollegesModal = document.getElementById("manageCollegesModal");
+    const closeManageColleges = document.getElementById("closeManageColleges");
+    const collegeTabBtns = document.querySelectorAll("#manageCollegesModal .tab-btn");
+    const collegeTabContents = document.querySelectorAll("#manageCollegesModal .tab-content");
+
+    if (manageCollegesBtn && manageCollegesModal && closeManageColleges) {
+        manageCollegesBtn.addEventListener("click", () => manageCollegesModal.classList.remove("hidden"));
+        closeManageColleges.addEventListener("click", () => manageCollegesModal.classList.add("hidden"));
+        collegeTabBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tab = btn.getAttribute("data-tab");
+                collegeTabContents.forEach(content => content.classList.add("hidden"));
+                document.getElementById(`tab-${tab}`).classList.remove("hidden");
+            });
+        });
+
+        // --- AJAX Integration for Colleges ---
+
+        // Add College
+        document.querySelector("#tab-add form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const collegeName = this.querySelector("input[name='college_name']").value;
+            const collegeAcronym = this.querySelector("input[name='college_acronym']").value;
+            const campusAcronym = "{{ campus.campus_acronym }}"; // Get campus acronym from Jinja
+
+            fetch(`/add_college/${campusAcronym}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `college_name=${encodeURIComponent(collegeName)}&college_acronym=${encodeURIComponent(collegeAcronym)}`
+            })
+            .then(response => response.json()) // Or response.text() depending on your Flask response
+            .then(data => {
+                // Handle success: Update the UI (e.g., refresh the college list)
+                console.log("College added:", data);
+                location.reload(); // Simple full reload for now; can be optimized
+            })
+            .catch(error => {
+                // Handle error: Display an error message to the user
+                console.error("Error adding college:", error);
+                alert("Failed to add college.");
+            });
+        });
+
+        // Remove College
+        document.querySelector("#tab-remove form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const collegeToRemove = this.querySelector("select[name='college_to_remove']").value;
+            const campusAcronym = "{{ campus.campus_acronym }}";
+
+            fetch(`/remove_college/${campusAcronym}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `college_to_remove=${encodeURIComponent(collegeToRemove)}`
+            })
+            .then(response => response.json()) // Or response.text()
+            .then(data => {
+                console.log("College removed:", data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error removing college:", error);
+                alert("Failed to remove college.");
+            });
+        });
+
+        // Rename College
+        document.querySelector("#tab-rename form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const oldCollegeName = this.querySelector("select[name='old_college_name']").value;
+            const newCollegeName = this.querySelector("input[name='new_college_name']").value;
+            const newCollegeAcronym = this.querySelector("input[name='new_college_acronym']").value;
+            const campusAcronym = "{{ campus.campus_acronym }}";
+
+            fetch(`/renameCollege/${campusAcronym}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `old_college_name=${encodeURIComponent(oldCollegeName)}&new_college_name=${encodeURIComponent(newCollegeName)}&new_college_acronym=${encodeURIComponent(newCollegeAcronym)}`
+            })
+            .then(response => response.json()) // Or response.text()
+            .then(data => {
+                console.log("College renamed:", data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error renaming college:", error);
+                alert("Failed to rename college.");
+            });
+        });
+    }
+</script>
 {% endblock %}

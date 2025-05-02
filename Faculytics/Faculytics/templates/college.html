@@ -94,6 +94,7 @@
                 <p class="text-sm text-gray-300 mt-2">{{ program.program_acronym }}</p>
 
                 <div class="flex gap-2 mt-4 w-full justify-center">
+                    {% if user.userType not in ["Curriculum Developer"] %}
                     <!-- Enter Program -->
                     <a href="{{ url_for('program_page',
                         program_acronym=program.program_acronym,
@@ -102,11 +103,14 @@
                        class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-center">
                         Enter
                     </a>
+                    {% endif %}
+                    {% if user.userType not in ["admin"] %}
                     <!-- Analytics -->
                     <button onclick="openAnalysisModal('{{ program.program_acronym }}', '{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
                             class="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white">
                         Analytics
                     </button>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -152,7 +156,6 @@
                 </select>
                 <select id="topicFilter" class="bg-gray-700 text-white p-2 rounded-lg">
                     <option value="all">All Topics</option>
-                    <!-- populate topics here -->
                 </select>
             </div>
             <div id="commentsList" class="space-y-4 max-h-[40vh] overflow-y-auto">
@@ -171,7 +174,7 @@
 {% endblock %}
 
 {% block scripts %}
-  {% if user.userType in ['Dean', 'Curriculum Developer', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs'] %}
+  {% if user.userType in ['Dean', 'Chairperson', 'Curriculum Developer', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs'] %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/scripts/template/college.js"></script>
@@ -191,6 +194,84 @@
                 const tab = btn.getAttribute("data-tab");
                 tabContents.forEach(content => content.classList.add("hidden"));
                 document.getElementById(`tab-${tab}`).classList.remove("hidden");
+            });
+        });
+
+        // Add Program
+        document.querySelector("#tab-add form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const programName = this.querySelector("input[name='program_name']").value;
+            const programAcronym = this.querySelector("input[name='program_acronym']").value;
+            const campusAcronym = "{{ campus.campus_acronym }}";
+            const collegeAcronym = "{{ college.college_acronym }}";
+
+            fetch(`/add_program/${campusAcronym}/${collegeAcronym}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `program_name=${encodeURIComponent(programName)}&program_acronym=${encodeURIComponent(programAcronym)}`
+            })
+            .then(response => response.json()) // Or response.text()
+            .then(data => {
+                console.log("Program added:", data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error adding program:", error);
+                alert("Failed to add program.");
+            });
+        });
+
+        // Remove Program
+        document.querySelector("#tab-remove form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const programToRemove = this.querySelector("select[name='program_to_remove']").value;
+            const campusAcronym = "{{ campus.campus_acronym }}";
+            const collegeAcronym = "{{ college.college_acronym }}";
+
+            fetch(`/remove_program/${campusAcronym}/${collegeAcronym}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `program_to_remove=${encodeURIComponent(programToRemove)}`
+            })
+            .then(response => response.json()) // Or response.text()
+            .then(data => {
+                console.log("Program removed:", data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error removing program:", error);
+                alert("Failed to remove program.");
+            });
+        });
+
+        // Rename Program
+        document.querySelector("#tab-rename form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const oldProgramAcronym = this.querySelector("select[name='old_program_acronym']").value;
+            const newProgramName = this.querySelector("input[name='new_program_name']").value;
+            const newProgramAcronym = this.querySelector("input[name='new_program_acronym']").value;
+            const campusAcronym = "{{ campus.campus_acronym }}";
+            const collegeAcronym = "{{ college.college_acronym }}";
+
+            fetch(`/rename_program/${campusAcronym}/${collegeAcronym}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `old_program_acronym=${encodeURIComponent(oldProgramAcronym)}&new_program_name=${encodeURIComponent(newProgramName)}&new_program_acronym=${encodeURIComponent(newProgramAcronym)}`
+            })
+            .then(response => response.json()) // Or response.text()
+            .then(data => {
+                console.log("Program renamed:", data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error("Error renaming program:", error);
+                alert("Failed to rename program.");
             });
         });
     }
