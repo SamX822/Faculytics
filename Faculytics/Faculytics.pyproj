@@ -55,6 +55,7 @@
     <Content Include="Faculytics\static\pics\evangelista.jpg" />
     <Content Include="Faculytics\static\pics\abella.jpg" />
     <Content Include="Faculytics\static\pics\monte.jpg" />
+    <Content Include="Faculytics\static\pics\plane.png" />
     <Content Include="Faculytics\static\pics\profile.png" />
     <Content Include="Faculytics\static\scripts\template\campus.js" />
     <Content Include="Faculytics\static\scripts\template\college.js" />
@@ -109,6 +110,10 @@
     <Content Include="Faculytics\templates\layout.html" />
   </ItemGroup>
   <ItemGroup>
+    <InterpreterReference Include="Global|PythonCore|3.12" />
+    <InterpreterReference Include="Global|VisualStudio|thesis_ml" />
+  </ItemGroup>
+  <ItemGroup>
     <Interpreter Include="env\">
       <Id>env</Id>
       <Version>3.12</Version>
@@ -118,10 +123,6 @@
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
       <Architecture>X64</Architecture>
     </Interpreter>
-  </ItemGroup>
-  <ItemGroup>
-    <InterpreterReference Include="Global|PythonCore|3.12" />
-    <InterpreterReference Include="Global|VisualStudio|thesis_ml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Web.targets" />
   <!-- Specify pre- and post-build commands in the BeforeBuild and 
