@@ -110,6 +110,7 @@ function fetchAndUpdateChart() {
             console.log("Received Data:", data);
             currentData = data;
             loadChart(data, "overall");
+            displayTeacherPerformance(data);
         })
         .catch(err => console.error("Error fetching data:", err));
 }
@@ -135,6 +136,7 @@ function openAnalysisModal(programAcronym, campusAcronym, collegeAcronym) {
 
             // Load the chart with overall data
             loadChart(data);
+            displayTeacherPerformance(data);
         })
         .catch(error => console.error("Error fetching program data:", error));
 
@@ -402,4 +404,30 @@ function loadComments(data) {
         });
 
     renderFilteredComments();
+}
+
+function displayTeacherPerformance(data) {
+    const performanceDiv = document.getElementById('teacherPerformanceSummary');
+    const cardClass = 'inline-flex items-center justify-center px-3 py-1.5 rounded-full font-semibold text-white';
+
+    if (performanceDiv) {
+        performanceDiv.innerHTML = `
+            <div class="bg-gray-700 p-4 rounded-md shadow-sm mb-4 text-white">
+                <span class="${cardClass} bg-gray-500"><p>Total Teachers Evaluated:<strong>     ${data.total_teachers}</strong></span></p>
+                <span class="${cardClass} bg-green-500"><p>Teachers Doing Well:<strong>     ${data.teachers_doing_well_count}</strong></span></p>
+                <span class="${cardClass} bg-red-500"><p>Teachers Needing Improvement:<strong>  ${data.teachers_not_doing_well_count}</strong></span></p>
+            </div>
+        `;
+    } else {
+        const analysisModalContent = document.querySelector('#analysisModal > div');
+        const newPerformanceDiv = document.createElement('div');
+        newPerformanceDiv.id = 'teacherPerformanceSummary';
+        newPerformanceDiv.classList.add('bg-gray-700', 'p-4', 'rounded-md', 'shadow-sm', 'mb-4', 'text-white');
+        newPerformanceDiv.innerHTML = `
+            <span class="${cardClass} bg-gray-500"><p>Total Teachers Evaluated:<strong>     ${data.total_teachers}</strong></span></p>
+            <span class="${cardClass} bg-green-500"><p>Teachers Doing Well:<strong>     ${data.teachers_doing_well_count}</strong></span></p>
+            <span class="${cardClass} bg-red-500"><p>Teachers Needing Improvement:<strong>  ${data.teachers_not_doing_well_count}</strong></span></p>
+        `;
+        analysisModalContent.insertBefore(newPerformanceDiv, document.getElementById('sentimentContent').parentNode);
+    }
 }

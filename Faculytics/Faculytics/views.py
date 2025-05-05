@@ -1554,11 +1554,50 @@ def college_analysis():
 
         files = [f["filename"] for f in sorted_file_data]
 
+        # Analyze teacher performance
+        teacher_performance = {}
+        for teacher in teachers:
+            teacher_performance[teacher.uName] = {"doing_well": 0, "not_doing_well": 0}
+
+        for topic_data in all_topics:
+            topic = topic_data["topic"]
+            sentiment = topic_data["sentiment"]
+
+            for upload in uploads:
+                topics_upload = extract_json_chunks('topics', upload)
+                for topic_entry_upload in topics_upload:
+                    extracted_topic = topic_entry_upload.get("topic") if isinstance(topic_entry_upload, dict) else topic_entry_upload
+                    extracted_sentiment = topic_entry_upload.get("sentiment") if isinstance(topic_entry_upload, dict) else all_sentiments[topics_upload.index(topic_entry_upload)]["sentiment_score"] if topics_upload.index(topic_entry_upload) < len(all_sentiments) else "Unknown" # Best effort to get sentiment
+
+                    if extracted_topic == topic:
+                        teacher_uname = upload.teacher_uname
+                        if teacher_uname in teacher_performance:
+                            if extracted_sentiment == "Negative":
+                                teacher_performance[teacher_uname]["not_doing_well"] += 1
+                            elif extracted_sentiment == "Positive":
+                                teacher_performance[teacher_uname]["doing_well"] += 1
+
+        # The number of teachers who are and aren't doing well
+        teachers_doing_well_count = 0
+        teachers_not_doing_well_count = 0
+        total_teachers = 0
+
+        for teacher_uname, performance in teacher_performance.items():
+            if performance["doing_well"] > performance["not_doing_well"]:
+                teachers_doing_well_count += 1
+            elif performance["not_doing_well"] >= performance["doing_well"]:
+                teachers_not_doing_well_count += 1
+
+        total_teachers = len(teachers)
+
         return jsonify({
             "files": files,
             "sentiment": all_sentiments,
             "topics": all_topics,
-            "comments": all_comments
+            "comments": all_comments,
+            "teachers_doing_well_count": teachers_doing_well_count,
+            "teachers_not_doing_well_count": teachers_not_doing_well_count,
+            "total_teachers": total_teachers
         }), 200
 
     except Exception as e:
