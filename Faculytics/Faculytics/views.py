@@ -143,7 +143,7 @@ def register():
             lastName=lastName,
             uName=uName,
             pWord=hashed_password,
-            campus_acronym="N/A" if userType in ['Curriculum Developer'] else campus_acronym,
+            campus_acronym="N/A" if userType in ['Curriculum Developer', 'University HR'] else campus_acronym,
             college_name=college_name if userType in ['Dean', 'Teacher', 'Chairperson'] else "N/A",
             program_acronym=program_acronym if userType in ['Teacher', 'Chairperson'] else "N/A"
         )
@@ -177,7 +177,7 @@ def dashboard():
     
     user = User.query.get(session['user_id'])
 
-    if user.userType in ['Curriculum Developer', 'Vice Chancellor of Academic Affairs']:
+    if user.userType in ['Curriculum Developer', 'Vice Chancellor of Academic Affairs', 'University HR']:
         campuses = Campus.query.all()
 
     # Fetch assigned campus for non-admin users
@@ -186,7 +186,7 @@ def dashboard():
         assigned_campus = Campus.query.filter_by(campus_acronym=user.campus_acronym, isDeleted=False).first()
     
     # Admins and Curriculum Developers see all campuses, excluding the "N/A" campus
-    if user.userType in ["admin", "Curriculum Developer", "Vice Chancellor for Academic Affairs"]:
+    if user.userType in ["admin", "Curriculum Developer", "Vice Chancellor for Academic Affairs", 'University HR']:
         campuses = Campus.query.filter(Campus.campus_acronym != "N/A").all()
     else:
         campuses = [assigned_campus] if assigned_campus else []
@@ -437,7 +437,7 @@ def campus_page(campus_acronym):
     # Determine which colleges should be visible based on userType
     visible_colleges = []
 
-    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs', 'Campus Director', 'Vice Chancellor']:
+    if user.userType in ['admin', 'Curriculum Developer', 'Vice Chancellor for Academic Affairs', 'Campus Director', 'Vice Chancellor', 'University HR', 'Campus HR']:
         # can see all colleges
         visible_colleges = campus_colleges
     elif user.userType in ['Dean', 'Chairperson']:
@@ -498,7 +498,7 @@ def program_page(program_acronym, college_acronym, campus_acronym):
             college_name=college.college_name,
             program_acronym=program.program_acronym
         ).all()
-    elif user.userType in ['Dean', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs']:
+    elif user.userType in ['Dean', 'Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs', 'University HR', 'Campus HR']:
         users = User.query.filter_by(
             campus_acronym=campus.campus_acronym,
             college_name=college.college_name,

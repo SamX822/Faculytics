@@ -97,7 +97,7 @@
 
         <!-- College Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {% if user.userType in ["Curriculum Developer", "Vice Chancellor for Academic Affairs"] %}
+            {% if user.userType in ["Curriculum Developer", "Vice Chancellor for Academic Affairs", "University HR", "Campus HR"] %}
             <!-- Show all colleges for Curriculum Developers -->
             {% for college in campus.colleges %}
             <div class="college-card group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">

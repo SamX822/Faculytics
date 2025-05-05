@@ -7,7 +7,7 @@
     {% include "sidebar.html" %}
 
     <!-- Check for authorized access first -->
-    {% if user.userType not in ["admin", "Dean", "Campus Director", "Vice Chancellor", "Chairperson", "Curriculum Developer", "Vice Chancellor for Academic Affairs", "Teacher"] %}
+    {% if user.userType not in ["admin", "Dean", "Campus Director", "Vice Chancellor", "Chairperson", "Curriculum Developer", "Vice Chancellor for Academic Affairs", "Teacher", "University HR", "Campus HR"] %}
     <script>
             window.location.href = "{{ url_for('login') }}";
     </script>
@@ -91,8 +91,8 @@
         </div>
         {% endif %}
 
-        <!-- Curriculum Developer/VC Academic Affairs: Campus Cards with Analytics -->
-        {% if user.userType in ["Curriculum Developer", "Vice Chancellor for Academic Affairs"] %}
+        <!-- University HR/Campus HR/Curriculum Developer/VC Academic Affairs: Campus Cards with Analytics -->
+        {% if user.userType in ["Curriculum Developer", "Vice Chancellor for Academic Affairs", "University HR"] %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {% for campus in campuses %}
             <div class="college-card group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
@@ -121,7 +121,7 @@
         {% endif %}
 
         <!-- Campus Leadership: Specific Assigned Campus -->
-        {% if user.userType in ["Dean", "Campus Director", "Vice Chancellor", "Chairperson"] %}
+        {% if user.userType in ["Dean", "Campus Director", "Vice Chancellor", "Chairperson", "Campus HR"] %}
         {% if assigned_campus %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             <div class="college-card group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10">
@@ -137,7 +137,7 @@
                            class="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-blue-500/30">
                             Enter Campus
                         </a>
-                        {% if user.userType in ["Campus Director", "Vice Chancellor"] %}
+                        {% if user.userType in ["Campus Director", "Vice Chancellor", "Campus HR"] %}
                         <button onclick="openCampusAnalyticsModal(event, '{{ assigned_campus.campus_acronym }}')"
                                 class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
                             View Analytics

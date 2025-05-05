@@ -61,7 +61,7 @@
                     <button onclick="openAnalysisModal('{{ user_loop.uName }}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                         Analytics
                     </button>
-                    {% elif user.userType in ['Campus Director', 'Vice Chancellor', 'Chairperson', 'Vice Chancellor for Academic Affairs'] and not user_loop.isDeleted %}
+                    {% elif user.userType in ['Campus Director', 'Vice Chancellor', 'Chairperson', 'Vice Chancellor for Academic Affairs', 'University HR','Campus HR'] and not user_loop.isDeleted %}
                     <button onclick="openAnalysisModal('{{ user_loop.uName }}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                         Analytics
                     </button>

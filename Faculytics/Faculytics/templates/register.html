@@ -19,6 +19,8 @@
                     <option value="Unselected">Select your position</option>
                     <option value="Vice Chancellor for Academic Affairs">Vice Chancellor for Academic Affairs</option>
                     <option value="Curriculum Developer">Curriculum Developer</option>
+                    <option value="University HR">University HR</option>
+                    <option value="Campus HR">Campus HR</option>
                     <option value="Campus Director">Campus Director</option>
                     <option value="Vice Chancellor">Vice Chancellor</option>
                     <option value="Dean">Dean</option>
@@ -163,7 +165,7 @@
         collegeSelect.removeAttribute('required');
         programSelect.removeAttribute('required');
 
-        if (["Vice Chancellor for Academic Affairs", "Vice Chancellor", "Campus Director", "Dean", "Chairperson", "Teacher"].includes(userType)) {
+        if (["Vice Chancellor for Academic Affairs", "Vice Chancellor", "Campus Director", "Dean", "Chairperson", "Teacher", "University HR", "Campus HR"].includes(userType)) {
             campusGroup.classList.remove('hidden');
             campusSelect.setAttribute('required', 'required');
         }
