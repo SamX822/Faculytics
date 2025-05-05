@@ -142,6 +142,14 @@
                                 class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
                             View Analytics
                         </button>
+                        <button class="bg-gradient-to-r from-[#3b5999] to-[#2e467d] border border-[#3b5999]/70 hover:shadow-[#00f6fa]/20 text-white rounded-lg font-medium text-sm px-5 py-2.5 text-center inline-flex items-center gap-2">
+                            <svg class="w-4 h-4 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                                 xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"></path>
+                            </svg>
+                            Download
+                        </button>
                         {% endif %}
                     </div>
                 </div>
@@ -261,6 +269,9 @@
             <!-- Actions -->
             <div class="mt-6 flex justify-end">
                 <button onclick="closeCampusAnalyticsModal()" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">Close</button>
+                <button class="px-6 py-2 bg-gradient-to-r from-green-600 to-green-800 text-white rounded-lg shadow-md hover:shadow-green-500/30 transition-all duration-300">
+                    Download Report
+                </button>
             </div>
         </div>
     </div>
