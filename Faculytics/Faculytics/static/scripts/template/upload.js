@@ -14,7 +14,6 @@ const processBtn = document.getElementById('processBtn');
 const teacherUName = document.getElementById('teacherUName');
 /*
     TODO:
-    
     >> Change all alert dialogs to custom modals.
  */
 document.addEventListener('DOMContentLoaded', function () {
@@ -39,6 +38,18 @@ document.addEventListener('DOMContentLoaded', function () {
         option.value = year;
         option.textContent = year;
         startYearDropdown.appendChild(option);
+    }
+
+    // Auto-select current year as starting year
+    startYearDropdown.value = currentYear;
+    endYearInput.value = currentYear + 1;
+
+    // Auto-select semester based on current month
+    const currentMonth = new Date().getMonth() + 1;
+    if (currentMonth >= 1 && currentMonth <= 6) {
+        semesterDropdown.value = '1'; // 1st semester (January to June)
+    } else if (currentMonth >= 7 && currentMonth <= 12) {
+        semesterDropdown.value = '2'; // 2nd semester (July to December)
     }
 
     startYearDropdown.addEventListener('change', function () {
@@ -92,8 +103,14 @@ document.addEventListener('DOMContentLoaded', function () {
             fileNameSpan.textContent = file.name;
             const sizeInKB = (file.size / 1024).toFixed(2);
             fileSizeSpan.textContent = `${sizeInKB} KB`;
+            validateForm(); // Enable button once file is selected
+        } else {
+            validateForm(); // Disable button if no file is selected
         }
     });
+
+    // Initial form validation on load to reflect pre-selected values
+    validateForm();
 });
 /*
     All functions below processes the CSV files to return results
