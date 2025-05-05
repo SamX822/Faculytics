@@ -1,0 +1,68 @@
+/* report_print.css */
+
+/* Reset some styles that might interfere with print */
+body {
+    margin: 20mm;
+    padding: 0;
+    background-color: #fff !important; /* Ensure white background */
+    color: #333 !important; /* Ensure readable text color */
+    font-size: 10pt; /* Adjust base font size for print */
+}
+
+.header {
+    background-color: #0047AB !important;
+    color: #fff !important;
+    padding: 15mm;
+    margin-bottom: 20mm;
+    border-radius: 0 !important; /* Remove decorative border-radius */
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5mm;
+}
+
+.logo {
+    width: 20mm;
+    height: 20mm;
+    margin-right: 5mm;
+}
+
+    .logo img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+h1 {
+    font-size: 24pt;
+    margin-bottom: 2mm;
+}
+
+.subtitle {
+    font-size: 12pt;
+    font-weight: 300;
+    opacity: 0.9;
+}
+
+.container {
+    max-width: none !important;
+    margin: 0;
+    padding: 0;
+}
+
+.card {
+    background: #fff !important;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-bottom: 15mm;
+    padding: 10mm;
+    position: relative; /* Ensure pseudo-elements are positioned correctly if used */
+}
+
+    .card::before, .card::after {
+        display: none !important; /* Hide decorative pseudo-elements */
+    }
+
+.card-title {
+    color

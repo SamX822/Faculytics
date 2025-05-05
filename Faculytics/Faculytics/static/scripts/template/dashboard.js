@@ -148,6 +148,58 @@ function switchTab(tab) {
     }
 }
 
+function downloadCampusReport(campusAcronym) {
+    const button = document.getElementById(`downloadBtn_${campusAcronym}`);
+    const icon = document.getElementById(`icon_${campusAcronym}`);
+    const spinner = document.getElementById(`spinner_${campusAcronym}`);
+    const text = document.getElementById(`text_${campusAcronym}`);
+
+    if (!campusAcronym) {
+        console.error("Missing campus acronym");
+        return;
+    }
+
+    // Set loading state
+    button.disabled = true;
+    button.classList.add("opacity-70", "cursor-not-allowed");
+    icon.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    text.textContent = "Downloading...";
+
+    fetch(`/download_campus_report?campus_acronym=${campusAcronym}`)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `campus_report_${campusAcronym}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            console.log("PDF download initiated successfully.");
+        })
+        .catch(error => {
+            console.error("Error fetching or downloading the report:", error);
+            if (typeof error === 'object' && error !== null && 'error' in error) {
+                console.error("Server error:", error.error);
+            }
+        })
+        .finally(() => {
+            // Reset state
+            button.disabled = false;
+            button.classList.remove("opacity-70", "cursor-not-allowed");
+            icon.classList.remove("hidden");
+            spinner.classList.add("hidden");
+            text.textContent = "Download Report";
+        });
+}
+
 function openCampusAnalyticsModal(event, dashboardAcronym) {
     // Prevent any default behavior from the button click
     event.preventDefault();

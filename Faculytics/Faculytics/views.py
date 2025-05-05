@@ -1,6 +1,6 @@
 #views.py
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, request, jsonify, session, flash, abort
+from flask import Flask, render_template, redirect, url_for, request, jsonify, session, flash, abort, make_response, send_file
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -18,11 +18,19 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from collections import defaultdict
-
+from weasyprint import HTML
+import io
+from io import BytesIO
 # ML libraries
 from transformers import pipeline
 from bertopic import BERTopic
 from sklearn.ensemble import RandomForestClassifier
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib as mpl
+import numpy as np
+
+# Report Lab
 
 # MarkyBoyax Sentiment Analysis Model
 from Faculytics.src.SentimentAnalysis_functions import SentimentAnalyzer
@@ -837,6 +845,8 @@ def generateRecommendation2(sentiment_result, comments_list, processed_comments,
                 topic_frequency[topic] = topic_frequency.get(topic, 0) + 1
         top_topics = sorted(topic_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
         top_topics_list = [topic for topic, _ in top_topics]
+
+        
 
         # Summary sections
         positive_summary = []
@@ -1919,3 +1929,419 @@ def dashboard_analytics():
         print(traceback.format_exc())
         return jsonify({"error": "Internal Server Error"}), 500
 
+@app.route('/report', methods=['GET'])
+def report():
+    current_date = datetime.now()
+    context = {
+        'title': 'Academic Performance Report',
+        'summary_text': 'This report presents an analysis of student performance across various departments at the University of Cebu - Main Campus for the Academic Year 2024-2025. The data highlights key trends in student achievement, attendance, and engagement metrics.',
+        'stats': [
+            {'value': '94%', 'label': 'Attendance Rate'},
+            {'value': '87.3', 'label': 'Average GPA'},
+            {'value': '1,243', 'label': 'Total Students'},
+            {'value': '32', 'label': 'Programs Offered'}
+        ],
+        'items': [
+            'College of Engineering showed highest improvement with 12% increase in overall GPA.',
+            'Nursing program maintained the highest retention rate at 97%.',
+            'Student satisfaction survey showed 89% positive feedback on faculty performance.',
+            'Library utilization increased by 34% compared to previous semester.'
+        ],
+        'table_headers': ['Department', 'Students', 'Avg. GPA', 'Retention Rate'],
+        'table_data': [
+            ['Computer Science', '312', '3.65', '92%'],
+            ['Business Administration', '284', '3.42', '88%'],
+            ['Nursing', '201', '3.78', '97%'],
+            ['Civil Engineering', '178', '3.51', '85%']
+        ],
+        'current_year': current_date.year,
+        'generation_date': current_date.strftime('%B %d, %Y')
+    }
+    report_path = "report_template.html"
+    rendered_html = render_template(report_path, **context)
+    pdf_file = HTML(string=rendered_html).write_pdf()
+    response = make_response(pdf_file)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'inline; filename=uc_academic_report.pdf'
+    return response
+@app.route('/download_campus_report', methods=['GET'])
+def download_campus_report():
+    try:
+        campus_acronym = request.args.get("campus_acronym")
+
+        if not campus_acronym:
+            return jsonify({"error": "Missing campus acronym"}), 400
+
+        campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+
+        if not campus:
+            return jsonify({"error": "Campus not found."}), 404
+
+        # Fetch all teachers in this campus (all colleges and programs under the campus)
+        teachers = User.query.filter_by(
+            campus_acronym=campus_acronym,
+            userType="Teacher",
+            isDeleted=False
+        ).all()
+
+        if not teachers:
+            return jsonify({"error": "No teachers found for this campus."}), 404
+
+        # Fetch their uploads
+        uploads = CSVUpload.query.filter(
+            CSVUpload.teacher_uname.in_([t.uName for t in teachers])
+        ).all()
+
+        if not uploads:
+            return jsonify({"error": "No uploaded sentiment data found for this campus."}), 404
+
+        import re, json
+
+        def extract_json_chunks(prefix, upload):
+            chunks = []
+            for attr in dir(upload):
+                if re.match(f"{prefix}\\d+", attr):
+                    chunk = getattr(upload, attr)
+                    if chunk is None:
+                        continue
+                    if isinstance(chunk, list):
+                        chunks.extend(chunk)
+                    elif isinstance(chunk, str):
+                        try:
+                            parsed = json.loads(chunk)
+                            if isinstance(parsed, (list, dict)):
+                                chunks.extend(parsed if isinstance(parsed, list) else [parsed])
+                        except json.JSONDecodeError:
+                            continue
+                    elif isinstance(chunk, dict):
+                        chunks.append(chunk)
+            return chunks
+
+        file_data = {}
+
+        # Loop through all uploads and aggregate data by file
+        for upload in sorted(uploads, key=lambda x: x.upload_date):
+            comments_chunks = extract_json_chunks('comments', upload)
+            sentiment_chunks = extract_json_chunks('sentiment', upload)
+            topics_chunks = extract_json_chunks('topics', upload)
+
+            if upload.filename not in file_data:
+                file_data[upload.filename] = {
+                    "filename": upload.filename,
+                    "sentiment": [],
+                    "topics": [],
+                    "comments": []
+                }
+
+            file_data[upload.filename]["sentiment"].extend(sentiment_chunks)
+            file_data[upload.filename]["topics"].extend(topics_chunks)
+            file_data[upload.filename]["comments"].extend(comments_chunks)
+
+        # Sort files based on naming convention or date
+        def sort_key(filename):
+            try:
+                start, end, sem = map(int, filename.split('_'))
+                return (start, end, sem)
+            except:
+                return (9999, 9999, 9)
+
+        sorted_file_data = [file_data[f] for f in sorted(file_data.keys(), key=sort_key)]
+
+        all_sentiments = []
+        all_topics = []
+        all_comments = []
+
+        # Aggregate sentiments, topics, and comments for each file
+        for file_entry in sorted_file_data:
+            sentiments = file_entry.get("sentiment", [])
+            topics = file_entry.get("topics", [])
+            comments = file_entry.get("comments", [])
+
+            for sentiment_entry in sentiments:
+                all_sentiments.append({
+                    "filename": file_entry["filename"],
+                    "sentiment_score": sentiment_entry
+                })
+
+            for idx, topic_entry in enumerate(topics):
+                corresponding_sentiment = sentiments[idx] if idx < len(sentiments) else "Unknown"
+
+                if isinstance(topic_entry, dict):
+                    topic = topic_entry.get("topic")
+                    sentiment = topic_entry.get("sentiment", corresponding_sentiment)
+                    if topic is not None and sentiment is not None:
+                        all_topics.append({
+                            "topic": topic,
+                            "sentiment": sentiment
+                        })
+                else:
+                    all_topics.append({
+                        "topic": topic_entry,
+                        "sentiment": corresponding_sentiment
+                    })
+
+            for idx, comment_entry in enumerate(comments):
+                corresponding_sentiment = sentiments[idx] if idx < len(sentiments) else "Unknown"
+                corresponding_topic = None
+
+                if idx < len(topics):
+                    topic_entry = topics[idx]
+                    if isinstance(topic_entry, dict):
+                        corresponding_topic = topic_entry.get("topic", "Unknown")
+                    else:
+                        corresponding_topic = topic_entry
+
+                if isinstance(comment_entry, dict):
+                    text = comment_entry.get("text")
+                    sentiment = comment_entry.get("sentiment", corresponding_sentiment)
+                    topic = comment_entry.get("topic", corresponding_topic)
+                    if text:
+                        all_comments.append({
+                            "text": text,
+                            "sentiment": sentiment if sentiment else "Unknown",
+                            "topic": topic if topic else "Unknown"
+                        })
+                else:
+                    all_comments.append({
+                        "text": comment_entry,
+                        "sentiment": corresponding_sentiment,
+                        "topic": corresponding_topic if corresponding_topic else "Unknown"
+                    })
+
+        # List of all files in the campus (aggregated)
+        files = [f["filename"] for f in sorted_file_data]
+        return campus_report(campus_acronym,files,all_sentiments,all_topics,all_comments)
+        #return generate_campus_report(campus_acronym, files, all_sentiments, all_topics, all_comments)  
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": "Internal Server Error"}), 500
+def campus_report(campus_acronym, files=None, sentiment=None, topics=None, comments=None):
+    try:
+        # Get campus information
+        campus = Campus.query.filter_by(campus_acronym=campus_acronym).first()
+        if not campus:
+            # Don't return jsonify response here since this is a helper function
+            # Just raise an exception to be caught by the parent function
+            raise ValueError("Campus not found")
+        
+        current_date = datetime.now()
+        
+        # Calculate statistics from sentiment data
+        sentiment_map = {"Positive": 1, "Negative": -1}
+
+        # Extract only the sentiments that are in the map
+        valid_sentiments = [item["sentiment"] for item in comments if item.get("sentiment") in sentiment_map]
+
+        # Count totals
+        total_positive = valid_sentiments.count("Positive")
+        total_negative = valid_sentiments.count("Negative")
+
+        # Calculate average sentiment score
+        valid_scores = [sentiment_map[sentiment] for sentiment in valid_sentiments]
+        avg_sentiment = total_positive / (total_positive + total_negative)
+        
+        # Get most frequent topics and count positive/negative mentions
+        topic_counts = {}
+
+        for item in topics:
+            if not isinstance(item, dict):
+                continue
+                
+            topic = item.get("topic")
+            sentiment = item.get("sentiment")
+            
+            if not topic or not sentiment:
+                continue
+
+            if topic not in topic_counts:
+                topic_counts[topic] = {"Positive": 0, "Negative": 0}
+
+            if sentiment in topic_counts[topic]:
+                topic_counts[topic][sentiment] += 1
+
+        # Sorting with variables for clarity
+        top_topics = sorted(
+            topic_counts.items(),
+            key=lambda x: sum(x[1].values()),
+            reverse=True
+        )
+        
+        # Sample comments for each sentiment category
+        positive_comments = [item["text"] for item in comments if isinstance(item, dict) and item.get("sentiment") == "Positive"]
+        negative_comments = [item["text"] for item in comments if isinstance(item, dict) and item.get("sentiment") == "Negative"]
+
+        positive_comments = []
+        for comment in comments:
+            if comment['sentiment'] == 'Positive':
+                positive_comments.append(comment)
+
+        # Assigning one variable to 3 positive samples
+        sample_positive = positive_comments[:3]
+
+        # Filtering negative comments
+        negative_comments = []
+        for comment in comments:
+            if comment['sentiment'] == 'Negative':
+                negative_comments.append(comment)
+
+        # Assigning one variable to 3 negative samples
+        sample_negative = negative_comments[:3]
+        
+
+
+        # Determine positive and negative topics
+        positive_topics = [topic for topic, counts in topic_counts.items() if counts.get("Positive", 0) > counts.get("Negative", 0)]
+        negative_topics = [topic for topic, counts in topic_counts.items() if counts.get("Negative", 0) > counts.get("Positive", 0)]
+
+        print(f"Negative Topics: {negative_topics}")
+
+        # ------------------------
+        # Bar Chart Generation
+        # ------------------------
+        # 1. Prepare data for the bar chart
+        # Use top_topics here
+        negative_topic_names = [topic for topic, _ in top_topics]
+        negative_topic_counts = [topic_counts[topic]['Negative'] for topic in negative_topic_names]
+
+        # Dynamically resolve the correct path
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        bar_chart_filename = os.path.join(base_dir, "static", "temp", "needs_bar_campus.png")
+        print(f"Saving chart to: {bar_chart_filename}")
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(bar_chart_filename), exist_ok=True)
+
+        # Delete existing file if it exists
+        if os.path.exists(bar_chart_filename):
+            os.remove(bar_chart_filename)
+
+        # Plot
+        colors = ['#ffcccc', '#ff9999', '#ff6666', '#ff3333', '#cc0000']
+        n_bins = 100
+        cmap_name = 'custom_red'
+        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bins)
+
+        # Apply a modern style
+        plt.style.use('seaborn-v0_8-whitegrid')
+        mpl.rcParams['font.family'] = 'sans-serif'
+        mpl.rcParams['font.sans-serif'] = ['Segoe UI', 'Arial', 'DejaVu Sans']
+
+        # Create figure with adjusted size for horizontal bars
+        fig, ax = plt.subplots(figsize=(10, max(6, len(negative_topic_names) * 0.5)))  # Height scales with number of topics
+
+        # Sort data for better visualization (optional)
+        sorted_indices = np.argsort(negative_topic_counts)
+        sorted_topics = [negative_topic_names[i] for i in sorted_indices]
+        sorted_counts = [negative_topic_counts[i] for i in sorted_indices]
+
+        # Get color values based on count
+        norm = plt.Normalize(min(sorted_counts), max(sorted_counts))
+        colors = [cm(norm(count)) for count in sorted_counts]
+
+        # Create horizontal bar chart
+        bars = ax.barh(sorted_topics, sorted_counts, color=colors, edgecolor='none', alpha=0.9)
+
+        # Add count values at the end of each bar
+        for i, bar in enumerate(bars):
+            width = bar.get_width()
+            ax.text(width + 0.3, bar.get_y() + bar.get_height()/2, 
+                    f'{sorted_counts[i]}', 
+                    ha='left', va='center', fontsize=9, fontweight='bold')
+
+        # Customize the plot
+        ax.set_xlabel('Number of Negative Mentions', fontsize=11, fontweight='bold')
+        ax.set_title(f'Negative Sentiment for Topics in {campus.campus_name}', 
+                     fontsize=14, fontweight='bold', pad=15)
+
+        # Remove the y-axis label since the categories are self-explanatory
+        ax.set_ylabel('')
+
+        # Customize grid lines
+        ax.grid(axis='x', linestyle='--', alpha=0.6, zorder=0)
+        ax.set_axisbelow(True)  # Place gridlines behind bars
+
+        # Format the axes
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.tick_params(axis='both', which='major', labelsize=10)
+
+        # Add a subtle background color
+        fig.patch.set_facecolor('#f8f8f8')
+        ax.set_facecolor('#f8f8f8')
+
+        # Tight layout and save with high DPI
+        plt.tight_layout()
+        plt.savefig(bar_chart_filename, bbox_inches='tight', dpi=300)
+        plt.close()
+
+        # Build report context
+        context = {
+            'title': f'{campus.campus_name} Analysis Report',
+            'summary_text': f'This report presents an analysis of student feedback and sentiment for {campus.campus_name} ({campus_acronym}). The data has been collected from {len(files)} datasets spanning multiple academic periods.',
+            'stats': [
+                {'value': f'{len(comments)}', 'label': 'Total Comments'},
+                {'value': f'{len(positive_comments)}', 'label': 'Positive Comments'},
+                {'value': f'{len(negative_comments)}', 'label': 'Negative Comments'},
+                {'value': f'{avg_sentiment:.2f}', 'label': 'Average Sentiment Score'}
+            ],
+            'items': [
+                f'Top mentioned topic: {top_topics[0][0]} (mentioned {sum(top_topics[0][1].values())} times)' if top_topics else 'No topics data available',
+                f'Positive sentiment rate: {len(positive_comments)/len(comments)*100:.1f}%' if comments else 'No comments data available',
+                f'Negative sentiment rate: {len(negative_comments)/len(comments)*100:.1f}%' if comments else 'No comments data available',
+            ],
+            'table_headers': ['Topic', 'Mentions', 'Average Sentiment', 'Trend'],
+            'table_data': [],
+            'needs_bar': bar_chart_filename
+        }
+        
+        # Process table data with better error handling
+        for topic, counts in top_topics:
+            total_positive = counts.get('Positive', 0)
+            total_negative = counts.get('Negative', 0)
+            total_mentions = total_positive + total_negative
+
+            # Calculate average sentiment as a simple +1/-1 scaled average
+            avg_sentiment_str = "N/A"
+            if total_mentions > 0:
+                avg_sentiment = total_positive / total_mentions
+                avg_sentiment_str = f"{avg_sentiment:.2f}"
+    
+            # Determine trend
+            trend = "Neutral"
+            if topic in positive_topics:
+                trend = "Positive"
+            elif topic in negative_topics:
+                trend = "Negative"
+        
+            context['table_data'].append([
+                topic,
+                total_mentions,
+                avg_sentiment_str,
+                trend
+            ])
+        
+        # Add remaining context items
+        context.update({
+            'positive_comments': sample_positive,
+            'negative_comments': sample_negative,
+            'negative_topics': negative_topics,
+            'all_files': files,
+            'campus_name': campus.campus_name,
+            'campus_acronym': campus_acronym,
+            'current_year': current_date.year,
+            'generation_date': current_date.strftime('%B %d, %Y at %H:%M:%S')
+        })        
+        # Generate the report
+        report_path = "report_template.html"
+        rendered_html = render_template(report_path, **context)
+
+
+        pdf_file = HTML(string=rendered_html, base_url=request.url_root).write_pdf()
+        response = make_response(pdf_file)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'inline; filename=uc_academic_report.pdf'
+        return response
+    except Exception as e:
+        print(traceback.format_exc())
+        raise Exception(f"Error generating campus report: {str(e)}")

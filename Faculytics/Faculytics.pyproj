@@ -17,7 +17,7 @@
     <SuppressCollectPythonCloudServiceFiles>true</SuppressCollectPythonCloudServiceFiles>
     <Name>Faculytics</Name>
     <RootNamespace>Faculytics</RootNamespace>
-    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>Global|VisualStudio|thesis_ml</InterpreterId>
     <SuppressEnvironmentCreationPrompt>True</SuppressEnvironmentCreationPrompt>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -42,6 +42,7 @@
     <Folder Include="Faculytics\" />
     <Folder Include="Faculytics\static\" />
     <Folder Include="Faculytics\static\content\" />
+    <Folder Include="Faculytics\static\temp\" />
     <Folder Include="Faculytics\static\pics\" />
     <Folder Include="Faculytics\static\uploads\" />
     <Folder Include="Faculytics\static\fonts\" />
@@ -57,11 +58,14 @@
     <Content Include="Faculytics\static\pics\monte.jpg" />
     <Content Include="Faculytics\static\pics\plane.png" />
     <Content Include="Faculytics\static\pics\profile.png" />
+    <Content Include="Faculytics\static\pics\uclogo.jpg" />
     <Content Include="Faculytics\static\scripts\template\campus.js" />
     <Content Include="Faculytics\static\scripts\template\college.js" />
     <Content Include="Faculytics\static\scripts\template\dashboard.js" />
     <Content Include="Faculytics\static\scripts\template\notificationbar.js" />
     <Content Include="Faculytics\static\scripts\template\program.js" />
+    <Content Include="Faculytics\static\scripts\template\report.css" />
+    <Content Include="Faculytics\templates\report_template.html" />
     <Content Include="Faculytics\static\scripts\template\teacher.js" />
     <Content Include="Faculytics\templates\approval.html" />
     <Content Include="Faculytics\templates\campus.html" />

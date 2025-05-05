@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} | {{ campus_name }}</title>
+    <style>
+        /* Print-optimized reset - eliminate all default margins */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.3;
+            color: #333;
+            background-color: #fff;
+            /* Minimal body margin */
+            margin: 0;
+            padding: 3mm;
+            font-size: 9pt;
+            /* Ensure no extra spacing */
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Compact header */
+        .header {
+            background-color: #0047AB;
+            color: #fff;
+            padding: 3mm;
+            display: flex;
+            align-items: center;
+            margin-bottom: 3mm;
+        }
+
+        .logo {
+            width: 10mm;
+            height: 10mm;
+            margin-right: 3mm;
+            background-color: white;
+            border-radius: 50%;
+            padding: 1mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .logo img {
+                max-width: 100%;
+                max-height: 100%;
+            }
+
+        .header-text h1 {
+            font-size: 14pt;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 8pt;
+            opacity: 0.9;
+            line-height: 1.1;
+        }
+
+        /* Main content container - no margins */
+        .container {
+            width: 100%;
+            /* No horizontal margins */
+            padding: 0;
+        }
+
+        /* Content sections with tighter spacing */
+        .content-row {
+            display: flex;
+            width: 100%;
+            gap: 2mm;
+            margin-bottom: 2mm;
+        }
+
+        .content-column {
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+        }
+
+        .col-2-3 {
+            flex: 2;
+        }
+
+        .col-1-3 {
+            flex: 1;
+        }
+
+        .col-1-2 {
+            flex: 1;
+        }
+
+        .col-full {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Card design with minimal padding */
+        .card {
+            background: white;
+            border-left: 2mm solid #0047AB;
+            padding: 2mm;
+            background-color: #f9f9f9;
+            height: 100%;
+        }
+
+        .card-title {
+            color: #0047AB;
+            font-size: 10pt;
+            margin-bottom: 2mm;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 1mm;
+        }
+
+            .card-title h2 {
+                font-size: 10pt;
+                font-weight: 600;
+                margin: 0;
+            }
+
+        .circle-icon {
+            width: 4mm;
+            height: 4mm;
+            background-color: #0047AB;
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 2mm;
+            font-weight: bold;
+            font-size: 6pt;
+        }
+
+        /* Compact lists */
+        .custom-list {
+            list-style-type: none;
+            padding-left: 2mm;
+            margin: 0;
+        }
+
+            .custom-list li {
+                position: relative;
+                padding-left: 3mm;
+                margin-bottom: 1mm;
+                line-height: 1.3;
+            }
+
+                .custom-list li::before {
+                    content: "•";
+                    color: #0047AB;
+                    position: absolute;
+                    left: 0;
+                }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(20mm, 1fr));
+            gap: 2mm;
+            margin-bottom: 0;
+        }
+
+        .stat-card {
+            background-color: #e6eeff;
+            border-radius: 1mm;
+            padding: 2mm;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #0047AB;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 6pt;
+            text-transform: uppercase;
+            color: #555;
+            line-height: 1;
+        }
+
+        /* Compressed tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7pt;
+        }
+
+            .data-table th, .data-table td {
+                padding: 1mm 2mm;
+                text-align: left;
+                border-bottom: 1px solid #eee;
+            }
+
+            .data-table th {
+                background-color: #e6eeff;
+                color: #0047AB;
+                font-weight: 600;
+            }
+
+        /* Comment sections */
+        .comments-container {
+            display: flex;
+            gap: 2mm;
+            margin-bottom: 0;
+        }
+
+        .comment-section {
+            flex: 1;
+        }
+
+            .comment-section h3 {
+                color: #0047AB;
+                font-size: 9pt;
+                margin-bottom: 2mm;
+                padding-bottom: 1mm;
+                border-bottom: 1px solid #eee;
+            }
+
+        .comment-card {
+            padding: 2mm;
+            margin-bottom: 2mm;
+            font-size: 7pt;
+        }
+
+            .comment-card.positive {
+                border-left: 2mm solid #4CAF50;
+                background-color: #f0fff0;
+            }
+
+            .comment-card.negative {
+                border-left: 2mm solid #F44336;
+                background-color: #fff0f0;
+            }
+
+        .comment-text {
+            font-style: italic;
+            margin-bottom: 1mm;
+            color: #444;
+        }
+
+        .comment-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 6pt;
+            color: #777;
+        }
+
+        /* Compact footer */
+        .footer {
+            border-top: 1px solid #eee;
+            padding-top: 2mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 6pt;
+            color: #888;
+            margin-top: 3mm;
+        }
+
+        /* Helper class to prevent page breaks inside elements */
+        .no-break {
+            page-break-inside: avoid;
+        }
+
+        /* Prevent orphaned headers */
+        h2, h3 {
+            page-break-after: avoid;
+        }
+
+        /* Force page break when needed */
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* Ensure tables don't get split across pages */
+        table {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <img src="../static/pics/uclogo.jpg" alt="UC Logo">
+            </div>
+            <div class="header-text">
+                <h1>{{ title }}</h1>
+                <p class="subtitle">{{ campus_name }} ({{ campus_acronym }})</p>
+            </div>
+        </header>
+
+        <div class="content-row">
+            <div class="col-2-3">
+                <div class="card no-break">
+                    <div class="card-title">
+                        <div class="circle-icon">S</div>
+                        <h2>Summary</h2>
+                    </div>
+                    <p>{{ summary_text }}</p>
+                </div>
+            </div>
+
+            <div class="col-1-3">
+                <div class="card no-break">
+                    <div class="card-title">
+                        <div class="circle-icon">K</div>
+                        <h2>Key Metrics</h2>
+                    </div>
+                    <div class="stats-grid">
+                        {% for stat in stats %}
+                        <div class="stat-card">
+                            <div class="stat-number">{{ stat.value }}</div>
+                            <div class="stat-label">{{ stat.label }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-row">
+            <div class="col-1-2">
+                <div class="card no-break">
+                    <div class="card-title">
+                        <div class="circle-icon">F</div>
+                        <h2>Key Findings</h2>
+                    </div>
+                    <ul class="custom-list">
+                        {% for item in items %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-1-2">
+                <div class="card no-break">
+                    <div class="card-title">
+                        <div class="circle-icon">T</div>
+                        <h2>Top Topics</h2>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                {% for header in table_headers %}
+                                <th>{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in table_data %}
+                            <tr>
+                                {% for cell in row %}
+                                <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-row">
+            <div class="col-full">
+                <div class="card no-break">
+                    <div class="card-title">
+                        <div class="circle-icon">N</div>
+                        <h2>Needs Analysis</h2>
+                    </div>
+                    {% if positive_topics or negative_topics %}
+                    <p>Based on the identified topics and their sentiment, the following needs and areas for improvement are highlighted:</p>
+                    <ul class="custom-list">
+                        {% if negative_topics %}
+                        <li>
+                            <strong>Areas for Improvement:</strong> Topics frequently associated with negative sentiment indicate potential areas needing attention:
+                            <div class="col-full">
+                                <div class="card">
+                                    <img src="{{ url_for('static', filename='temp/needs_bar_campus.png') }}"
+                                         alt="Negative Sentiment Chart"
+                                         style="width: 100%; max-width: 85%; height: auto;">
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% else %}
+                    <p>Insufficient topic data available to perform a needs analysis.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="content-row">
+            <div class="col-full">
+                <div class="card">
+                    <div class="card-title">
+                        <div class="circle-icon">C</div>
+                        <h2>Sample Comments</h2>
+                    </div>
+                    <div class="comments-container">
+                        <div class="comment-section">
+                            <h3>Positive Feedback</h3>
+                            {% if positive_comments %}
+                            {% for comment in positive_comments %}
+                            <div class="comment-card positive no-break">
+                                <p class="comment-text">"{{ comment.text }}"</p>
+                                <div class="comment-meta">
+                                    <span>Topic: {{ comment.topic }}</span>
+                                    <span>Sentiment: {{ comment.sentiment }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p>No positive comments available.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="comment-section">
+                            <h3>Improvement Areas</h3>
+                            {% if negative_comments %}
+                            {% for comment in negative_comments %}
+                            <div class="comment-card negative no-break">
+                                <p class="comment-text">"{{ comment.text }}"</p>
+                                <div class="comment-meta">
+                                    <span>Topic: {{ comment.topic }}</span>
+                                    <span>Sentiment: {{ comment.sentiment }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p>No negative comments available.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-row">
+            <div class="col-full">
+                <div class="card no-break">
+                    <div class="card-title">
+                        <div class="circle-icon">D</div>
+                        <h2>Data Sources</h2>
+                    </div>
+                    <p>This report analyzes data from the following academic periods:</p>
+                    <ul class="custom-list">
+                        {% for file in all_files %}
+                        <li>{{ file }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>{{ current_year }} {{ campus_name }}. All rights reserved.</p>
+            <p>Generated: {{ generation_date }}</p>
+        </footer>
+    </div>
+</body>
+</html>
