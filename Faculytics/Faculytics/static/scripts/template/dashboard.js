@@ -168,6 +168,19 @@ function loadSentimentChart(data) {
     if (analysisChartInstance) analysisChartInstance.destroy();
     const ctx = document.getElementById('analysisChart').getContext('2d');
 
+    function parseFilename(filename) {
+        const [startYear, endYear, semester] = filename.split('_').map(Number);
+        return {
+            startYear,
+            endYear,
+            semester
+        };
+    }
+    function formatLabel(parsedFilename) {
+        const semesterString = parsedFilename.semester === 1 ? '1st Sem' : '2nd Sem';
+        return `A.Y. ${parsedFilename.startYear}-${parsedFilename.endYear} ${semesterString}`;
+    }
+
     // group by filename
     const buckets = {};
     data.sentiment.forEach(({ filename, sentiment_score }) => {
@@ -184,14 +197,29 @@ function loadSentimentChart(data) {
         }
     });
 
+    // Sort filenames chronologically and format labels
+    const sortedFilenames = Object.keys(buckets).sort((a, b) => {
+        const aParts = parseFilename(a);
+        const bParts = parseFilename(b);
+
+        if (aParts.startYear !== bParts.startYear) {
+            return aParts.startYear - bParts.startYear;
+        } else if (aParts.endYear !== bParts.endYear) {
+            return aParts.endYear - bParts.endYear;
+        } else {
+            return aParts.semester - bParts.semester;
+        }
+    });
+
     // sort filenames chronologically
-    const labels = Object.keys(buckets).sort(); // or your parseFilename+sort_key
-    const positiveData = labels.map(f => buckets[f].positive);
-    const negativeData = labels.map(f => buckets[f].negative);
+    const labels = sortedFilenames.map(filename => formatLabel(parseFilename(filename)));
+    const positiveData = sortedFilenames.map(f => buckets[f].positive);
+    const negativeData = sortedFilenames.map(f => buckets[f].negative);
 
     console.log("Buckets:", buckets);
     console.log("Positive Data:", positiveData);
     console.log("Negative Data:", negativeData);
+    console.log("Formatted Labels:", labels);
 
     analysisChartInstance = new Chart(ctx, {
         type: 'line',
@@ -234,7 +262,7 @@ function loadSentimentChart(data) {
                 x: {
                     title: {
                         display: true,
-                        text: 'Filenames',
+                        text: 'Academic Year - Semester',
                         color: 'white'
                     },
                     ticks: {

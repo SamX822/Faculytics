@@ -196,9 +196,27 @@ function loadSentimentChart(data, fileName) {
     }
 
     const ctx = document.getElementById('analysisChart').getContext('2d');
+    const canvas = ctx.canvas;
+
+    function parseFilename(filename) {
+        const [startYear, endYear, semester] = filename.split('_').map(Number);
+        return {
+            startYear,
+            endYear,
+            semester
+        };
+    }
+    function formatLabel(parsedFilename) {
+        const semesterString = parsedFilename.semester === 1 ? '1st Sem' : '2nd Sem';
+        return `A.Y. ${parsedFilename.startYear}-${parsedFilename.endYear} ${semesterString}`;
+    }
 
     if (fileName === "overall") {
         // --- OVERALL VIEW (LINE CHART) ---
+
+        canvas.classList.remove('doughnut-chart');
+        canvas.width = '';  // Reset inline width
+        canvas.height = ''; // Reset inline height
         function parseFilename(filename) {
             const [startYear, endYear, semester] = filename.split('_').map(Number);
             return {
@@ -222,7 +240,7 @@ function loadSentimentChart(data, fileName) {
             }
         });
         // Extract labels and sentiment data from sorted list
-        const labels = sortedFiles.map(file => file.filename);
+        const labels = sortedFiles.map(file => formatLabel(parseFilename(file.filename)));
         const positiveData = sortedFiles.map(file => {
             const sentimentData = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
             return sentimentData.filter(s => s === "Positive").length;
@@ -272,7 +290,7 @@ function loadSentimentChart(data, fileName) {
                     x: {
                         title: {
                             display: true,
-                            text: 'Files',
+                            text: 'Academic Year - Semester',
                             color: 'white'
                         },
                         ticks: {
@@ -298,8 +316,12 @@ function loadSentimentChart(data, fileName) {
             }
         });
     } else {
-        // --- SPECIFIC FILE VIEW (BAR CHART) ---
-        const selectedFile = data.files.find(file => file.filename === fileName);
+        // --- SPECIFIC FILE VIEW (DOUGHNUT CHART) ---
+        canvas.classList.add('doughnut-chart');
+        canvas.width = 400;
+        canvas.height = 400;
+
+        const selectedFile = data.files.find(file => formatLabel(parseFilename(file.filename)));
         if (!selectedFile) {
             console.error("File not found in dataset.");
             return;
@@ -309,43 +331,17 @@ function loadSentimentChart(data, fileName) {
         const negativeCount = selectedFile.sentiment.filter(s => s === "Negative").length;
 
         analysisChartInstance = new Chart(ctx, {
-            type: 'bar',
+            type: 'doughnut',
             data: {
                 labels: ["Positive", "Negative"],
                 datasets: [{
                     label: 'Sentiment Count',
                     data: [positiveCount, negativeCount],
-                    backgroundColor: ['green', 'red'],
-                    categoryPercentage: 0.8,
-                    barPercentage: 0.8
+                    backgroundColor: ['green', 'red']
                 }]
             },
             options: {
                 responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Count',
-                            color: 'white'
-                        },
-                        ticks: {
-                            stepSize: 1,
-                            color: 'white'
-                        },
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Sentiment Type',
-                            color: 'white'
-                        },
-                        ticks: {
-                            color: 'white'
-                        }
-                    }
-                },
                 plugins: {
                     legend: {
                         labels: {

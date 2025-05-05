@@ -223,7 +223,7 @@ function renderSentimentChart(sentiment) {
     }
 
     sentimentChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: ['Positive', 'Negative'],
             datasets: [{

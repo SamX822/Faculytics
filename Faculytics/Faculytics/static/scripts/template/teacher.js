@@ -193,6 +193,7 @@ function loadTeacherSentimentChart(data, fileName) {
     }
 
     const ctx = document.getElementById('teacherAnalysisChart')?.getContext('2d');
+    const canvas = ctx.canvas;
     if (!ctx) return;
 
     if (!data || data.error) {
@@ -204,9 +205,24 @@ function loadTeacherSentimentChart(data, fileName) {
         ctx.fillText(text, ctx.canvas.width / 2, ctx.canvas.height / 2);
         return;
     }
+    function parseFilename(filename) {
+        const [startYear, endYear, semester] = filename.split('_').map(Number);
+        return {
+            startYear,
+            endYear,
+            semester
+        };
+    }
+    function formatLabel(parsedFilename) {
+        const semesterString = parsedFilename.semester === 1 ? '1st Sem' : '2nd Sem';
+        return `A.Y. ${parsedFilename.startYear}-${parsedFilename.endYear} ${semesterString}`;
+    }
 
     if (fileName === "overall") {
         // --- OVERALL VIEW (LINE CHART) ---
+        canvas.classList.remove('doughnut-chart');
+        canvas.width = '';  // Reset inline width
+        canvas.height = ''; // Reset inline height
         function parseFilename(filename) {
             const [startYear, endYear, semester] = filename.split('_').map(Number);
             return { startYear, endYear, semester };
@@ -219,7 +235,7 @@ function loadTeacherSentimentChart(data, fileName) {
             if (aParts.endYear !== bParts.endYear) return aParts.endYear - bParts.endYear;
             return aParts.semester - bParts.semester;
         });
-        const labels = sortedFiles.map(file => file.filename);
+        const labels = sortedFiles.map(file => formatLabel(parseFilename(file.filename)));
         const positiveData = sortedFiles.map(file => (Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]")).filter(s => s === "Positive").length);
         const negativeData = sortedFiles.map(file => (Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]")).filter(s => s === "Negative").length);
 
@@ -229,7 +245,12 @@ function loadTeacherSentimentChart(data, fileName) {
             options: { responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Sentiment Count', color: 'white' }, ticks: { stepSize: 1, color: 'white' } }, x: { title: { display: true, text: 'Files', color: 'white' }, ticks: { color: 'white' } } }, plugins: { legend: { display: true, labels: { color: 'white' } }, tooltip: { callbacks: { label: function (tooltipItem) { return `${tooltipItem.dataset.label}: ${tooltipItem.raw} sentiments`; } } } } }
         });
     } else {
-        const selectedFile = data.files?.find(file => file.filename === fileName);
+        // --- SPECIFIC FILE VIEW (DOUGHNUT CHART) ---
+        canvas.classList.add('doughnut-chart');
+        canvas.width = 400;
+        canvas.height = 400;
+
+        const selectedFile = data.files.find(file => formatLabel(parseFilename(file.filename)));
         if (!selectedFile) {
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             ctx.font = "16px Arial";
@@ -243,9 +264,9 @@ function loadTeacherSentimentChart(data, fileName) {
         const negativeCount = (Array.isArray(selectedFile.sentiment) ? selectedFile.sentiment : JSON.parse(selectedFile.sentiment || "[]")).filter(s => s === "Negative").length;
 
         teacherAnalysisChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: ["Positive", "Negative"], datasets: [{ label: 'Sentiment Count', data: [positiveCount, negativeCount], backgroundColor: ['green', 'red'], categoryPercentage: 0.8, barPercentage: 0.8 }] },
-            options: { responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Count', color: 'white' }, ticks: { stepSize: 1, color: 'white' } }, x: { title: { display: true, text: 'Sentiment Type', color: 'white' }, ticks: { color: 'white' } } }, plugins: { legend: { labels: { color: 'white', font: { weight: 'bold' } } } } }
+            type: 'doughnut',
+            data: { labels: ["Positive", "Negative"], datasets: [{ label: 'Sentiment Count', data: [positiveCount, negativeCount], backgroundColor: ['green', 'red']}] },
+            options: { responsive: true, plugins: { legend: { labels: { color: 'white', font: { weight: 'bold' } } } } }
         });
     }
 }
