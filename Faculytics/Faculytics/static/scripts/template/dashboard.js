@@ -1,7 +1,8 @@
-let globalDashboardData = {};
 // dashboard.js
+let globalDashboardData = {};
 let analysisChartInstance = null;
 let topicChartInstance = null;
+let needsAnalysisChartInstance = null;
 let currentData = null;
 let activeTab = "sentiment";
 let globalCombinedComments = [];
@@ -18,6 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
         topicTab: {
             button: document.getElementById('topicTab'),
             content: document.getElementById('topicContent')
+        },
+        needsAnalysisTab: {
+            button: document.getElementById('needsAnalysisTab'),
+            content: document.getElementById('needsAnalysisContent')
         },
         commentsTab: {
             button: document.getElementById('commentsTab'),
@@ -110,17 +115,20 @@ function fetchAndUpdateChart() {
 
 document.getElementById('sentimentTab').addEventListener('click', () => switchTab('sentiment'));
 document.getElementById('topicTab').addEventListener('click', () => switchTab('topic'));
+document.getElementById('needsAnalysisTab').addEventListener('click', () => switchTab('needsanalysis'));
 document.getElementById('commentsTab').addEventListener('click', () => switchTab('comments'));
 
 function switchTab(tab) {
     // Hide all content sections
     document.getElementById('sentimentContent').classList.add('hidden');
     document.getElementById('topicContent').classList.add('hidden');
+    document.getElementById('needsAnalysisContent').classList.add('hidden');
     document.getElementById('commentsContent').classList.add('hidden');
 
     // Reset tab button styles
     document.getElementById('sentimentTab').classList.remove('bg-blue-600');
     document.getElementById('topicTab').classList.remove('bg-blue-600');
+    document.getElementById('needsAnalysisTab').classList.remove('bg-blue-600');
     document.getElementById('commentsTab').classList.remove('bg-blue-600');
 
     // Show selected tab content and highlight the selected tab
@@ -130,6 +138,10 @@ function switchTab(tab) {
     } else if (tab === 'topic') {
         document.getElementById('topicContent').classList.remove('hidden');
         document.getElementById('topicTab').classList.add('bg-blue-600');
+    } else if (tab === 'needsanalysis') {
+        document.getElementById('needsAnalysisContent').classList.remove('hidden');
+        document.getElementById('needsAnalysisTab').classList.add('bg-blue-600');
+        activeTab = 'needsanalysis';
     } else if (tab === 'comments') {
         document.getElementById('commentsContent').classList.remove('hidden');
         document.getElementById('commentsTab').classList.add('bg-blue-600');
@@ -159,6 +171,8 @@ function loadChart(data) {
         loadSentimentChart(data);
     } else if (activeTab === "topic") {
         loadTopicChart(data);
+    } else if (activeTab === "needsanalysis") {
+        loadNeedsAnalysisChart(data);
     } else if (activeTab === "comments") {
         loadComments(data);
     }
@@ -382,7 +396,84 @@ function loadTopicChart(data) {
         }
     });
 }
+function loadNeedsAnalysisChart(data) {
+    if (needsAnalysisChartInstance) {
+        needsAnalysisChartInstance.destroy();
+    }
+    const ctx = document.getElementById('needsAnalysisChart').getContext('2d');
 
+    let negativeTopicCounts = {};
+
+    if (data && data.topics) {
+        data.topics.forEach(({ topic, sentiment }) => {
+            if (topic && topic.trim() !== "" && sentiment && sentiment.toLowerCase() === "negative") {
+                negativeTopicCounts[topic] = (negativeTopicCounts[topic] || 0) + 1;
+            }
+        });
+    }
+
+    const sortedTopics = Object.keys(negativeTopicCounts)
+        .sort((a, b) => negativeTopicCounts[b] - negativeTopicCounts[a])
+        .slice(0, 10); // Display top 10 negative topics
+
+    const topicLabels = sortedTopics.map(topic => topic);
+    const topicData = sortedTopics.map(topic => negativeTopicCounts[topic]);
+
+    needsAnalysisChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topicLabels,
+            datasets: [{
+                label: 'Negative Feedback',
+                data: topicData,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Negative Feedback',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Category',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `Negative Feedback: ${tooltipItem.raw}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 function loadComments(data) {
     const commentsList = document.getElementById('commentsList');
     const topicFilter = document.getElementById('topicFilter');

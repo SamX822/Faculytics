@@ -1,6 +1,7 @@
 ﻿// program.js
 let analysisChartInstance = null;
 let topicChartInstance = null;
+let needsAnalysisChartInstance = null;
 let currentData = null;
 let currentFileName = "overall";
 let activeTab = "sentiment";
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         topicTab: {
             button: document.getElementById('topicTab'),
             content: document.getElementById('topicContent')
+        },
+        needsAnalysisTab: {
+            button: document.getElementById('needsAnalysisTab'),
+            content: document.getElementById('needsAnalysisContent')
         },
         commentsTab: {
             button: document.getElementById('commentsTab'),
@@ -128,6 +133,7 @@ function fetchAndUpdateChart() {
         .catch(error => console.error("Error fetching analysis data:", error));
 }
 function openAnalysisModal(username) {
+    currentData = null;
     uname = username; // Capture username globally
     document.getElementById('analysisModal').classList.remove('hidden');
 
@@ -183,6 +189,8 @@ function loadChart(data, fileName) {
         loadSentimentChart(data, fileName);
     } else if (activeTab === "topic") {
         loadTopicChart(data, fileName);
+    } else if (activeTab === "needsanalysis") {
+        loadNeedsAnalysisChart(data, fileName);
     } else if (activeTab === "comments") {
         loadComments(data, fileName);
     } else if (activeTab === 'recommendations') {
@@ -574,7 +582,98 @@ function loadTopicChart(data, fileName) {
         });
     }
 }
+function loadNeedsAnalysisChart(data, fileName) {
+    if (needsAnalysisChartInstance) {
+        needsAnalysisChartInstance.destroy();
+    }
+    const ctx = document.getElementById('needsAnalysisChart').getContext('2d');
 
+    let negativeTopicCounts = {};
+
+    const processFileTopics = (file) => {
+        if (!file.topics || !file.sentiment) return;
+        const topics = Array.isArray(file.topics) ? file.topics : JSON.parse(file.topics || "[]");
+        const sentiments = Array.isArray(file.sentiment) ? file.sentiment : JSON.parse(file.sentiment || "[]");
+
+        topics.forEach((topic, index) => {
+            if (topic && topic.trim() !== "" && sentiments[index] === "Negative") {
+                negativeTopicCounts[topic] = (negativeTopicCounts[topic] || 0) + 1;
+            }
+        });
+    };
+
+    if (fileName === "overall") {
+        data.files.forEach(processFileTopics);
+    } else {
+        const selectedFile = data.files.find(file => file.filename === fileName);
+        if (selectedFile) {
+            processFileTopics(selectedFile);
+        }
+    }
+
+    // Sort topics by count
+    const sortedTopics = Object.keys(negativeTopicCounts)
+        .sort((a, b) => negativeTopicCounts[b] - negativeTopicCounts[a])
+        .slice(0, 10); // Display top 10 negative topics
+
+    const topicLabels = sortedTopics.map(topic => topic);
+    const topicData = sortedTopics.map(topic => negativeTopicCounts[topic]);
+
+    needsAnalysisChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topicLabels,
+            datasets: [{
+                label: 'Areas Needing Improvement',
+                data: topicData,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Negative Feedback',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Category',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false, // We only have one dataset
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `Negative Feedback: ${tooltipItem.raw}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 function loadComments(data, fileName) {
     const commentsList = document.getElementById('commentsList');
     const topicFilter = document.getElementById('topicFilter');

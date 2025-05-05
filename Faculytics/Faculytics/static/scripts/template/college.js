@@ -1,6 +1,7 @@
 ﻿// college.js
 let analysisChartInstance = null;
 let topicChartInstance = null;
+let needsAnalysisChartInstance = null;
 let currentData = null;
 let currentFileName = "overall";
 let activeTab = "sentiment";
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         topicTab: {
             button: document.getElementById('topicTab'),
             content: document.getElementById('topicContent')
+        },
+        needsAnalysisTab: {
+            button: document.getElementById('needsAnalysisTab'),
+            content: document.getElementById('needsAnalysisContent')
         },
         commentsTab: {
             button: document.getElementById('commentsTab'),
@@ -154,6 +159,8 @@ function loadChart(data, fileName) {
     } else if (activeTab === "topic") {
         console.log('Received topics:', data.topics);
         loadTopicChart(data, fileName);
+    } else if (activeTab === "needsanalysis") {
+        loadNeedsAnalysisChart(data);
     } else if (activeTab === "comments") {
         loadComments(data, fileName);
     }
@@ -377,7 +384,84 @@ function loadTopicChart(data) {
         }
     });
 }
+function loadNeedsAnalysisChart(data) {
+    if (needsAnalysisChartInstance) {
+        needsAnalysisChartInstance.destroy();
+    }
+    const ctx = document.getElementById('needsAnalysisChart').getContext('2d');
 
+    let negativeTopicCounts = {};
+
+    if (data && data.topics) {
+        data.topics.forEach(({ topic, sentiment }) => {
+            if (topic && topic.trim() !== "" && sentiment && sentiment.toLowerCase() === "negative") {
+                negativeTopicCounts[topic] = (negativeTopicCounts[topic] || 0) + 1;
+            }
+        });
+    }
+
+    const sortedTopics = Object.keys(negativeTopicCounts)
+        .sort((a, b) => negativeTopicCounts[b] - negativeTopicCounts[a])
+        .slice(0, 10); // Display top 10 negative topics
+
+    const topicLabels = sortedTopics.map(topic => topic);
+    const topicData = sortedTopics.map(topic => negativeTopicCounts[topic]);
+
+    needsAnalysisChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topicLabels,
+            datasets: [{
+                label: 'Negative Feedback',
+                data: topicData,
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: 'rgba(220, 53, 69, 1)',
+                borderWidth: 1,
+                categoryPercentage: 0.8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Negative Feedback',
+                        color: 'white'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        color: 'white'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Category',
+                        color: 'white'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            return `Negative Feedback: ${tooltipItem.raw}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 function loadComments(data) {
     const commentsList = document.getElementById('commentsList');
     const topicFilter = document.getElementById('topicFilter');
