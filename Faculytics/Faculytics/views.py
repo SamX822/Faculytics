@@ -1,6 +1,7 @@
 #views.py
 from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, jsonify, session, flash, abort
+from flask_weasyprint import HTML, render_pdf
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -14,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query
 from sqlalchemy import and_
 import re
+from .auth import dean_chairperson_hr_vcaa_required
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -1284,6 +1286,16 @@ def saveToDatabase():
     #    db.session.rollback()
     #    return jsonify({"error": f"Database error: {str(e)}"}), 500
 
+def extract_json_chunks(prefix, upload):
+    chunks = []
+    for attr in dir(upload):
+        if re.match(f"{prefix}\\d+", attr):
+            chunk = getattr(upload, attr)
+            if chunk:
+                parsed = json.loads(chunk) if isinstance(chunk, str) else chunk
+                chunks.extend(parsed)
+    return chunks
+
 def calculate_grade_value(grade_range_str):
     """Calculates the numerical grade value from a grade range string."""
     try:
@@ -1308,6 +1320,82 @@ def get_grade_equivalent(grade_value):
         return "Unsatisfactory"
     else:
         return "N/A"
+
+@app.route('/download_analysis_pdf', methods=['GET'])
+@dean_chairperson_hr_vcaa_required
+def download_analysis_pdf():
+    teacherUName = request.args.get("teacher")
+    file_name = request.args.get("file_name", "overall")
+
+    if not teacherUName:
+        return "Missing teacher username", 400
+
+    uploads = CSVUpload.query.filter_by(teacher_uname=teacherUName).all()
+
+    if not uploads:
+        return "No uploads found for this teacher.", 404
+
+    file_data = []
+    total_positive = 0
+    total_negative = 0
+    #overall_grade_value_sum = 0
+    #valid_grade_count = 0
+
+    for upload in uploads:
+        sentiments = extract_json_chunks('sentiment', upload)
+        topics = extract_json_chunks('topics', upload)
+        comments = extract_json_chunks('comments', upload)
+        grade_range = upload.grade
+        recommendation_text_db = upload.recommendation
+
+        file_grade_value = calculate_grade_value(grade_range)
+        if file_grade_value is not None:
+            overall_grade_value_sum += file_grade_value
+            valid_grade_count += 1
+
+        file_data.append({
+            "filename": upload.filename,
+            "sentiment": sentiments,
+            "topics": topics,
+            "comments": comments,
+            "recommendation": recommendation_text_db
+        })
+
+        total_positive += sentiments.count("Positive")
+        total_negative += sentiments.count("Negative")
+
+    overall_recommendations = ""
+    #overall_grade_display = "N/A"
+
+    if file_name == "overall":
+        overall_recommendations = generateRecommendationAnalytics(file_data)
+        #overall_grade_value = overall_grade_value_sum / valid_grade_count if valid_grade_count > 0 else None
+        #overall_grade_display = get_grade_equivalent(overall_grade_value)
+        recommendation_text = overall_recommendations
+    else:
+        target_upload = next((u for u in uploads if u.filename == file_name), None)
+        if not target_upload:
+            return "File not found", 404
+        sentiments = extract_json_chunks('sentiment', target_upload)
+        topics = extract_json_chunks('topics', target_upload)
+        comments = extract_json_chunks('comments', target_upload)
+        recommendation_text = target_upload.recommendation
+        #grade_value = calculate_grade_value(target_upload.grade)
+        #overall_grade_display = get_grade_equivalent(grade_value)
+        total_positive = sentiments.count("Positive")
+        total_negative = sentiments.count("Negative")
+
+    # Render HTML template for PDF
+    html = render_template('analysis_pdf_template.html',
+                           teacher=teacherUName,
+                           file_name=file_name,
+                           positive_count=total_positive,
+                           negative_count=total_negative,
+                           file_data=file_data,
+                           #overall_grade=overall_grade_display,
+                           recommendation_text=recommendation_text)
+
+    return render_pdf(HTML(string=html))
 
 @app.route('/analysis', methods=['GET'])
 def analysis():
