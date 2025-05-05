@@ -137,6 +137,23 @@ function openAnalysisModal(username) {
     uname = username; // Capture username globally
     document.getElementById('analysisModal').classList.remove('hidden');
 
+    // Add the "Download PDF" button
+    const downloadButton = document.createElement('button');
+    downloadButton.textContent = 'Download PDF';
+    downloadButton.classList.add('mt-4', 'bg-blue-500', 'hover:bg-blue-700', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded');
+    downloadButton.addEventListener('click', () => {
+        const currentFileNameForDownload = document.getElementById('fileSelect').value;
+        const downloadUrl = `/download_analysis_pdf?teacher=${encodeURIComponent(uname)}&file_name=${currentFileNameForDownload}`;
+        window.open(downloadUrl, '_blank'); // Open in a new tab for download
+    });
+
+    const modalFooter = document.querySelector('#analysisModal .modal-footer'); // Adjust selector if needed
+    if (modalFooter) {
+        modalFooter.appendChild(downloadButton);
+    } else {
+        console.error("Modal footer not found!");
+    }
+
     // Reset active tab to sentiment analysis
     document.getElementById('sentimentTab').click();
 

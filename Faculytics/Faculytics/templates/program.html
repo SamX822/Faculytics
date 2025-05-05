@@ -53,7 +53,7 @@
                 <p class="text-sm text-gray-400">{{ user_loop.userType }} {% if user_loop.isDeleted %}(Deleted){% endif %}</p>
 
                 <div class="flex gap-2 mt-3">
-                    {% if user.userType == 'Dean' and not user_loop.isDeleted %}
+                    {% if user.userType in ['Dean', 'Chairperson'] and not user_loop.isDeleted %}
                     <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
                             onclick="redirectToUploadHistory('{{ user_loop.uName }}', '{{ college.college_acronym }}', '{{ program.program_acronym }}', '{{ campus.campus_acronym }}')">
                         Upload
@@ -61,10 +61,13 @@
                     <button onclick="openAnalysisModal('{{ user_loop.uName }}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                         Analytics
                     </button>
-                    {% elif user.userType in ['Campus Director', 'Vice Chancellor', 'Chairperson', 'Vice Chancellor for Academic Affairs', 'University HR','Campus HR'] and not user_loop.isDeleted %}
+                    {% elif user.userType in ['Campus Director', 'Vice Chancellor', 'Vice Chancellor for Academic Affairs', 'University HR','Campus HR'] and not user_loop.isDeleted %}
                     <button onclick="openAnalysisModal('{{ user_loop.uName }}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                         Analytics
                     </button>
+                    <div class="mt-4 flex justify-between">
+                        <button id="downloadButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Download Report</button>
+                    </div>
                     {% elif user.userType == 'admin' %}
                     {% if user_loop.isDeleted %}
                     <button class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg restore-button"
@@ -133,7 +136,7 @@
             <option value="overall">Overall</option>
         </select>
         <div id="fileDetails" class="mt-4 text-white"></div>
-        <div class="mt-4 flex justify-between">
+        <div class="modal-footer mt-4 flex justify-between">
             <button id="viewButton" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">View</button>
             <button onclick="closeAnalysisModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg">Close</button>
         </div>

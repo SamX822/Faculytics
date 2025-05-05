@@ -6,7 +6,7 @@
     <!-- Sidebar -->
     {% include "sidebar.html" %}
 
-    {% if user.userType == "Dean" %}
+    {% if user.userType in ["Dean", "Chairperson"] %}
     <main class="ml-[14rem] p-6 text-gray-300 w-full min-h-screen">
 
         <!-- Back to program Button -->
@@ -32,7 +32,7 @@
         </div>
     </main>
 
-    {% elif user.userType == "Campus Director" or  user.userType == "Vice Chancellor" or user.userType == "Teacher" %}
+    {% elif user.userType in ["Campus Director", "Vice Chancellor", "Teacher", "Vice Chancellor of Academic Affairs"] %}
     <script>
         window.location.href = "{{ url_for('dashboard') }}";
     </script>

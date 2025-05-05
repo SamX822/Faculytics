@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Query
 from sqlalchemy import and_
 import re
+from .auth import dean_chairperson_hr_vcaa_required
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -1294,6 +1295,16 @@ def saveToDatabase():
     #    db.session.rollback()
     #    return jsonify({"error": f"Database error: {str(e)}"}), 500
 
+def extract_json_chunks(prefix, upload):
+    chunks = []
+    for attr in dir(upload):
+        if re.match(f"{prefix}\\d+", attr):
+            chunk = getattr(upload, attr)
+            if chunk:
+                parsed = json.loads(chunk) if isinstance(chunk, str) else chunk
+                chunks.extend(parsed)
+    return chunks
+
 def calculate_grade_value(grade_range_str):
     """Calculates the numerical grade value from a grade range string."""
     try:
@@ -1318,6 +1329,240 @@ def get_grade_equivalent(grade_value):
         return "Unsatisfactory"
     else:
         return "N/A"
+
+def extract_json_chunks(prefix, upload):
+    chunks = []
+    for attr in dir(upload):
+        if re.match(f"{prefix}\\d+", attr):
+            chunk = getattr(upload, attr)
+            if chunk:
+                parsed = json.loads(chunk) if isinstance(chunk, str) else chunk
+                chunks.extend(parsed)
+    return chunks
+
+def generate_analysis_pdf_reportlab(teacher_data, file_name):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    normal_style = styles['Normal']
+    h1_style = styles['h1']
+    h2_style = styles['h2']
+    h3_style = styles['h3']
+    bold_style = ParagraphStyle(name='BoldStyle', parent=normal_style, fontName='Helvetica-Bold')
+    green_style = ParagraphStyle(name='GreenStyle', parent=normal_style, textColor=colors.green)
+    red_style = ParagraphStyle(name='RedStyle', parent=normal_style, textColor=colors.red)
+
+    story = []
+
+    story.append(Paragraph(f"Analytics Report - Teacher: {teacher_data['teacher']} - File: {file_name}", h1_style))
+    story.append(Spacer(1, 12))
+
+    # Sentiment Analysis Section
+    story.append(Paragraph("Sentiment Analysis", h2_style))
+    story.append(Paragraph(f"Positive Sentiments: {teacher_data['positive']}", normal_style))
+    story.append(Paragraph(f"Negative Sentiments: {teacher_data['negative']}", normal_style))
+    if 'overall_grade' in teacher_data:
+        story.append(Paragraph(f"Overall Grade: {teacher_data['overall_grade']}", normal_style))
+    story.append(Spacer(1, 12))
+
+    # Topic Analysis Section
+    story.append(Paragraph("Topic Analysis", h2_style))
+    if file_name == 'overall':
+        overall_topics = {}
+        for file in teacher_data['files']:
+            for topic in file['topics']:
+                if topic:
+                    overall_topics[topic] = overall_topics.get(topic, 0) + 1
+        if overall_topics:
+            story.append(Paragraph("Overall Top Topics:", h3_style))
+            topic_list = [f"{topic} (Count: {count})" for topic, count in sorted(overall_topics.items(), key=lambda item: item[1], reverse=True)[:10]]
+            story.append(ListFlowable([Paragraph(item, normal_style) for item in topic_list], bulletType='bullet'))
+        else:
+            story.append(Paragraph("No topics found.", normal_style))
+    else:
+        current_file = next((f for f in teacher_data['files'] if f['filename'] == file_name), None)
+        if current_file and current_file['topics']:
+            story.append(Paragraph(f"Topics for {file_name}:", h3_style))
+            topic_list = [f"{topic}" for topic in current_file['topics'] if topic] # Counts are not available per file in this structure
+            story.append(ListFlowable([Paragraph(topic, normal_style) for topic in topic_list], bulletType='bullet'))
+        else:
+            story.append(Paragraph("No topics found for this file.", normal_style))
+    story.append(Spacer(1, 12))
+
+    # Needs Analysis (Negative Topics) Section
+    story.append(Paragraph("Needs Analysis (Negative Topics)", h2_style))
+    if file_name == 'overall':
+        overall_negative_topics = {}
+        for file in teacher_data['files']:
+            for i, sentiment in enumerate(file['sentiment']):
+                if sentiment == 'Negative' and file['topics'][i]:
+                    overall_negative_topics[file['topics'][i]] = overall_negative_topics.get(file['topics'][i], 0) + 1
+        if overall_negative_topics:
+            story.append(Paragraph("Overall Negative Topics:", h3_style))
+            negative_topic_list = [f"{topic} (Count: {count})" for topic, count in sorted(overall_negative_topics.items(), key=lambda item: item[1], reverse=True)[:10]]
+            story.append(ListFlowable([Paragraph(item, normal_style) for item in negative_topic_list], bulletType='bullet'))
+        else:
+            story.append(Paragraph("No negative topics found.", normal_style))
+    else:
+        current_file = next((f for f in teacher_data['files'] if f['filename'] == file_name), None)
+        if current_file:
+            file_negative_topics = {}
+            for i, sentiment in enumerate(current_file['sentiment']):
+                if sentiment == 'Negative' and current_file['topics'][i]:
+                    file_negative_topics[current_file['topics'][i]] = file_negative_topics.get(current_file['topics'][i], 0) + 1
+            if file_negative_topics:
+                story.append(Paragraph(f"Negative Topics for {file_name}:", h3_style))
+                negative_topic_list = [f"{topic} (Count: {count})" for topic, count in sorted(file_negative_topics.items(), key=lambda item: item[1], reverse=True)]
+                story.append(ListFlowable([Paragraph(item, normal_style) for item in negative_topic_list], bulletType='bullet'))
+            else:
+                story.append(Paragraph("No negative topics found for this file.", normal_style))
+        else:
+            story.append(Paragraph("No data for this file.", normal_style))
+    story.append(Spacer(1, 12))
+
+    # Comments Section
+    story.append(Paragraph("Comments", h2_style))
+    if file_name == 'overall':
+        for file in teacher_data['files']:
+            story.append(Paragraph(f"Comments from {file['filename']}:", h3_style))
+            if file['comments']:
+                comment_data = [[f'"{comment}"', file['sentiment'][i], file['topics'][i]] for i, comment in enumerate(file['comments'])]
+                table = Table([['Comment', 'Sentiment', 'Topic']] + comment_data)
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                ]))
+                story.append(table)
+            else:
+                story.append(Paragraph("No comments in this file.", normal_style))
+            story.append(Spacer(1, 6))
+    else:
+        current_file = next((f for f in teacher_data['files'] if f['filename'] == file_name), None)
+        if current_file and current_file['comments']:
+            story.append(Paragraph(f"Comments for {file_name}:", h3_style))
+            comment_data = [[f'"{comment}"', current_file['sentiment'][i], current_file['topics'][i]] for i, comment in enumerate(current_file['comments'])]
+            table = Table([['Comment', 'Sentiment', 'Topic']] + comment_data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            story.append(table)
+        else:
+            story.append(Paragraph("No comments in this file.", normal_style))
+        story.append(Spacer(1, 12))
+
+    # Recommendations Section 
+    story.append(Paragraph("Recommendations", h2_style))
+    story.append(Spacer(1, 6))
+
+    recommendation_text = teacher_data['recommendation']
+    overall_negative_topics = {}
+    if file_name == 'overall':
+        for file in teacher_data['files']:
+            for i, sentiment in enumerate(file['sentiment']):
+                if sentiment == 'Negative' and file['topics'][i]:
+                    overall_negative_topics[file['topics'][i]] = overall_negative_topics.get(file['topics'][i], 0) + 1
+
+    lines = recommendation_text.strip().split("\n")
+    if lines:
+        for line in lines:
+            line = line.strip()
+            if line:
+                topic_match = None
+                topic_count_str = ""
+                for topic, count in overall_negative_topics.items():
+                    if topic.lower() in line.lower():
+                        topic_match = topic
+                        topic_count_str = f" (Mentioned {count} times)"
+                        break
+                story.append(Paragraph(line + topic_count_str, normal_style))
+                story.append(Spacer(1, 6)) # Add space between lines
+    else:
+        story.append(Paragraph("No recommendations available.", normal_style))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+@app.route('/download_analysis_pdf', methods=['GET'])
+@login_required
+def download_analysis_pdf():
+    teacherUName = request.args.get("teacher")
+    file_name = request.args.get("file_name", "overall")
+
+    if not teacherUName:
+        return "Missing teacher username", 400
+
+    uploads = CSVUpload.query.filter_by(teacher_uname=teacherUName).all()
+
+    if not uploads:
+        return "No uploads found for this teacher.", 404
+
+    file_data = []
+    total_positive = 0
+    total_negative = 0
+    overall_grade_value_sum = 0
+    valid_grade_count = 0
+
+    for upload in uploads:
+        sentiments = extract_json_chunks('sentiment', upload)
+        topics = extract_json_chunks('topics', upload)
+        comments = extract_json_chunks('comments', upload)
+        grade_range = upload.grade
+        recommendation_text_db = upload.recommendation
+
+        file_grade_value = calculate_grade_value(grade_range)
+        if file_grade_value is not None:
+            overall_grade_value_sum += file_grade_value
+            valid_grade_count += 1
+
+        file_data.append({
+            "filename": upload.filename,
+            "sentiment": sentiments,
+            "topics": topics,
+            "comments": comments,
+            "recommendation": recommendation_text_db
+        })
+
+        total_positive += sentiments.count("Positive")
+        total_negative += sentiments.count("Negative")
+
+    overall_recommendations = ""
+
+    if file_name == "overall":
+        overall_recommendations = generateRecommendationAnalytics(file_data)
+        recommendation_text = overall_recommendations
+    else:
+        target_upload = next((u for u in uploads if u.filename == file_name), None)
+        if not target_upload:
+            return "File not found", 404
+        sentiments = extract_json_chunks('sentiment', target_upload)
+        topics = extract_json_chunks('topics', target_upload)
+        comments = extract_json_chunks('comments', target_upload)
+        recommendation_text = target_upload.recommendation
+        total_positive = sentiments.count("Positive")
+        total_negative = sentiments.count("Negative")
+
+    analysis_data = {
+        "teacher": teacherUName,
+        "files": file_data,
+        "positive": total_positive,
+        "negative": total_negative,
+        "recommendation": recommendation_text
+    }
+
+    pdf_buffer = generate_analysis_pdf_reportlab(analysis_data, file_name)
+    return send_file(pdf_buffer, as_attachment=True, download_name=f"analytics_{teacherUName}_{file_name}.pdf", mimetype='application/pdf')
 
 @app.route('/analysis', methods=['GET'])
 def analysis():
