@@ -65,9 +65,6 @@
                     <button onclick="openAnalysisModal('{{ user_loop.uName }}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                         Analytics
                     </button>
-                    <div class="mt-4 flex justify-between">
-                        <button id="downloadButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Download Report</button>
-                    </div>
                     {% elif user.userType == 'admin' %}
                     {% if user_loop.isDeleted %}
                     <button class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg restore-button"

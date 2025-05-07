@@ -137,23 +137,6 @@ function openAnalysisModal(username) {
     uname = username; // Capture username globally
     document.getElementById('analysisModal').classList.remove('hidden');
 
-    // Add the "Download PDF" button
-    const downloadButton = document.createElement('button');
-    downloadButton.textContent = 'Download PDF';
-    downloadButton.classList.add('mt-4', 'bg-blue-500', 'hover:bg-blue-700', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded');
-    downloadButton.addEventListener('click', () => {
-        const currentFileNameForDownload = document.getElementById('fileSelect').value;
-        const downloadUrl = `/download_analysis_pdf?teacher=${encodeURIComponent(uname)}&file_name=${currentFileNameForDownload}`;
-        window.open(downloadUrl, '_blank'); // Open in a new tab for download
-    });
-
-    const modalFooter = document.querySelector('#analysisModal .modal-footer'); // Adjust selector if needed
-    if (modalFooter) {
-        modalFooter.appendChild(downloadButton);
-    } else {
-        console.error("Modal footer not found!");
-    }
-
     // Reset active tab to sentiment analysis
     document.getElementById('sentimentTab').click();
 
@@ -752,51 +735,44 @@ function loadComments(data, fileName) {
     renderFilteredComments();
 }
 function loadRecommendations(data, fileName) {
-    const recommendationsUl = document.getElementById('recommendationsUl');
+    const recommendationsContent = document.getElementById('recommendationsContent'); // Changed container ID
+    recommendationsContent.innerHTML = ''; // Clear previous content
 
-    recommendationsUl.innerHTML = ''; // Clear previous recommendations
-
-    let recommendations = [];
+    let recommendationText = '';
     if (fileName === 'overall') {
-        if (data.recommendation) {
-            recommendations = data.recommendation.split('\n').map(line => line.trim()).filter(line => line !== '');
-        }
+        recommendationText = data.recommendation;
     } else {
         const selectedFile = data.files.find(file => file.filename === fileName);
         if (selectedFile && selectedFile.recommendation) {
-            recommendations = selectedFile.recommendation.split('\n').map(rec => rec.trim()).filter(rec => rec !== '');
+            recommendationText = selectedFile.recommendation;
         }
     }
 
-    if (recommendations && recommendations.length > 0) {
-        recommendations.forEach(recommendation => {
-            const li = document.createElement('li');
-            // Check if the line might be a title (e.g., starts with "###" in Markdown)
-            if (recommendation.startsWith('###')) {
-                const h6 = document.createElement('h6');
-                h6.classList.add('font-semibold', 'mb-1', 'text-blue-300'); // Example Tailwind classes
-                h6.textContent = recommendation.substring(3).trim();
-                recommendationsUl.appendChild(h6);
-            } else if (recommendation.startsWith('##')) {
-                const h5 = document.createElement('h5');
-                h5.classList.add('font-semibold', 'mb-2', 'text-blue-200'); // Example Tailwind classes
-                h5.textContent = recommendation.substring(2).trim();
-                recommendationsUl.appendChild(h5);
-            } else if (recommendation.startsWith('#')) {
-                const h4 = document.createElement('h4');
-                h4.classList.add('font-semibold', 'mb-3', 'text-blue-100'); // Example Tailwind classes
-                h4.textContent = recommendation.substring(1).trim();
-                recommendationsUl.appendChild(h4);
-            } else {
-                li.classList.add('mb-2', 'text-gray-200'); // Add some spacing between list items
-                li.textContent = recommendation;
-                recommendationsUl.appendChild(li);
-            }
-        });
+    if (recommendationText && recommendationText.trim() !== "") {
+        let safeText = recommendationText
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/\n/g, "<br>"); // Handle line breaks with <br>
+
+        // Convert Markdown bold (**) into HTML <strong> tags
+        safeText = safeText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // For ordered lists (numbered)
+        safeText = safeText.replace(/^(\d+)\.\s+/gm, "<ol class='list-decimal pl-5'><li>$1. "); // Starts ordered list item
+        safeText = safeText.replace(/<\/li><ol class='list-decimal pl-5'><li>(\d+)\.\s+/g, "</li><li>$1. "); // Subsequent list items
+        safeText = safeText.replace(/<\/li><\/ol><li>(\d+)\.\s+/g, "</li><li>$1. "); // Handle cases after a closed list
+        safeText = safeText.replace(/<li>(\d+)\.\s+<br>/g, "<li>$1. "); // Clean up <br> after list start
+        safeText = safeText.replace(/<\/li><br>/g, "</li>"); // Clean up <br> before list end
+        safeText = safeText.replace(/<\/ol><br>/g, "</ol>"); // Clean up <br> after list end
+        safeText = safeText.replace(/<\/ol><li>/g, "</ol><li class='mt-2'>"); // Add margin after a list
+        safeText = safeText.replace(/<li>(.*?)<\/li>(?!<\/ol>)/g, "<li>$1</li>"); // Ensure single list items are closed
+        safeText = safeText.replace(/<ol class='list-decimal pl-5'><li>(.*?)<\/li>(?!<\/ol>)/g, "<ol class='list-decimal pl-5'><li>$1</li></ol>"); // Basic single item list
+
+        recommendationsContent.innerHTML = `<div class="leading-relaxed">${safeText}</div>`;
     } else {
-        const li = document.createElement('li');
-        li.classList.add('text-gray-400');
-        li.textContent = 'No specific recommendations found for this view.';
-        recommendationsUl.appendChild(li);
+        recommendationsContent.innerHTML = `<p class="text-gray-400 italic">No specific recommendations found for this view.</p>`;
     }
 }

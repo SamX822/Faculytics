@@ -48,7 +48,7 @@
         <!-- Modal Background -->
         <div id="manageCollegesModal" class="fixed z-50 inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center">
             <div class="bg-gray-900 p-6 rounded-lg w-full max-w-2xl shadow-lg relative">
-                <h2 class="text-2xl text-white font-bold mb-4">Manage Colleges</h2>
+                <h2 class="text-2xl text-white font-bold mb-4">Colleges Management</h2>
                 <button id="closeManageColleges" class="absolute top-2 right-4 text-white text-2xl hover:text-red-500">&times;</button>
 
                 <!-- Tabs -->
@@ -117,10 +117,31 @@
                                 class="w-full py-2 bg-gradient-to-r from-green-600 to-green-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-green-500/30">
                             View Analytics
                         </button>
-                        <a href="{{ url_for('report') }}"
-                           class="w-full py-2 bg-gradient-to-r from-amber-600 to-amber-800 text-white text-center rounded-lg shadow transition-all duration-300 hover:shadow-amber-500/30">
-                            Generate Report
-                        </a>
+                        {% if user.userType not in ["Curriculum Developer"] %}
+                        <button id="downloadCollegeBtn_{{ campus.campus_acronym }}_{{ college.college_acronym }}"
+                                onclick="downloadCollegeReport('{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
+                                class="group relative overflow-hidden py-2 px-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-center rounded-lg shadow-lg transition-all duration-300 hover:shadow-purple-500/50 hover:-translate-y-1">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg id="iconCollege_{{ campus.campus_acronym }}_{{ college.college_acronym }}" xmlns="http://www.w3.org/2000/svg"
+                                     class="h-5 w-5 transition-transform group-hover:translate-y-1"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+
+                                <svg id="spinnerCollege_{{ campus.campus_acronym }}_{{ college.college_acronym }}" class="hidden h-5 w-5 animate-spin text-white"
+                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+
+                                <span id="textCollege_{{ campus.campus_acronym }}_{{ college.college_acronym }}">Generate Report</span>
+                            </span>
+
+                            <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-violet-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500"></div>
@@ -160,6 +181,29 @@
                                 </svg>
                                 View Analytics
                             </span>
+                        </button>
+                        <button id="downloadCollegeBtn_{{ campus.campus_acronym }}_{{ college.college_acronym }}"
+                                onclick="downloadCollegeReport('{{ campus.campus_acronym }}', '{{ college.college_acronym }}')"
+                                class="group relative overflow-hidden py-2 px-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-center rounded-lg shadow-lg transition-all duration-300 hover:shadow-purple-500/50 hover:-translate-y-1">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg id="iconCollege_{{ campus.campus_acronym }}_{{ college.college_acronym }}" xmlns="http://www.w3.org/2000/svg"
+                                     class="h-5 w-5 transition-transform group-hover:translate-y-1"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+
+                                <svg id="spinnerCollege_{{ campus.campus_acronym }}_{{ college.college_acronym }}" class="hidden h-5 w-5 animate-spin text-white"
+                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+
+                                <span id="textCollege_{{ campus.campus_acronym }}_{{ college.college_acronym }}">Generate Report</span>
+                            </span>
+
+                            <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-violet-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                         </button>
                         {% endif %}
                     </div>
@@ -227,9 +271,6 @@
                 <!-- Actions -->
                 <div class="mt-4 flex justify-end">
                     <button onclick="closeCampusAnalyticsModal()" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">Close</button>
-                    <button id="downloadButton" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">
-                        Download Report
-                    </button>
                 </div>
             </div>
         </div>

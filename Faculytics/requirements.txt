@@ -8,3 +8,6 @@ scikit-learn
 python-dotenv
 google-genai
 reportlab
+matplotlib
+numpy
+weasyprint

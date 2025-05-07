@@ -36,7 +36,7 @@
         <a href="{{ url_for('approval_page') }}"
            class="group relative overflow-hidden bg-gradient-to-r from-[#3b5999] to-[#2e467d] text-white py-2.5 px-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#00f6fa]/20 flex items-center gap-2 border border-[#3b5999]/80">
             <!-- Button text -->
-            <span class="relative z-10 font-medium">Manage Approvals</span>
+            <span class="relative z-10 font-medium">Approvals</span>
 
             <!-- Notification Badge -->
             {% set pending_count = pending_approvals|default(0) %}
@@ -129,6 +129,7 @@
                         </button>
 
                         <!-- Download Report Button -->
+                        {% if user.userType in ["Vice Chancellor for Academic Affairs", "University HR"] %}
                         <button id="downloadBtn_{{ campus.campus_acronym }}"
                                 onclick="downloadCampusReport('{{ campus.campus_acronym }}')"
                                 class="group relative overflow-hidden py-3 px-6 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-center rounded-xl shadow-lg transition-all duration-300 hover:shadow-purple-500/50 hover:-translate-y-1">
@@ -155,6 +156,7 @@
 
                             <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-violet-600 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                         </button>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="h-1 w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500"></div>
@@ -199,6 +201,7 @@
                             <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-600 to-green-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                         </button>
                         <!-- Download Report Button -->
+                        {% if user.userType in ["Campus HR", "Campus Director", "Vice Chancellor"] %}
                         <button id="downloadBtn_{{ campus.campus_acronym }}"
                                 onclick="downloadCampusReport('{{ assigned_campus.campus_acronym }}')"
                                 class="group relative overflow-hidden py-3 px-6 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-center rounded-xl shadow-lg transition-all duration-300 hover:shadow-purple-500/50 hover:-translate-y-1">
@@ -233,6 +236,7 @@
                             </svg>
                             Download
                         </button>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -352,9 +356,6 @@
             <!-- Actions -->
             <div class="mt-6 flex justify-end">
                 <button onclick="closeCampusAnalyticsModal()" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">Close</button>
-                <button class="px-6 py-2 bg-gradient-to-r from-green-600 to-green-800 text-white rounded-lg shadow-md hover:shadow-green-500/30 transition-all duration-300">
-                    Download Report
-                </button>
             </div>
         </div>
     </div>

@@ -148,6 +148,57 @@ function switchTab(tab) {
     }
 }
 
+function downloadCollegeReport(campusAcronym, collegeAcronym) {
+    const button = document.getElementById(`downloadCollegeBtn_${campusAcronym}_${collegeAcronym}`);
+    const icon = document.getElementById(`iconCollege_${campusAcronym}_${collegeAcronym}`);
+    const spinner = document.getElementById(`spinnerCollege_${campusAcronym}_${collegeAcronym}`);
+    const text = document.getElementById(`textCollege_${campusAcronym}_${collegeAcronym}`);
+
+    if (!campusAcronym || !collegeAcronym) {
+        console.error("Missing campus or college acronym");
+        return;
+    }
+
+    // Set loading state
+    button.disabled = true;
+    button.classList.add("opacity-70", "cursor-not-allowed");
+    icon.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    text.textContent = "Downloading...";
+
+    fetch(`/download_college_report?campus_acronym=${campusAcronym}&college_acronym=${collegeAcronym}`)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `college_report_${campusAcronym}_${collegeAcronym}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            console.log(`College report for ${collegeAcronym} download initiated successfully.`);
+        })
+        .catch(error => {
+            console.error("Error fetching or downloading the college report:", error);
+            if (typeof error === 'object' && error !== null && 'error' in error) {
+                console.error("Server error:", error.error);
+            }
+        })
+        .finally(() => {
+            // Reset state
+            button.disabled = false;
+            button.classList.remove("opacity-70", "cursor-not-allowed");
+            icon.classList.remove("hidden");
+            spinner.classList.add("hidden");
+            text.textContent = "Generate Report";
+        });
+}
 function openCampusAnalyticsModal(event, campusAcronym, collegeAcronym) {
     // Prevent any default behavior from the button click
     event.preventDefault();
