@@ -47,6 +47,7 @@ from Faculytics.src.TopicModeling_functions import CommentProcessor
 sentiment_analyzer = SentimentAnalyzer()
 topic_modeling = CommentProcessor()
 
+# adviser: Mr. Neil A. Basabe
 # Load environment variables from .env
 # Activation for gemini
 load_dotenv()
