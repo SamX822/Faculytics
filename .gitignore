@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /Faculytics/env
 /Faculytics/.env
+/Faculytics/Faculytics/__init__.py
