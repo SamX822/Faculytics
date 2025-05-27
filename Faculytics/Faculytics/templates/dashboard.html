@@ -59,6 +59,28 @@
         </a>
         {% endif %}
 
+        <!-- University Wide Analytics button -->
+        {% if user.userType in ["Vice Chancellor for Academic Affairs", "University HR", "Curriculum Developer"] %}
+        <div class="mt-4">
+            <button onclick="openUniversityAnalyticsModal()"
+                    class="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2.5 px-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#00f6fa]/20 flex items-center gap-2 border border-[#3b5999]/80 mb-6">
+                <span class="flex items-center space-x-2 relative z-10 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>University-Wide Analytics</span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 relative z-10 ml-auto opacity-70" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
+                </div>
+            </button>
+        </div>
+        {% endif %}
+
         <!-- Admin View: All Campuses Grid -->
         {% if user.userType == "admin" %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
@@ -359,6 +381,55 @@
             </div>
         </div>
     </div>
+
+    <!-- University Wide Analytics Modal-->
+    <div id="universityAnalysisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+        <div class="bg-gray-800 p-6 rounded-lg w-full max-w-5xl mt-4 overflow-y-auto max-h-[90vh] border border-gray-700 shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-6 text-center">University-Wide Analytics</h3>
+
+            <div class="flex justify-center border-b border-gray-700 mb-6">
+                <button id="universitySentimentTab" class="py-2 px-6 text-white bg-blue-600 rounded-t-lg mr-2 transition-all duration-300 hover:bg-blue-700">Sentiment Analysis</button>
+                <button id="universityTopicTab" class="py-2 px-6 text-white bg-gray-700 rounded-t-lg mr-2 transition-all duration-300 hover:bg-gray-600">Topic Modeling</button>
+                <button id="universityNeedsAnalysisTab" class="py-2 px-4 text-white bg-gray-700 rounded-t-lg mr-2 transition-all duration-300 hover:bg-gray-600">Needs Analysis</button>
+                <button id="universityCommentsTab" class="py-2 px-6 text-white bg-gray-700 rounded-t-lg transition-all duration-300 hover:bg-gray-600">Comments</button>
+            </div>
+
+            <div id="universitySentimentContent" class="block">
+                <canvas id="universityAnalysisChart" class="bg-gray-900 rounded-lg p-4"></canvas>
+            </div>
+
+            <div id="universityTopicContent" class="hidden">
+                <canvas id="universityTopicChart" class="bg-gray-900 rounded-lg p-4"></canvas>
+            </div>
+
+            <div id="universityNeedsAnalysisContent" class="hidden">
+                <canvas id="universityNeedsAnalysisChart"></canvas>
+            </div>
+
+            <div id="universityCommentsContent" class="hidden text-white">
+                <div class="flex flex-wrap gap-4 mb-4">
+                    <select id="universitySentimentFilter" class="bg-gray-700 text-white p-2 rounded-lg">
+                        <option value="all">All Sentiments</option>
+                        <option value="Positive">Positive</option>
+                        <option value="Negative">Negative</option>
+                    </select>
+                    <select id="universityTopicFilter" class="bg-gray-700 text-white p-2 rounded-lg">
+                        <option value="all">All Topics</option>
+                    </select>
+                </div>
+                <div id="universityCommentsList" class="space-y-4 max-h-[40vh] overflow-y-auto">
+                </div>
+            </div>
+
+            <div id="universityFileDetails" class="mt-6 text-white p-4 bg-gray-900 rounded-lg shadow-inner">
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeUniversityAnalyticsModal()" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg shadow-md hover:shadow-red-500/30 transition-all duration-300">Close</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -375,4 +446,5 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/scripts/template/teacher.js"></script>
 <script src="/static/scripts/template/dashboard.js"></script>
+<script src="/static/scripts/template/university.js"></script>
 {% endblock %}

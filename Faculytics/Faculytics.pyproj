@@ -65,6 +65,7 @@
     <Content Include="Faculytics\static\scripts\template\notificationbar.js" />
     <Content Include="Faculytics\static\scripts\template\program.js" />
     <Content Include="Faculytics\static\scripts\template\report.css" />
+    <Content Include="Faculytics\static\scripts\template\university.js" />
     <Content Include="Faculytics\templates\report_template.html" />
     <Content Include="Faculytics\static\scripts\template\teacher.js" />
     <Content Include="Faculytics\templates\approval.html" />
